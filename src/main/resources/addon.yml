@@ -1,6 +1,6 @@
 name: BentoBox-InvSwitcher
 main: com.wasteofplastic.invswitcher.InvSwitcher
-version: 0.1
+version: ${version}
 
 authors: tastybento
 
