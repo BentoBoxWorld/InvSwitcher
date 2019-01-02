@@ -49,7 +49,7 @@ public class StoreTest {
         Whitebox.setInternalState(BentoBox.class, "instance", plugin);
         Settings settings = mock(Settings.class);
         when(plugin.getSettings()).thenReturn(settings);
-        when(settings.getDatabaseType()).thenReturn(DatabaseType.FLATFILE);
+        when(settings.getDatabaseType()).thenReturn(DatabaseType.YAML);
 
         // Player mock
         player = mock(Player.class);
