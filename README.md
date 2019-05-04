@@ -27,7 +27,7 @@ This addon will give players a separate inventory, health, food level and experi
 **AcidIsland**'s Inventory, Health, Food level and Experience are shared only between it's corresponding worlds:
 - AcidIsland_world
 - AcidIsland_world_nether
-- BSkyBlock_world_the_end
+- AcidIsland_world_the_end
 
 **Please note:**
 - It is not limited to just BentoBox worlds. It applies to all worlds on the server (right now).
