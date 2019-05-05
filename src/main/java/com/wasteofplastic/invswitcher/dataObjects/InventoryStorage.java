@@ -8,15 +8,23 @@ import java.util.Map;
 import org.bukkit.Location;
 import org.bukkit.inventory.ItemStack;
 
+import com.google.gson.annotations.Expose;
+
 import world.bentobox.bentobox.database.objects.DataObject;
 
 public class InventoryStorage implements DataObject {
 
+    @Expose
     private String uniqueId;
+    @Expose
     private Map<String, List<ItemStack>> inventory = new HashMap<>();
+    @Expose
     private Map<String, Double> health = new HashMap<>();
+    @Expose
     private Map<String, Integer> food = new HashMap<>();
+    @Expose
     private Map<String, Integer> exp = new HashMap<>();
+    @Expose
     private Map<String, Location> location = new HashMap<>();
 
     @Override
