@@ -4,6 +4,7 @@ package com.wasteofplastic.invswitcher;
 import com.wasteofplastic.invswitcher.listeners.PlayerTeleportListener;
 
 import world.bentobox.bentobox.api.addons.Addon;
+import world.bentobox.bentobox.database.DatabaseSetup.DatabaseType;
 
 public class InvSwitcher extends Addon {
     private Store store;
@@ -11,10 +12,16 @@ public class InvSwitcher extends Addon {
 
     @Override
     public void onEnable() {
+        // Verify that we're not running on a YAML database
+        if (this.getPlugin().getSettings().getDatabaseType().equals(DatabaseType.YAML)) {
+            this.setState(State.DISABLED);
+            this.logError("This addon is incompatible with YAML database. Please use another type, like JSON.");
+            return;
+        }
         // Create the store
         store = new Store(this);
         // Register the listeners
-        getServer().getPluginManager().registerEvents(new PlayerTeleportListener(this), getPlugin());
+        registerListener(new PlayerTeleportListener(this));
     }
 
 

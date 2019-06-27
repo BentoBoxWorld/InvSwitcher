@@ -6,7 +6,7 @@
 
 	<groupId>com.wasteofplastic</groupId>
 	<artifactId>InvSwitcher</artifactId>
-	<version>0.0.3-SNAPSHOT</version>
+	<version>0.0.4-SNAPSHOT</version>
 
 	<name>InvSwitcher</name>
 	<description>InvSwitcher is an add-on for BentoBox, an expandable Minecraft Bukkit plugin for island-type games like ASkyBlock or AcidIsland.</description>
