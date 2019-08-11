@@ -1,6 +1,8 @@
 package com.wasteofplastic.invswitcher;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
@@ -21,7 +23,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
+import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
@@ -38,13 +40,15 @@ import world.bentobox.bentobox.database.DatabaseSetup.DatabaseType;
 @PrepareForTest({Bukkit.class})
 public class StoreTest {
 
+    @Mock
     private InvSwitcher addon;
+    @Mock
     private Player player;
+    @Mock
     private World world;
 
     @Before
     public void setUp() {
-        addon = mock(InvSwitcher.class);
         BentoBox plugin = mock(BentoBox.class);
         Whitebox.setInternalState(BentoBox.class, "instance", plugin);
         Settings settings = mock(Settings.class);
@@ -52,13 +56,12 @@ public class StoreTest {
         when(settings.getDatabaseType()).thenReturn(DatabaseType.YAML);
 
         // Player mock
-        player = mock(Player.class);
         UUID uuid = UUID.randomUUID();
         when(player.getUniqueId()).thenReturn(uuid);
         AttributeInstance attribute = mock(AttributeInstance.class);
         // Health
         when(attribute.getValue()).thenReturn(18D);
-        when(player.getAttribute(Mockito.any())).thenReturn(attribute);
+        when(player.getAttribute(any())).thenReturn(attribute);
         // Inventory
         PlayerInventory inv = mock(PlayerInventory.class);
         ItemStack[] contents = { new ItemStack(Material.ACACIA_BOAT, 1), null, new ItemStack(Material.BAKED_POTATO, 32), null, null, new ItemStack(Material.CAVE_SPIDER_SPAWN_EGG, 2) };
@@ -66,7 +69,6 @@ public class StoreTest {
         when(player.getInventory()).thenReturn(inv);
 
         // World mock
-        world = mock(World.class);
         when(world.getName()).thenReturn("world_the_end_nether");
 
         // World 2
@@ -93,6 +95,7 @@ public class StoreTest {
     @Test
     public void testStore() {
         new Store(addon);
+        verify(addon).getLogger();
     }
 
     /**
@@ -102,10 +105,10 @@ public class StoreTest {
     public void testGetInventory() {
         Store s = new Store(addon);
         s.getInventory(player, world);
-        Mockito.verify(player).setFoodLevel(20);
-        Mockito.verify(player).setHealth(18);
-        Mockito.verify(player).getInventory();
-        Mockito.verify(player).setTotalExperience(0);
+        verify(player).setFoodLevel(20);
+        verify(player).setHealth(18);
+        verify(player).getInventory();
+        verify(player).setTotalExperience(0);
     }
 
     /**

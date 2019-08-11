@@ -1,7 +1,7 @@
 name: BentoBox-InvSwitcher
 main: com.wasteofplastic.invswitcher.InvSwitcher
-version: ${version}
+version: ${version}${build.number}
 
 authors: tastybento
 
-softdepend: AcidIsland, BSkyBlock
+softdepend: AcidIsland, BSkyBlock, SkyGrid, CaveBock
