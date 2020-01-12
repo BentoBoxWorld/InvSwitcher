@@ -1,5 +1,5 @@
-# addon-invSwitcher
-World inventory switcher add-on for BentoBox. This add-on will work for any game modes.
+# InvSwitcher
+Inventory switcher is an add-on for BentoBox. This add-on will work for any game modes.
 
 ## How to use
 
