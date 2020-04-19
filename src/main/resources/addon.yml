@@ -4,4 +4,4 @@ version: ${version}${build.number}
 
 authors: tastybento
 
-softdepend: AcidIsland, BSkyBlock, SkyGrid, CaveBock
+softdepend: AcidIsland, BSkyBlock, SkyGrid, CaveBock, AOneBlock
