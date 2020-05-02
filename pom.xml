@@ -10,7 +10,7 @@
 
     <name>InvSwitcher</name>
     <description>InvSwitcher is an add-on for BentoBox, an expandable Minecraft Bukkit plugin for island-type games like ASkyBlock or AcidIsland.</description>
-    <url>https://github.com/BentoBoxWorld/addon-invSwitcher</url>
+    <url>https://github.com/BentoBoxWorld/InvSwitcher</url>
     <inceptionYear>2018</inceptionYear>
 
     <developers>
@@ -25,20 +25,20 @@
     </developers>
 
     <scm>
-        <connection>scm:git:https://github.com/BentoBoxWorld/addon-invSwitcher.git</connection>
-        <developerConnection>scm:git:git@github.com:BentoBoxWorld/addon-invSwitcher.git</developerConnection>
-        <url>https://github.com/BentoBoxWorld/addon-welcomewarpsigns</url>
+        <connection>scm:git:https://github.com/BentoBoxWorld/InvSwitcher.git</connection>
+        <developerConnection>scm:git:git@github.com:BentoBoxWorld/InvSwitcher.git</developerConnection>
+        <url>https://github.com/BentoBoxWorld/InvSwitcher</url>
     </scm>
 
     <ciManagement>
         <system>jenkins</system>
-        <url>https://ci.codemc.org/job/BentoBoxWorld/job/addon-invSwitcher/</url>
+        <url>https://ci.codemc.org/job/BentoBoxWorld/job/InvSwitcher/</url>
     </ciManagement>
 
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/BentoBoxWorld/addon-invSwitcher/issues</url>
+        <url>https://github.com/BentoBoxWorld/InvSwitcher/issues</url>
     </issueManagement>
 
     <distributionManagement>
