@@ -11,7 +11,9 @@ import org.bukkit.inventory.ItemStack;
 import com.google.gson.annotations.Expose;
 
 import world.bentobox.bentobox.database.objects.DataObject;
+import world.bentobox.bentobox.database.objects.Table;
 
+@Table(name = "InventoryStorage")
 public class InventoryStorage implements DataObject {
 
     @Expose

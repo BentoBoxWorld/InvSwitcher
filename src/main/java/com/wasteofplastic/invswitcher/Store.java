@@ -127,7 +127,7 @@ public class Store {
         store.setFood(overworldName, player.getFoodLevel());
         store.setExp(overworldName, getTotalExperience(player));
         store.setLocation(worldName, player.getLocation());
-        database.saveObject(store);
+        database.saveObjectAsync(store);
         // Clear the player's inventory
         player.getInventory().clear();
         setTotalExperience(player, 0);
