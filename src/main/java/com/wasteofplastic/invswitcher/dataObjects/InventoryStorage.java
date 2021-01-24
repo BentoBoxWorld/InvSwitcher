@@ -1,6 +1,7 @@
 package com.wasteofplastic.invswitcher.dataObjects;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,8 @@ public class InventoryStorage implements DataObject {
     private Map<String, Location> location = new HashMap<>();
     @Expose
     private Map<String, GameMode> gameMode = new HashMap<>();
+    @Expose
+    private Map<String, Map<String, List<String>>> advancements = new HashMap<>();
 
     @Override
     public String getUniqueId() {
@@ -161,4 +164,17 @@ public class InventoryStorage implements DataObject {
     public GameMode getGameMode(String worldName) {
         return this.gameMode.getOrDefault(worldName, GameMode.SURVIVAL);
     }
+
+    public void setAdvancement(String worldName, String key, List<String> criteria) {
+        this.advancements.computeIfAbsent(worldName, k -> new HashMap<>()).put(key, criteria);
+    }
+
+    /**
+     * @return the advancements
+     */
+    public Map<String, List<String>> getAdvancements(String worldName) {
+        return advancements.getOrDefault(worldName, Collections.emptyMap());
+    }
+
+
 }

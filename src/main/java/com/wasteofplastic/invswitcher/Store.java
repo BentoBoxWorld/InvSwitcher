@@ -22,13 +22,18 @@
 
 package com.wasteofplastic.invswitcher;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.advancement.Advancement;
+import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -90,6 +95,17 @@ public class Store {
 
         player.setGameMode(store.getGameMode(overworldName));
 
+        // Advancements
+        store.getAdvancements(overworldName).forEach((k, v) -> {
+            Iterator<Advancement> it = Bukkit.advancementIterator();
+            while (it.hasNext()) {
+                Advancement a = it.next();
+                if (a.getKey().toString().equals(k)) {
+                    // Award
+                    v.forEach(player.getAdvancementProgress(a)::awardCriteria);
+                }
+            }
+        });
         // Get Spawn Point
         store.getLocation(worldName);
     }
@@ -138,6 +154,16 @@ public class Store {
         // Clear the player's inventory
         player.getInventory().clear();
         setTotalExperience(player, 0);
+        // Advancements
+        Iterator<Advancement> it = Bukkit.advancementIterator();
+        while (it.hasNext()) {
+            Advancement a = it.next();
+            AdvancementProgress p = player.getAdvancementProgress(a);
+            if (!p.getAwardedCriteria().isEmpty()) {
+                store.setAdvancement(worldName, a.getKey().toString(), new ArrayList<>(p.getAwardedCriteria()));
+            }
+            p.getAwardedCriteria().forEach(p::revokeCriteria);
+        }
         // Done!
     }
 
