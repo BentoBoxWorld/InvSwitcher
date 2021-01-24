@@ -88,8 +88,14 @@ public class Store {
 
         setTotalExperience(player, store.getExp().getOrDefault(overworldName, 0));
 
+        player.setGameMode(store.getGameMode(overworldName));
+
         // Get Spawn Point
         store.getLocation(worldName);
+    }
+
+    public void removeFromCache(Player player) {
+        cache.remove(player.getUniqueId());
     }
 
     private InventoryStorage getInv(Player player) {
@@ -127,6 +133,7 @@ public class Store {
         store.setFood(overworldName, player.getFoodLevel());
         store.setExp(overworldName, getTotalExperience(player));
         store.setLocation(worldName, player.getLocation());
+        store.setGameMode(overworldName, player.getGameMode());
         database.saveObjectAsync(store);
         // Clear the player's inventory
         player.getInventory().clear();

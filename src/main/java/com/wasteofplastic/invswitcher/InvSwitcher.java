@@ -1,7 +1,7 @@
 package com.wasteofplastic.invswitcher;
 
 
-import com.wasteofplastic.invswitcher.listeners.PlayerTeleportListener;
+import com.wasteofplastic.invswitcher.listeners.PlayerListener;
 
 import world.bentobox.bentobox.api.addons.Addon;
 import world.bentobox.bentobox.database.DatabaseSetup.DatabaseType;
@@ -21,7 +21,7 @@ public class InvSwitcher extends Addon {
         // Create the store
         store = new Store(this);
         // Register the listeners
-        registerListener(new PlayerTeleportListener(this));
+        registerListener(new PlayerListener(this));
     }
 
 

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.inventory.ItemStack;
 
@@ -28,6 +29,8 @@ public class InventoryStorage implements DataObject {
     private Map<String, Integer> exp = new HashMap<>();
     @Expose
     private Map<String, Location> location = new HashMap<>();
+    @Expose
+    private Map<String, GameMode> gameMode = new HashMap<>();
 
     @Override
     public String getUniqueId() {
@@ -74,6 +77,7 @@ public class InventoryStorage implements DataObject {
     public Map<String, Location> getLocation() {
         return location;
     }
+
 
     /**
      * @param inventory the inventory to set
@@ -150,4 +154,11 @@ public class InventoryStorage implements DataObject {
         }
     }
 
+    public void setGameMode(String worldName, GameMode gameMode) {
+        this.gameMode.put(worldName, gameMode);
+    }
+
+    public GameMode getGameMode(String worldName) {
+        return this.gameMode.getOrDefault(worldName, GameMode.SURVIVAL);
+    }
 }
