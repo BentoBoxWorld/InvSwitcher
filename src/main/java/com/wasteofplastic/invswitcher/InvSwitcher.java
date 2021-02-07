@@ -26,8 +26,12 @@ public class InvSwitcher extends Addon {
 
 
     @Override
-    public void onDisable()
-    {
+    public void onDisable() {
+        // save cache
+        if (store != null) {
+            getStore().saveOnlinePlayers();
+        }
+
     }
 
 

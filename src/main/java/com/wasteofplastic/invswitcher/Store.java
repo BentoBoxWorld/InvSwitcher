@@ -137,6 +137,17 @@ public class Store {
      * @param world - the world that is associated with these items/elements
      */
     public void storeInventory(Player player, World world) {
+        storeAndSave(player, world);
+        clearPlayer(player);
+        // Done!
+    }
+
+    /**
+     * Store and save the player to the database
+     * @param player - player
+     * @param world - world to save
+     */
+    public void storeAndSave(Player player, World world) {
         // Get the player's inventory
         InventoryStorage store = getInv(player);
         // Do not differentiate between world environments
@@ -150,10 +161,6 @@ public class Store {
         store.setExp(overworldName, getTotalExperience(player));
         store.setLocation(worldName, player.getLocation());
         store.setGameMode(overworldName, player.getGameMode());
-        database.saveObjectAsync(store);
-        // Clear the player's inventory
-        player.getInventory().clear();
-        setTotalExperience(player, 0);
         // Advancements
         Iterator<Advancement> it = Bukkit.advancementIterator();
         while (it.hasNext()) {
@@ -162,9 +169,21 @@ public class Store {
             if (!p.getAwardedCriteria().isEmpty()) {
                 store.setAdvancement(worldName, a.getKey().toString(), new ArrayList<>(p.getAwardedCriteria()));
             }
+        }
+        database.saveObjectAsync(store);
+    }
+
+    private void clearPlayer(Player player) {
+        // Clear the player's inventory
+        player.getInventory().clear();
+        setTotalExperience(player, 0);
+        Iterator<Advancement> it = Bukkit.advancementIterator();
+        while (it.hasNext()) {
+            Advancement a = it.next();
+            AdvancementProgress p = player.getAdvancementProgress(a);
             p.getAwardedCriteria().forEach(p::revokeCriteria);
         }
-        // Done!
+
     }
 
     //new Exp Math from 1.8
@@ -240,5 +259,12 @@ public class Store {
                 amount = 0;
             }
         }
+    }
+
+    /**
+     * Save all online players
+     */
+    public void saveOnlinePlayers() {
+        Bukkit.getOnlinePlayers().forEach(p -> this.storeAndSave(p, p.getWorld()));
     }
 }
