@@ -9,6 +9,8 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import com.wasteofplastic.invswitcher.InvSwitcher;
 
+import world.bentobox.bentobox.util.Util;
+
 /**
  * Handles all teleportation events, e.g., player teleporting into world
  *
@@ -32,7 +34,9 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled=true)
     public void onWorldEnter(final PlayerChangedWorldEvent event) {
-        addon.getStore().getInventory(event.getPlayer(), event.getPlayer().getWorld());
+        if (!Util.sameWorld(event.getPlayer().getWorld(), event.getFrom())) {
+            addon.getStore().getInventory(event.getPlayer(), event.getPlayer().getWorld());
+        }
     }
 
     /**
@@ -41,7 +45,9 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled=true)
     public void onWorldExit(final PlayerChangedWorldEvent event) {
-        addon.getStore().storeInventory(event.getPlayer(), event.getFrom());
+        if (!Util.sameWorld(event.getPlayer().getWorld(), event.getFrom())) {
+            addon.getStore().storeInventory(event.getPlayer(), event.getFrom());
+        }
     }
 
 
