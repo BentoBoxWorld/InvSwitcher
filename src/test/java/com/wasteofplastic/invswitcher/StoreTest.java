@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.UUID;
 
@@ -47,6 +48,8 @@ public class StoreTest {
     @Mock
     private World world;
 
+    private com.wasteofplastic.invswitcher.Settings sets;
+
     @Before
     public void setUp() {
         BentoBox plugin = mock(BentoBox.class);
@@ -74,6 +77,10 @@ public class StoreTest {
         // World 2
         World fromWorld = mock(World.class);
         when(fromWorld.getName()).thenReturn("from_the_end_nether");
+
+        sets = new com.wasteofplastic.invswitcher.Settings();
+        when(addon.getSettings()).thenReturn(sets);
+        when(addon.getWorlds()).thenReturn(Collections.singleton(world));
     }
 
     @After
