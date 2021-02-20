@@ -1,0 +1,17 @@
+# InvSwitcher Config
+# Worlds to operate. Nether and End worlds are automatically included.
+worlds:
+- acidisland_world
+- oneblock_world
+- boxed_world
+- bskyblock_world
+options:
+  # 
+  # Per-world settings. Gamemode means Survivial, Creative, etc.
+  inventory: true
+  health: true
+  food: true
+  advancements: true
+  gamemode: true
+  experience: true
+  location: true

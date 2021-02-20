@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 tastybento
+ * Copyright (c) 2017 - 2021 tastybento
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -50,8 +50,10 @@ import world.bentobox.bentobox.database.Database;
 public class Store {
     private final Database<InventoryStorage> database;
     private final Map<UUID, InventoryStorage> cache;
+    private final InvSwitcher addon;
 
     public Store(InvSwitcher addon) {
+        this.addon = addon;
         database = new Database<>(addon, InventoryStorage.class);
         cache = new HashMap<>();
     }
@@ -62,52 +64,64 @@ public class Store {
      * @param world - world
      */
     public void getInventory(Player player, World world) {
-        // Get inventory
+        // Get the store
         InventoryStorage store = getInv(player);
 
         // Do not differentiate between world environments. Only the location is different
         String worldName = world.getName();
         String overworldName = (world.getName().replace("_the_end", "")).replace("_nether", "");
 
-        player.getInventory().setContents(store.getInventory(overworldName).toArray(new ItemStack[0]));
-
-
-        double health = store.getHealth().getOrDefault(overworldName, player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
-
-        if (health > player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue()) {
-            health = player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
+        // Inventory
+        if (addon.getSettings().isInventory()) {
+            player.getInventory().setContents(store.getInventory(overworldName).toArray(new ItemStack[0]));
         }
-        if (health < 0D) {
-            health = 0D;
-        }
-        player.setHealth(health);
+        if (addon.getSettings().isHealth()) {
+            // Health
+            double health = store.getHealth().getOrDefault(overworldName, player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
 
-
-        int food = store.getFood().getOrDefault(overworldName, 20);
-        if (food > 20) {
-            food = 20;
-        } else if (food < 0) {
-            food = 0;
-        }
-        player.setFoodLevel(food);
-
-        setTotalExperience(player, store.getExp().getOrDefault(overworldName, 0));
-
-        player.setGameMode(store.getGameMode(overworldName));
-
-        // Advancements
-        store.getAdvancements(overworldName).forEach((k, v) -> {
-            Iterator<Advancement> it = Bukkit.advancementIterator();
-            while (it.hasNext()) {
-                Advancement a = it.next();
-                if (a.getKey().toString().equals(k)) {
-                    // Award
-                    v.forEach(player.getAdvancementProgress(a)::awardCriteria);
-                }
+            if (health > player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue()) {
+                health = player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
             }
-        });
-        // Get Spawn Point
-        store.getLocation(worldName);
+            if (health < 0D) {
+                health = 0D;
+            }
+            player.setHealth(health);
+        }
+        if (addon.getSettings().isFood()) {
+            // Food
+            int food = store.getFood().getOrDefault(overworldName, 20);
+            if (food > 20) {
+                food = 20;
+            } else if (food < 0) {
+                food = 0;
+            }
+            player.setFoodLevel(food);
+        }
+        if (addon.getSettings().isExperience()) {
+            // Experience
+            setTotalExperience(player, store.getExp().getOrDefault(overworldName, 0));
+        }
+        if (addon.getSettings().isGamemode()) {
+            // Game modes
+            player.setGameMode(store.getGameMode(overworldName));
+        }
+        if (addon.getSettings().isAdvancements()) {
+            // Advancements
+            store.getAdvancements(overworldName).forEach((k, v) -> {
+                Iterator<Advancement> it = Bukkit.advancementIterator();
+                while (it.hasNext()) {
+                    Advancement a = it.next();
+                    if (a.getKey().toString().equals(k)) {
+                        // Award
+                        v.forEach(player.getAdvancementProgress(a)::awardCriteria);
+                    }
+                }
+            });
+        }
+        if (addon.getSettings().isLocation()) {
+            // Get Spawn Point
+            store.getLocation(worldName);
+        }
     }
 
     public void removeFromCache(Player player) {
@@ -148,26 +162,40 @@ public class Store {
      * @param world - world to save
      */
     public void storeAndSave(Player player, World world) {
-        // Get the player's inventory
+        // Get the player's store
         InventoryStorage store = getInv(player);
         // Do not differentiate between world environments
         String worldName = world.getName();
         String overworldName = (world.getName().replace("_the_end", "")).replace("_nether", "");
-        // Copy the player's items to the store
-        List<ItemStack> contents = Arrays.asList(player.getInventory().getContents());
-        store.setInventory(overworldName, contents);
-        store.setHealth(overworldName, player.getHealth());
-        store.setFood(overworldName, player.getFoodLevel());
-        store.setExp(overworldName, getTotalExperience(player));
-        store.setLocation(worldName, player.getLocation());
-        store.setGameMode(overworldName, player.getGameMode());
-        // Advancements
-        Iterator<Advancement> it = Bukkit.advancementIterator();
-        while (it.hasNext()) {
-            Advancement a = it.next();
-            AdvancementProgress p = player.getAdvancementProgress(a);
-            if (!p.getAwardedCriteria().isEmpty()) {
-                store.setAdvancement(worldName, a.getKey().toString(), new ArrayList<>(p.getAwardedCriteria()));
+        if (addon.getSettings().isInventory()) {
+            // Copy the player's items to the store
+            List<ItemStack> contents = Arrays.asList(player.getInventory().getContents());
+            store.setInventory(overworldName, contents);
+        }
+        if (addon.getSettings().isHealth()) {
+            store.setHealth(overworldName, player.getHealth());
+        }
+        if (addon.getSettings().isFood()) {
+            store.setFood(overworldName, player.getFoodLevel());
+        }
+        if (addon.getSettings().isExperience()) {
+            store.setExp(overworldName, getTotalExperience(player));
+        }
+        if (addon.getSettings().isLocation()) {
+            store.setLocation(worldName, player.getLocation());
+        }
+        if (addon.getSettings().isGamemode()) {
+            store.setGameMode(overworldName, player.getGameMode());
+        }
+        if (addon.getSettings().isAdvancements()) {
+            // Advancements
+            Iterator<Advancement> it = Bukkit.advancementIterator();
+            while (it.hasNext()) {
+                Advancement a = it.next();
+                AdvancementProgress p = player.getAdvancementProgress(a);
+                if (!p.getAwardedCriteria().isEmpty()) {
+                    store.setAdvancement(worldName, a.getKey().toString(), new ArrayList<>(p.getAwardedCriteria()));
+                }
             }
         }
         database.saveObjectAsync(store);

@@ -34,7 +34,9 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled=true)
     public void onWorldEnter(final PlayerChangedWorldEvent event) {
-        if (!Util.sameWorld(event.getPlayer().getWorld(), event.getFrom())) {
+        if (!Util.sameWorld(event.getPlayer().getWorld(), event.getFrom())
+                && (addon.getWorlds().contains(event.getPlayer().getWorld())
+                        || addon.getWorlds().contains(event.getFrom()))) {
             addon.getStore().getInventory(event.getPlayer(), event.getPlayer().getWorld());
         }
     }
@@ -57,7 +59,9 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled=true)
     public void onPlayerJoin(final PlayerJoinEvent event) {
-        addon.getStore().getInventory(event.getPlayer(), event.getPlayer().getWorld());
+        if (addon.getWorlds().contains(event.getPlayer().getWorld())) {
+            addon.getStore().getInventory(event.getPlayer(), event.getPlayer().getWorld());
+        }
     }
 
     /**
@@ -66,7 +70,9 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled=true)
     public void onPlayerQuit(final PlayerQuitEvent event) {
-        addon.getStore().storeAndSave(event.getPlayer(), event.getPlayer().getWorld());
+        if (addon.getWorlds().contains(event.getPlayer().getWorld())) {
+            addon.getStore().storeAndSave(event.getPlayer(), event.getPlayer().getWorld());
+        }
         addon.getStore().removeFromCache(event.getPlayer());
     }
 
