@@ -20,8 +20,6 @@ public class InvSwitcher extends Addon {
 
     private Settings settings;
 
-    private boolean hooked;
-
     private Config<Settings> config = new Config<>(this, Settings.class);
 
     private Set<World> worlds = new HashSet<>();
@@ -32,6 +30,10 @@ public class InvSwitcher extends Addon {
         this.saveDefaultConfig();
         // Load the plugin's config
         this.loadSettings();
+    }
+
+    @Override
+    public void allLoaded() {
         // Load worlds
         worlds = getSettings().getWorlds()
                 .stream()
@@ -44,7 +46,6 @@ public class InvSwitcher extends Addon {
             this.setState(State.DISABLED);
             return;
         }
-        hooked = true;
         // Add nethers and ends
         Set<World> netherEnds = new HashSet<>();
         log("Hooking into the following worlds:");
@@ -62,23 +63,20 @@ public class InvSwitcher extends Addon {
             }
         });
         worlds.addAll(netherEnds);
+        // Create the store
+        store = new Store(this);
+        // Register the listeners
+        registerListener(new PlayerListener(this));
     }
 
     @Override
     public void onEnable() {
-        if (!hooked) {
-            return;
-        }
         // Verify that we're not running on a YAML database
         if (this.getPlugin().getSettings().getDatabaseType().equals(DatabaseType.YAML)) {
             this.setState(State.DISABLED);
             this.logError("This addon is incompatible with YAML database. Please use another type, like JSON.");
             return;
         }
-        // Create the store
-        store = new Store(this);
-        // Register the listeners
-        registerListener(new PlayerListener(this));
     }
 
 
