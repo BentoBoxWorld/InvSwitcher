@@ -1,4 +1,4 @@
-name: BentoBox-InvSwitcher
+name: InvSwitcher
 main: com.wasteofplastic.invswitcher.InvSwitcher
 version: ${version}${build.number}
 api-version: 1.14
