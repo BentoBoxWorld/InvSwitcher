@@ -34,6 +34,8 @@ public class InventoryStorage implements DataObject {
     private Map<String, GameMode> gameMode = new HashMap<>();
     @Expose
     private Map<String, Map<String, List<String>>> advancements = new HashMap<>();
+    @Expose
+    private Map<String, List<ItemStack>> enderChest = new HashMap<>();
 
     @Override
     public String getUniqueId() {
@@ -176,5 +178,22 @@ public class InventoryStorage implements DataObject {
         return advancements.getOrDefault(worldName, Collections.emptyMap());
     }
 
+    /**
+     * Get the EnderChest inventory
+     * @param overworldName - world name
+     * @return inventory
+     */
+    public List<ItemStack> getEnderChest(String overworldName) {
+        return enderChest == null ? new ArrayList<>() : enderChest.getOrDefault(overworldName, new ArrayList<>());
+    }
 
+    /**
+    *
+    * @param worldname the world name
+    * @param inventory the inventory to set
+    */
+   public void setEnderChest(String worldname, List<ItemStack> inventory) {
+       this.enderChest.put(worldname, inventory);
+
+   }
 }

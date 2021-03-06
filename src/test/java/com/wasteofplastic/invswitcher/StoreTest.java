@@ -70,6 +70,7 @@ public class StoreTest {
         ItemStack[] contents = { new ItemStack(Material.ACACIA_BOAT, 1), null, new ItemStack(Material.BAKED_POTATO, 32), null, null, new ItemStack(Material.CAVE_SPIDER_SPAWN_EGG, 2) };
         when(inv.getContents()).thenReturn(contents);
         when(player.getInventory()).thenReturn(inv);
+        when(player.getEnderChest()).thenReturn(inv);
 
         // World mock
         when(world.getName()).thenReturn("world_the_end_nether");

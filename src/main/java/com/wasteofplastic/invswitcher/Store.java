@@ -122,6 +122,9 @@ public class Store {
             // Get Spawn Point
             store.getLocation(worldName);
         }
+        if (addon.getSettings().isEnderChest()) {
+            player.getEnderChest().setContents(store.getEnderChest(overworldName).toArray(new ItemStack[0]));
+        }
     }
 
     public void removeFromCache(Player player) {
@@ -198,6 +201,11 @@ public class Store {
                 }
             }
         }
+        if (addon.getSettings().isEnderChest()) {
+            // Copy the player's ender chest items to the store
+            List<ItemStack> contents = Arrays.asList(player.getEnderChest().getContents());
+            store.setEnderChest(overworldName, contents);
+        }
         database.saveObjectAsync(store);
     }
 
@@ -211,7 +219,7 @@ public class Store {
             AdvancementProgress p = player.getAdvancementProgress(a);
             p.getAwardedCriteria().forEach(p::revokeCriteria);
         }
-
+        player.getEnderChest().clear();
     }
 
     //new Exp Math from 1.8

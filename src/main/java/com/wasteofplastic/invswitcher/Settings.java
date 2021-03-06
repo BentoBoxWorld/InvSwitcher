@@ -1,12 +1,12 @@
 package com.wasteofplastic.invswitcher;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import world.bentobox.bentobox.api.configuration.ConfigComment;
 import world.bentobox.bentobox.api.configuration.ConfigEntry;
 import world.bentobox.bentobox.api.configuration.ConfigObject;
 import world.bentobox.bentobox.api.configuration.StoreAt;
-
-import java.util.HashSet;
-import java.util.Set;
 
 @StoreAt(filename = "config.yml", path = "addons/InvSwitcher")
 public class Settings implements ConfigObject {
@@ -32,6 +32,8 @@ public class Settings implements ConfigObject {
     private boolean experience = true;
     @ConfigEntry(path = "options.location")
     private boolean location = true;
+    @ConfigEntry(path = "options.ender-chest")
+    private boolean enderChest = true;
     /**
      * @return the worlds
      */
@@ -127,6 +129,18 @@ public class Settings implements ConfigObject {
      */
     public void setLocation(boolean location) {
         this.location = location;
+    }
+    /**
+     * @return the enderChest
+     */
+    public boolean isEnderChest() {
+        return enderChest;
+    }
+    /**
+     * @param enderChest the enderChest to set
+     */
+    public void setEnderChest(boolean enderChest) {
+        this.enderChest = enderChest;
     }
 
 

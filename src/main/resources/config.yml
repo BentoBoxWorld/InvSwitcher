@@ -5,6 +5,8 @@ worlds:
 - oneblock_world
 - boxed_world
 - bskyblock_world
+- skyblock-world
+- caveblock-world
 options:
   # 
   # Per-world settings. Gamemode means Survivial, Creative, etc.
@@ -15,3 +17,4 @@ options:
   gamemode: true
   experience: true
   location: true
+  ender-chest: true
