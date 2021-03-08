@@ -170,6 +170,14 @@ public class InventoryStorage implements DataObject {
     public void setAdvancement(String worldName, String key, List<String> criteria) {
         this.advancements.computeIfAbsent(worldName, k -> new HashMap<>()).put(key, criteria);
     }
+    
+    /**
+     * Clears advancements for world
+     * @param worldName - world name
+     */
+    public void clearAdvancement(String worldName) {
+        this.advancements.remove(worldName);       
+    }
 
     /**
      * @return the advancements
@@ -196,4 +204,6 @@ public class InventoryStorage implements DataObject {
        this.enderChest.put(worldname, inventory);
 
    }
+
+
 }

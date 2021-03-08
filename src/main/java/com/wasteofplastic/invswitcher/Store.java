@@ -192,6 +192,7 @@ public class Store {
         }
         if (addon.getSettings().isAdvancements()) {
             // Advancements
+            store.clearAdvancement(worldName);
             Iterator<Advancement> it = Bukkit.advancementIterator();
             while (it.hasNext()) {
                 Advancement a = it.next();
