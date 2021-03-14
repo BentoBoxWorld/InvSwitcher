@@ -28,13 +28,18 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.Statistic;
 import org.bukkit.World;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -125,6 +130,9 @@ public class Store {
         if (addon.getSettings().isEnderChest()) {
             player.getEnderChest().setContents(store.getEnderChest(overworldName).toArray(new ItemStack[0]));
         }
+        if (addon.getSettings().isStatistics()) {
+            getStats(store, player, overworldName);
+        }
     }
 
     public void removeFromCache(Player player) {
@@ -207,9 +215,104 @@ public class Store {
             List<ItemStack> contents = Arrays.asList(player.getEnderChest().getContents());
             store.setEnderChest(overworldName, contents);
         }
+        if (addon.getSettings().isStatistics()) {
+            saveStats(store, player, overworldName);
+        }
         database.saveObjectAsync(store);
     }
 
+    @SuppressWarnings("deprecation")
+    private void saveStats(InventoryStorage store, Player player, String worldName) {
+        store.clearStats(worldName);
+        // Statistics
+        Arrays.stream(Statistic.values()).forEach(s -> {
+            Map<Material, Integer> map;
+            Map<EntityType, Integer> entMap;
+            switch(s.getType()) {
+            case BLOCK:
+                map = Arrays.stream(Material.values()).filter(Material::isBlock)
+                .filter(m -> !m.isLegacy())
+                .filter(m -> player.getStatistic(s, m) > 0)
+                .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
+                if (!map.isEmpty()) {
+                    store.getBlockStats(worldName).put(s, map);
+                }
+            case ITEM:
+                map = Arrays.stream(Material.values()).filter(Material::isItem)
+                .filter(m -> !m.isLegacy())
+                .filter(m -> player.getStatistic(s, m) > 0)
+                .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
+                if (!map.isEmpty()) {
+                    store.getItemStats(worldName).put(s, map);
+                }
+                break;
+            case ENTITY:
+                entMap = Arrays.stream(EntityType.values()).filter(EntityType::isAlive)
+                .filter(m -> player.getStatistic(s, m) > 0)
+                .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
+                if (!entMap.isEmpty()) {
+                    store.getEntityStats(worldName).put(s, entMap);
+                }
+                break;
+            case UNTYPED:
+                int sc = player.getStatistic(s);
+                if (sc > 0) {
+                    store.getUntypedStats(worldName).put(s, sc);
+                }
+                break;
+            default:
+                break;
+
+            }
+        });
+
+    }
+
+    /**
+     * Get all the stats for this world and apply them to the player
+     * @param store - store
+     * @param player - player
+     * @param worldName - world name
+     */
+    private void getStats(InventoryStorage store, Player player, String worldName) {
+        // Statistics
+        Arrays.stream(Statistic.values()).forEach(s -> {
+            switch(s.getType()) {
+            case BLOCK:
+                if (store.getBlockStats(worldName).containsKey(s)) {
+                    for (Entry<Material, Integer> en : store.getBlockStats(worldName).get(s).entrySet()) {
+                        player.setStatistic(s, en.getKey(), en.getValue());
+                    }
+                } 
+                break;
+            case ITEM:
+                if (store.getItemStats(worldName).containsKey(s)) {
+                    for (Entry<Material, Integer> en : store.getItemStats(worldName).get(s).entrySet()) {
+                        player.setStatistic(s, en.getKey(), en.getValue());
+                    }
+                } 
+                break;
+            case ENTITY:
+                if (store.getEntityStats(worldName).containsKey(s)) {
+                    for (Entry<EntityType, Integer> en : store.getEntityStats(worldName).get(s).entrySet()) {
+                        player.setStatistic(s, en.getKey(), en.getValue());
+                    }
+                } 
+                break;
+            case UNTYPED:                
+                if (store.getUntypedStats(worldName).containsKey(s)) {                    
+                    player.setStatistic(s, store.getUntypedStats(worldName).get(s));
+                }
+                break;
+            default:
+                break;
+
+            }
+        }); 
+
+    }
+
+    @SuppressWarnings("deprecation")
     private void clearPlayer(Player player) {
         // Clear the player's inventory
         player.getInventory().clear();
@@ -221,6 +324,38 @@ public class Store {
             p.getAwardedCriteria().forEach(p::revokeCriteria);
         }
         player.getEnderChest().clear();
+        // Statistics
+        Arrays.stream(Statistic.values()).forEach(s -> {
+            switch(s.getType()) {
+            case BLOCK:
+                for (Material m: Material.values()) {
+                    if (m.isBlock() && !m.isLegacy()) {
+                        player.setStatistic(s, m, 0);
+                    }
+                }
+            case ITEM:
+                for (Material m: Material.values()) {
+                    if (m.isItem() && !m.isLegacy()) {
+                        player.setStatistic(s, m, 0);
+                    }
+                }
+                break;
+            case ENTITY:
+                for (EntityType en: EntityType.values()) {
+                    if (en.isAlive()) {
+                        player.setStatistic(s, en, 0);
+                    }
+                }
+                break;
+            case UNTYPED:
+                player.setStatistic(s, 0);
+                break;
+            default:
+                break;
+
+            }
+
+        });
     }
 
     //new Exp Math from 1.8

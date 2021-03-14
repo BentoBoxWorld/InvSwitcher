@@ -34,6 +34,9 @@ public class Settings implements ConfigObject {
     private boolean location = true;
     @ConfigEntry(path = "options.ender-chest")
     private boolean enderChest = true;
+    @ConfigEntry(path = "options.statistics")
+    private boolean statistics = true;
+    
     /**
      * @return the worlds
      */
@@ -141,6 +144,18 @@ public class Settings implements ConfigObject {
      */
     public void setEnderChest(boolean enderChest) {
         this.enderChest = enderChest;
+    }
+    /**
+     * @return the statistics
+     */
+    public boolean isStatistics() {
+        return statistics;
+    }
+    /**
+     * @param statistics the statistics to set
+     */
+    public void setStatistics(boolean statistics) {
+        this.statistics = statistics;
     }
 
 

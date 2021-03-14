@@ -18,3 +18,4 @@ options:
   experience: true
   location: true
   ender-chest: true
+  statistics: true

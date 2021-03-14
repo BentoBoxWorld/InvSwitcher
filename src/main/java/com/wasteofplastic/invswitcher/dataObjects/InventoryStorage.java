@@ -2,12 +2,16 @@ package com.wasteofplastic.invswitcher.dataObjects;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Statistic;
+import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 
 import com.google.gson.annotations.Expose;
@@ -36,6 +40,14 @@ public class InventoryStorage implements DataObject {
     private Map<String, Map<String, List<String>>> advancements = new HashMap<>();
     @Expose
     private Map<String, List<ItemStack>> enderChest = new HashMap<>();
+    @Expose
+    private Map<String, Map<Statistic, Integer>> untypedStats = new HashMap<>();
+    @Expose
+    private Map<String, Map<Statistic, Map<Material, Integer>>> blockStats = new HashMap<>();
+    @Expose
+    private Map<String, Map<Statistic, Map<Material, Integer>>> itemStats = new HashMap<>();
+    @Expose
+    private Map<String, Map<Statistic, Map<EntityType, Integer>>> entityStats = new HashMap<>();
 
     @Override
     public String getUniqueId() {
@@ -205,5 +217,95 @@ public class InventoryStorage implements DataObject {
 
    }
 
+    /**
+     * @return the enderChest
+     */
+    public Map<String, List<ItemStack>> getEnderChest() {
+        return enderChest;
+    }
 
+    /**
+     * @param enderChest the enderChest to set
+     */
+    public void setEnderChest(Map<String, List<ItemStack>> enderChest) {
+        this.enderChest = enderChest;
+    }
+
+    /**
+     * Clear the stats for player for world name
+     * @param worldName World name
+     */
+    public void clearStats(String worldName) {
+        this.blockStats.remove(worldName);
+        this.itemStats.remove(worldName);
+        this.untypedStats.remove(worldName);
+        this.entityStats.remove(worldName);
+    }
+
+    /**
+     * Get Untyped stats
+     * @param worldName World name
+     * @return the untypedStats
+     */
+    public Map<Statistic, Integer> getUntypedStats(String worldName) {
+        return untypedStats.computeIfAbsent(worldName, k -> new EnumMap<>(Statistic.class));
+    }
+
+    /**
+     * @param worldName World name
+     * @param untypedStats the untypedStats to set
+     */
+    public void setUntypedStats(String worldName, Map<Statistic, Integer> untypedStats) {
+        this.untypedStats.put(worldName, untypedStats);
+    }
+
+    /**
+     * @param worldName World name
+     * @return the blockStats
+     */
+    public Map<Statistic, Map<Material, Integer>> getBlockStats(String worldName) {
+        return blockStats.computeIfAbsent(worldName, k -> new EnumMap<>(Statistic.class));
+    }
+    
+    /**
+     * @param worldName World name
+     * @param blockStats the blockStats to set
+     */
+    public void setBlockStats(String worldName, Map<Statistic, Map<Material, Integer>> blockStats) {
+        this.blockStats.put(worldName, blockStats);
+    }
+
+    /**
+     * @param worldName World name
+     * @return the itemStats
+     */
+    public Map<Statistic, Map<Material, Integer>> getItemStats(String worldName) {
+        return itemStats.computeIfAbsent(worldName, k -> new EnumMap<>(Statistic.class));
+    }
+
+    /**
+     * @param worldName World name
+     * @param itemStats the itemStats to set
+     */
+    public void setItemStats(String worldName, Map<Statistic, Map<Material, Integer>> itemStats) {
+        this.itemStats.put(worldName, itemStats);
+    }
+
+    /**
+     * @param worldName World name
+     * @return the entityStats
+     */
+    public Map<Statistic, Map<EntityType, Integer>> getEntityStats(String worldName) {
+        return entityStats.computeIfAbsent(worldName, k -> new EnumMap<>(Statistic.class));
+    }
+
+    /**
+     * @param worldName World name
+     * @param entityStats the entityStats to set
+     */
+    public void setEntityStats(String worldName, Map<Statistic, Map<EntityType, Integer>> entityStats) {
+        this.entityStats.put(worldName, entityStats);
+    }
+    
+    
 }
