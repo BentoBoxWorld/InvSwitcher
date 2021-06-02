@@ -165,6 +165,15 @@ public class InventoryStorage implements DataObject {
         return inventory == null ? new ArrayList<>() : inventory.getOrDefault(overworldName, new ArrayList<>());
     }
 
+    /**
+     * Check if an inventory for this world exists or not
+     * @param overworldName - over world name
+     * @return true if there is an inventory for this world, false if not.
+     */
+    public boolean isInventory(String overworldName) {
+        return inventory != null && inventory.containsKey(overworldName);
+    }
+
     public void getLocation(String worldName) {
         if (location != null) {
             location.get(worldName);
@@ -182,13 +191,13 @@ public class InventoryStorage implements DataObject {
     public void setAdvancement(String worldName, String key, List<String> criteria) {
         this.advancements.computeIfAbsent(worldName, k -> new HashMap<>()).put(key, criteria);
     }
-    
+
     /**
      * Clears advancements for world
      * @param worldName - world name
      */
     public void clearAdvancement(String worldName) {
-        this.advancements.remove(worldName);       
+        this.advancements.remove(worldName);
     }
 
     /**
@@ -208,14 +217,14 @@ public class InventoryStorage implements DataObject {
     }
 
     /**
-    *
-    * @param worldname the world name
-    * @param inventory the inventory to set
-    */
-   public void setEnderChest(String worldname, List<ItemStack> inventory) {
-       this.enderChest.put(worldname, inventory);
+     *
+     * @param worldname the world name
+     * @param inventory the inventory to set
+     */
+    public void setEnderChest(String worldname, List<ItemStack> inventory) {
+        this.enderChest.put(worldname, inventory);
 
-   }
+    }
 
     /**
      * @return the enderChest
@@ -266,7 +275,7 @@ public class InventoryStorage implements DataObject {
     public Map<Statistic, Map<Material, Integer>> getBlockStats(String worldName) {
         return blockStats.computeIfAbsent(worldName, k -> new EnumMap<>(Statistic.class));
     }
-    
+
     /**
      * @param worldName World name
      * @param blockStats the blockStats to set
@@ -306,6 +315,6 @@ public class InventoryStorage implements DataObject {
     public void setEntityStats(String worldName, Map<Statistic, Map<EntityType, Integer>> entityStats) {
         this.entityStats.put(worldName, entityStats);
     }
-    
-    
+
+
 }

@@ -64,6 +64,19 @@ public class Store {
     }
 
     /**
+     * Check if there is a world storage for the player for this world or not
+     * @param player - player
+     * @param world - world
+     * @return true if there is a world stored for this player, otherwise false
+     */
+    public boolean isWorldStored(Player player, World world) {
+        // Get the store
+        InventoryStorage store = getInv(player);
+        String overworldName = (world.getName().replace("_the_end", "")).replace("_nether", "");
+        return store.isInventory(overworldName);
+    }
+
+    /**
      * Gets items for world. Changes the inventory of player immediately.
      * @param player - player
      * @param world - world
@@ -74,6 +87,7 @@ public class Store {
 
         // Do not differentiate between world environments. Only the location is different
         String worldName = world.getName();
+
         String overworldName = (world.getName().replace("_the_end", "")).replace("_nether", "");
 
         // Inventory
@@ -139,6 +153,11 @@ public class Store {
         cache.remove(player.getUniqueId());
     }
 
+    /**
+     * Get the inventory storage object for player from the database or make a new one
+     * @param player - player
+     * @return inventory storage object
+     */
     private InventoryStorage getInv(Player player) {
         if (cache.containsKey(player.getUniqueId())) {
             return cache.get(player.getUniqueId());
@@ -283,24 +302,24 @@ public class Store {
                     for (Entry<Material, Integer> en : store.getBlockStats(worldName).get(s).entrySet()) {
                         player.setStatistic(s, en.getKey(), en.getValue());
                     }
-                } 
+                }
                 break;
             case ITEM:
                 if (store.getItemStats(worldName).containsKey(s)) {
                     for (Entry<Material, Integer> en : store.getItemStats(worldName).get(s).entrySet()) {
                         player.setStatistic(s, en.getKey(), en.getValue());
                     }
-                } 
+                }
                 break;
             case ENTITY:
                 if (store.getEntityStats(worldName).containsKey(s)) {
                     for (Entry<EntityType, Integer> en : store.getEntityStats(worldName).get(s).entrySet()) {
                         player.setStatistic(s, en.getKey(), en.getValue());
                     }
-                } 
+                }
                 break;
-            case UNTYPED:                
-                if (store.getUntypedStats(worldName).containsKey(s)) {                    
+            case UNTYPED:
+                if (store.getUntypedStats(worldName).containsKey(s)) {
                     player.setStatistic(s, store.getUntypedStats(worldName).get(s));
                 }
                 break;
@@ -308,7 +327,7 @@ public class Store {
                 break;
 
             }
-        }); 
+        });
 
     }
 

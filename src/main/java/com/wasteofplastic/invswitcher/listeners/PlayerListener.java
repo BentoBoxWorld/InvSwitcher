@@ -59,7 +59,7 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled=true)
     public void onPlayerJoin(final PlayerJoinEvent event) {
-        if (addon.getWorlds().contains(event.getPlayer().getWorld())) {
+        if (addon.getWorlds().contains(event.getPlayer().getWorld()) && addon.getStore().isWorldStored(event.getPlayer(), event.getPlayer().getWorld())) {
             addon.getStore().getInventory(event.getPlayer(), event.getPlayer().getWorld());
         }
     }
