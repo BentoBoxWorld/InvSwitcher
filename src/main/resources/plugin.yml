@@ -1,0 +1,8 @@
+name: InvSwitcher
+main: com.wasteofplastic.invswitcher.InvSwitcherPladdon
+version: ${version}
+api-version: 1.16
+description: InvSwitcher
+author: tastybento
+depend:
+  - BentoBox
