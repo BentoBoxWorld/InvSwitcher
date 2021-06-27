@@ -1,5 +1,6 @@
 package com.wasteofplastic.invswitcher.listeners;
 
+import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -34,22 +35,21 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled=true)
     public void onWorldEnter(final PlayerChangedWorldEvent event) {
-        if (!Util.sameWorld(event.getPlayer().getWorld(), event.getFrom())
-                && (addon.getWorlds().contains(event.getPlayer().getWorld())
-                        || addon.getWorlds().contains(event.getFrom()))) {
-            addon.getStore().getInventory(event.getPlayer(), event.getPlayer().getWorld());
+        /*
+         * 0. From same world (e.g., nether/end) to same world.
+         * 1. From non-game world to non-game world
+         * 2. From non-game world to game world
+         * 3. From game world to non-game world
+         * 4. From game world to another game world
+         *
+         */
+        World from = event.getFrom();
+        World to = event.getPlayer().getWorld();
+        if (Util.sameWorld(to, from) || (!addon.getWorlds().contains(from) && !addon.getWorlds().contains(to))) {
+            return;
         }
-    }
-
-    /**
-     * Saves inventory
-     * @param event - event
-     */
-    @EventHandler(priority = EventPriority.LOW, ignoreCancelled=true)
-    public void onWorldExit(final PlayerChangedWorldEvent event) {
-        if (!Util.sameWorld(event.getPlayer().getWorld(), event.getFrom())) {
-            addon.getStore().storeInventory(event.getPlayer(), event.getFrom());
-        }
+        addon.getStore().storeInventory(event.getPlayer(), from);
+        addon.getStore().getInventory(event.getPlayer(), to);
     }
 
 
