@@ -1,6 +1,7 @@
 package com.wasteofplastic.invswitcher;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
@@ -32,13 +34,14 @@ import org.powermock.reflect.Whitebox;
 import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.Settings;
 import world.bentobox.bentobox.database.DatabaseSetup.DatabaseType;
+import world.bentobox.bentobox.util.Util;
 
 /**
  * @author tastybento
  *
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Bukkit.class})
+@PrepareForTest({Bukkit.class, Util.class})
 public class StoreTest {
 
     @Mock
@@ -82,6 +85,10 @@ public class StoreTest {
         sets = new com.wasteofplastic.invswitcher.Settings();
         when(addon.getSettings()).thenReturn(sets);
         when(addon.getWorlds()).thenReturn(Collections.singleton(world));
+
+        PowerMockito.mockStatic(Util.class);
+        when(Util.getWorld(eq(world))).thenReturn(world);
+        when(Util.getWorld(eq(fromWorld))).thenReturn(fromWorld);
     }
 
     @After
