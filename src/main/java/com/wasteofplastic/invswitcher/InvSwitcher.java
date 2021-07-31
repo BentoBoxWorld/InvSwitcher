@@ -75,7 +75,6 @@ public class InvSwitcher extends Addon {
         if (this.getPlugin().getSettings().getDatabaseType().equals(DatabaseType.YAML)) {
             this.setState(State.DISABLED);
             this.logError("This addon is incompatible with YAML database. Please use another type, like JSON.");
-            return;
         }
     }
 

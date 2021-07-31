@@ -46,6 +46,7 @@ import org.bukkit.inventory.ItemStack;
 import com.wasteofplastic.invswitcher.dataObjects.InventoryStorage;
 
 import world.bentobox.bentobox.database.Database;
+import world.bentobox.bentobox.util.Util;
 
 /**
  * Enables inventory switching between games. Handles food, experience and spawn points.
@@ -53,6 +54,8 @@ import world.bentobox.bentobox.database.Database;
  *
  */
 public class Store {
+    private static final CharSequence THE_END = "_the_end";
+    private static final CharSequence NETHER = "_nether";
     private final Database<InventoryStorage> database;
     private final Map<UUID, InventoryStorage> cache;
     private final InvSwitcher addon;
@@ -72,7 +75,7 @@ public class Store {
     public boolean isWorldStored(Player player, World world) {
         // Get the store
         InventoryStorage store = getInv(player);
-        String overworldName = (world.getName().replace("_the_end", "")).replace("_nether", "");
+        String overworldName = (world.getName().replace(THE_END, "")).replace(NETHER, "");
         return store.isInventory(overworldName);
     }
 
@@ -85,34 +88,18 @@ public class Store {
         // Get the store
         InventoryStorage store = getInv(player);
 
-        // Do not differentiate between world environments. Only the location is different
-        String overworldName = (world.getName().replace("_the_end", "")).replace("_nether", "");
+        // Do not differentiate between world environments.
+        String overworldName = Util.getWorld(world).getName();
 
         // Inventory
         if (addon.getSettings().isInventory()) {
             player.getInventory().setContents(store.getInventory(overworldName).toArray(new ItemStack[0]));
         }
         if (addon.getSettings().isHealth()) {
-            // Health
-            double health = store.getHealth().getOrDefault(overworldName, player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
-
-            if (health > player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue()) {
-                health = player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
-            }
-            if (health < 0D) {
-                health = 0D;
-            }
-            player.setHealth(health);
+            setHeath(store, player, overworldName);
         }
         if (addon.getSettings().isFood()) {
-            // Food
-            int food = store.getFood().getOrDefault(overworldName, 20);
-            if (food > 20) {
-                food = 20;
-            } else if (food < 0) {
-                food = 0;
-            }
-            player.setFoodLevel(food);
+            setFood(store, player, overworldName);
         }
         if (addon.getSettings().isExperience()) {
             // Experience
@@ -123,17 +110,7 @@ public class Store {
             player.setGameMode(store.getGameMode(overworldName));
         }
         if (addon.getSettings().isAdvancements()) {
-            // Advancements
-            store.getAdvancements(overworldName).forEach((k, v) -> {
-                Iterator<Advancement> it = Bukkit.advancementIterator();
-                while (it.hasNext()) {
-                    Advancement a = it.next();
-                    if (a.getKey().toString().equals(k)) {
-                        // Award
-                        v.forEach(player.getAdvancementProgress(a)::awardCriteria);
-                    }
-                }
-            });
+            setAdvancements(store, player, overworldName);
         }
         if (addon.getSettings().isEnderChest()) {
             player.getEnderChest().setContents(store.getEnderChest(overworldName).toArray(new ItemStack[0]));
@@ -141,6 +118,47 @@ public class Store {
         if (addon.getSettings().isStatistics()) {
             getStats(store, player, overworldName);
         }
+    }
+
+    private void setHeath(InventoryStorage store, Player player, String overworldName) {
+        // Health
+        double health = store.getHealth().getOrDefault(overworldName, player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
+
+        if (health > player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue()) {
+            health = player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
+        }
+        if (health < 0D) {
+            health = 0D;
+        }
+        player.setHealth(health);
+
+    }
+
+    private void setFood(InventoryStorage store, Player player, String overworldName) {
+        // Food
+        int food = store.getFood().getOrDefault(overworldName, 20);
+        if (food > 20) {
+            food = 20;
+        } else if (food < 0) {
+            food = 0;
+        }
+        player.setFoodLevel(food);
+
+    }
+
+    private void setAdvancements(InventoryStorage store, Player player, String overworldName) {
+        // Advancements
+        store.getAdvancements(overworldName).forEach((k, v) -> {
+            Iterator<Advancement> it = Bukkit.advancementIterator();
+            while (it.hasNext()) {
+                Advancement a = it.next();
+                if (a.getKey().toString().equals(k)) {
+                    // Award
+                    v.forEach(player.getAdvancementProgress(a)::awardCriteria);
+                }
+            }
+        });
+
     }
 
     public void removeFromCache(Player player) {
@@ -190,7 +208,7 @@ public class Store {
         InventoryStorage store = getInv(player);
         // Do not differentiate between world environments
         String worldName = world.getName();
-        String overworldName = (world.getName().replace("_the_end", "")).replace("_nether", "");
+        String overworldName = (world.getName().replace(THE_END, "")).replace(NETHER, "");
         if (addon.getSettings().isInventory()) {
             // Copy the player's items to the store
             List<ItemStack> contents = Arrays.asList(player.getInventory().getContents());
@@ -247,6 +265,7 @@ public class Store {
                 if (!map.isEmpty()) {
                     store.getBlockStats(worldName).put(s, map);
                 }
+                break;
             case ITEM:
                 map = Arrays.stream(Material.values()).filter(Material::isItem)
                 .filter(m -> !m.isLegacy())
@@ -343,6 +362,7 @@ public class Store {
                         player.setStatistic(s, m, 0);
                     }
                 }
+                break;
             case ITEM:
                 for (Material m: Material.values()) {
                     if (m.isItem() && !m.isLegacy()) {
