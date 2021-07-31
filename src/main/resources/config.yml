@@ -16,6 +16,5 @@ options:
   advancements: true
   gamemode: true
   experience: true
-  location: true
   ender-chest: true
   statistics: true

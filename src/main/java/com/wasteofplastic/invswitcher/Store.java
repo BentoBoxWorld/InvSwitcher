@@ -86,8 +86,6 @@ public class Store {
         InventoryStorage store = getInv(player);
 
         // Do not differentiate between world environments. Only the location is different
-        String worldName = world.getName();
-
         String overworldName = (world.getName().replace("_the_end", "")).replace("_nether", "");
 
         // Inventory
@@ -136,10 +134,6 @@ public class Store {
                     }
                 }
             });
-        }
-        if (addon.getSettings().isLocation()) {
-            // Get Spawn Point
-            store.getLocation(worldName);
         }
         if (addon.getSettings().isEnderChest()) {
             player.getEnderChest().setContents(store.getEnderChest(overworldName).toArray(new ItemStack[0]));
@@ -210,9 +204,6 @@ public class Store {
         }
         if (addon.getSettings().isExperience()) {
             store.setExp(overworldName, getTotalExperience(player));
-        }
-        if (addon.getSettings().isLocation()) {
-            store.setLocation(worldName, player.getLocation());
         }
         if (addon.getSettings().isGamemode()) {
             store.setGameMode(overworldName, player.getGameMode());
