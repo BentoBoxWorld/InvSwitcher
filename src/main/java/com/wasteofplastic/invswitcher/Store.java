@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -89,7 +90,7 @@ public class Store {
         InventoryStorage store = getInv(player);
 
         // Do not differentiate between world environments.
-        String overworldName = Util.getWorld(world).getName();
+        String overworldName = Objects.requireNonNull(Util.getWorld(world)).getName();
 
         // Inventory
         if (addon.getSettings().isInventory()) {
