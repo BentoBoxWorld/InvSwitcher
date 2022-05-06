@@ -344,49 +344,78 @@ public class Store {
 
     @SuppressWarnings("deprecation")
     private void clearPlayer(Player player) {
-        // Clear the player's inventory
-        player.getInventory().clear();
-        setTotalExperience(player, 0);
-        Iterator<Advancement> it = Bukkit.advancementIterator();
-        while (it.hasNext()) {
-            Advancement a = it.next();
-            AdvancementProgress p = player.getAdvancementProgress(a);
-            p.getAwardedCriteria().forEach(p::revokeCriteria);
+        if (this.addon.getSettings().isInventory())
+        {
+            // Clear the player's inventory
+            player.getInventory().clear();
         }
-        player.getEnderChest().clear();
-        // Statistics
-        Arrays.stream(Statistic.values()).forEach(s -> {
-            switch(s.getType()) {
-            case BLOCK:
-                for (Material m: Material.values()) {
-                    if (m.isBlock() && !m.isLegacy()) {
-                        player.setStatistic(s, m, 0);
-                    }
-                }
-                break;
-            case ITEM:
-                for (Material m: Material.values()) {
-                    if (m.isItem() && !m.isLegacy()) {
-                        player.setStatistic(s, m, 0);
-                    }
-                }
-                break;
-            case ENTITY:
-                for (EntityType en: EntityType.values()) {
-                    if (en.isAlive()) {
-                        player.setStatistic(s, en, 0);
-                    }
-                }
-                break;
-            case UNTYPED:
-                player.setStatistic(s, 0);
-                break;
-            default:
-                break;
 
+        if (this.addon.getSettings().isExperience())
+        {
+            // Reset experience
+            setTotalExperience(player, 0);
+        }
+
+        if (this.addon.getSettings().isAdvancements())
+        {
+            // Reset advancements
+            Iterator<Advancement> it = Bukkit.advancementIterator();
+            while (it.hasNext())
+            {
+                Advancement a = it.next();
+                AdvancementProgress p = player.getAdvancementProgress(a);
+                p.getAwardedCriteria().forEach(p::revokeCriteria);
             }
+        }
 
-        });
+        if (this.addon.getSettings().isEnderChest())
+        {
+            // Reset enderchest
+            player.getEnderChest().clear();
+        }
+
+        if (this.addon.getSettings().isStatistics())
+        {
+            // Reset Statistics
+            Arrays.stream(Statistic.values()).forEach(s ->
+            {
+                switch (s.getType())
+                {
+                    case BLOCK:
+                        for (Material m : Material.values())
+                        {
+                            if (m.isBlock() && !m.isLegacy())
+                            {
+                                player.setStatistic(s, m, 0);
+                            }
+                        }
+                        break;
+                    case ITEM:
+                        for (Material m : Material.values())
+                        {
+                            if (m.isItem() && !m.isLegacy())
+                            {
+                                player.setStatistic(s, m, 0);
+                            }
+                        }
+                        break;
+                    case ENTITY:
+                        for (EntityType en : EntityType.values())
+                        {
+                            if (en.isAlive())
+                            {
+                                player.setStatistic(s, en, 0);
+                            }
+                        }
+                        break;
+                    case UNTYPED:
+                        player.setStatistic(s, 0);
+                        break;
+                    default:
+                        break;
+                }
+            });
+        }
     }
 
     //new Exp Math from 1.8
