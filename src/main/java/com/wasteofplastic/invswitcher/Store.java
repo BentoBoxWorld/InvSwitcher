@@ -260,40 +260,38 @@ public class Store {
             Map<Material, Integer> map;
             Map<EntityType, Integer> entMap;
             switch (s.getType()) {
-                case BLOCK -> {
-                    map = Arrays.stream(Material.values()).filter(Material::isBlock)
-                            .filter(m -> !m.isLegacy())
-                            .filter(m -> player.getStatistic(s, m) > 0)
-                            .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
-                    if (!map.isEmpty()) {
-                        store.getBlockStats(worldName).put(s, map);
-                    }
+            case BLOCK -> {
+                map = Arrays.stream(Material.values()).filter(Material::isBlock)
+                        .filter(m -> !m.isLegacy())
+                        .filter(m -> player.getStatistic(s, m) > 0)
+                        .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
+                if (!map.isEmpty()) {
+                    store.getBlockStats(worldName).put(s, map);
                 }
-                case ITEM -> {
-                    map = Arrays.stream(Material.values()).filter(Material::isItem)
-                            .filter(m -> !m.isLegacy())
-                            .filter(m -> player.getStatistic(s, m) > 0)
-                            .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
-                    if (!map.isEmpty()) {
-                        store.getItemStats(worldName).put(s, map);
-                    }
+            }
+            case ITEM -> {
+                map = Arrays.stream(Material.values()).filter(Material::isItem)
+                        .filter(m -> !m.isLegacy())
+                        .filter(m -> player.getStatistic(s, m) > 0)
+                        .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
+                if (!map.isEmpty()) {
+                    store.getItemStats(worldName).put(s, map);
                 }
-                case ENTITY -> {
-                    entMap = Arrays.stream(EntityType.values()).filter(EntityType::isAlive)
-                            .filter(m -> player.getStatistic(s, m) > 0)
-                            .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
-                    if (!entMap.isEmpty()) {
-                        store.getEntityStats(worldName).put(s, entMap);
-                    }
+            }
+            case ENTITY -> {
+                entMap = Arrays.stream(EntityType.values()).filter(EntityType::isAlive)
+                        .filter(m -> player.getStatistic(s, m) > 0)
+                        .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
+                if (!entMap.isEmpty()) {
+                    store.getEntityStats(worldName).put(s, entMap);
                 }
-                case UNTYPED -> {
-                    int sc = player.getStatistic(s);
-                    if (sc > 0) {
-                        store.getUntypedStats(worldName).put(s, sc);
-                    }
+            }
+            case UNTYPED -> {
+                int sc = player.getStatistic(s);
+                if (sc > 0) {
+                    store.getUntypedStats(worldName).put(s, sc);
                 }
-                default -> {
-                }
+            }
             }
         });
 
