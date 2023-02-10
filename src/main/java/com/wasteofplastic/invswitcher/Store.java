@@ -306,40 +306,42 @@ public class Store {
      */
     private void getStats(InventoryStorage store, Player player, String worldName) {
         // Statistics
-        Arrays.stream(Statistic.values()).forEach(s -> {
-            switch(s.getType()) {
-            case BLOCK:
-                if (store.getBlockStats(worldName).containsKey(s)) {
-                    for (Entry<Material, Integer> en : store.getBlockStats(worldName).get(s).entrySet()) {
-                        player.setStatistic(s, en.getKey(), en.getValue());
-                    }
-                }
-                break;
-            case ITEM:
-                if (store.getItemStats(worldName).containsKey(s)) {
-                    for (Entry<Material, Integer> en : store.getItemStats(worldName).get(s).entrySet()) {
-                        player.setStatistic(s, en.getKey(), en.getValue());
-                    }
-                }
-                break;
-            case ENTITY:
-                if (store.getEntityStats(worldName).containsKey(s)) {
-                    for (Entry<EntityType, Integer> en : store.getEntityStats(worldName).get(s).entrySet()) {
-                        player.setStatistic(s, en.getKey(), en.getValue());
-                    }
-                }
-                break;
-            case UNTYPED:
-                if (store.getUntypedStats(worldName).containsKey(s)) {
-                    player.setStatistic(s, store.getUntypedStats(worldName).get(s));
-                }
-                break;
-            default:
-                break;
+        Arrays.stream(Statistic.values()).forEach(s -> getStat(s, store, player, worldName));
 
+    }
+
+    private void getStat(Statistic s, InventoryStorage store, Player player, String worldName) {
+        switch(s.getType()) {
+        case BLOCK:
+            if (store.getBlockStats(worldName).containsKey(s)) {
+                for (Entry<Material, Integer> en : store.getBlockStats(worldName).get(s).entrySet()) {
+                    player.setStatistic(s, en.getKey(), en.getValue());
+                }
             }
-        });
+            break;
+        case ITEM:
+            if (store.getItemStats(worldName).containsKey(s)) {
+                for (Entry<Material, Integer> en : store.getItemStats(worldName).get(s).entrySet()) {
+                    player.setStatistic(s, en.getKey(), en.getValue());
+                }
+            }
+            break;
+        case ENTITY:
+            if (store.getEntityStats(worldName).containsKey(s)) {
+                for (Entry<EntityType, Integer> en : store.getEntityStats(worldName).get(s).entrySet()) {
+                    player.setStatistic(s, en.getKey(), en.getValue());
+                }
+            }
+            break;
+        case UNTYPED:
+            if (store.getUntypedStats(worldName).containsKey(s)) {
+                player.setStatistic(s, store.getUntypedStats(worldName).get(s));
+            }
+            break;
+        default:
+            break;
 
+        }
     }
 
     @SuppressWarnings("deprecation")
@@ -381,38 +383,38 @@ public class Store {
             {
                 switch (s.getType())
                 {
-                    case BLOCK:
-                        for (Material m : Material.values())
+                case BLOCK:
+                    for (Material m : Material.values())
+                    {
+                        if (m.isBlock() && !m.isLegacy())
                         {
-                            if (m.isBlock() && !m.isLegacy())
-                            {
-                                player.setStatistic(s, m, 0);
-                            }
+                            player.setStatistic(s, m, 0);
                         }
-                        break;
-                    case ITEM:
-                        for (Material m : Material.values())
+                    }
+                    break;
+                case ITEM:
+                    for (Material m : Material.values())
+                    {
+                        if (m.isItem() && !m.isLegacy())
                         {
-                            if (m.isItem() && !m.isLegacy())
-                            {
-                                player.setStatistic(s, m, 0);
-                            }
+                            player.setStatistic(s, m, 0);
                         }
-                        break;
-                    case ENTITY:
-                        for (EntityType en : EntityType.values())
+                    }
+                    break;
+                case ENTITY:
+                    for (EntityType en : EntityType.values())
+                    {
+                        if (en.isAlive())
                         {
-                            if (en.isAlive())
-                            {
-                                player.setStatistic(s, en, 0);
-                            }
+                            player.setStatistic(s, en, 0);
                         }
-                        break;
-                    case UNTYPED:
-                        player.setStatistic(s, 0);
-                        break;
-                    default:
-                        break;
+                    }
+                    break;
+                case UNTYPED:
+                    player.setStatistic(s, 0);
+                    break;
+                default:
+                    break;
                 }
             });
         }
