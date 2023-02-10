@@ -37,13 +37,6 @@ public class InventoryStorageTest {
     }
 
     /**
-     * @throws java.lang.Exception
-     */
-    @After
-    public void tearDown() throws Exception {
-    }
-
-    /**
      * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#getUniqueId()}.
      */
     @Test
