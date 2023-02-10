@@ -1,4 +1,4 @@
-package com.wasteofplastic.invswitcher.dataObjects;
+package com.wasteofplastic.invswitcher.dataobjects;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -22,7 +22,7 @@ import org.junit.runner.RunWith;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 /**
- * @author tastybento
+ * @author tastybentos
  *
  */
 @RunWith(PowerMockRunner.class)
@@ -39,7 +39,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#getUniqueId()}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getUniqueId()}.
      */
     @Test
     public void testGetUniqueId() {
@@ -47,7 +47,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#setUniqueId(java.lang.String)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setUniqueId(java.lang.String)}.
      */
     @Test
     public void testSetUniqueId() {
@@ -57,7 +57,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#getInventory()}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getInventory()}.
      */
     @Test
     public void testGetInventory() {
@@ -65,7 +65,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#getHealth()}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getHealth()}.
      */
     @Test
     public void testGetHealth() {
@@ -73,7 +73,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#getFood()}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getFood()}.
      */
     @Test
     public void testGetFood() {
@@ -81,7 +81,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#getExp()}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getExp()}.
      */
     @Test
     public void testGetExp() {
@@ -89,7 +89,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#getLocation()}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getLocation()}.
      */
     @Test
     public void testGetLocation() {
@@ -97,7 +97,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#setInventory(java.util.Map)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setInventory(java.util.Map)}.
      */
     @Test
     public void testSetInventoryMapOfStringListOfItemStack() {
@@ -108,7 +108,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#setInventory(java.lang.String, java.util.List)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setInventory(java.lang.String, java.util.List)}.
      */
     @Test
     public void testSetInventoryStringListOfItemStack() {
@@ -119,7 +119,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#setHealth(java.util.Map)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setHealth(java.util.Map)}.
      */
     @Test
     public void testSetHealthMapOfStringDouble() {
@@ -129,7 +129,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#setFood(java.util.Map)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setFood(java.util.Map)}.
      */
     @Test
     public void testSetFoodMapOfStringInteger() {
@@ -139,7 +139,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#setExp(java.util.Map)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setExp(java.util.Map)}.
      */
     @Test
     public void testSetExpMapOfStringInteger() {
@@ -149,7 +149,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#setLocation(java.util.Map)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setLocation(java.util.Map)}.
      */
     @Test
     public void testSetLocationMapOfStringLocation() {
@@ -160,7 +160,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#setHealth(java.lang.String, double)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setHealth(java.lang.String, double)}.
      */
     @Test
     public void testSetHealthStringDouble() {
@@ -169,7 +169,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#setFood(java.lang.String, int)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setFood(java.lang.String, int)}.
      */
     @Test
     public void testSetFoodStringInt() {
@@ -178,7 +178,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#setExp(java.lang.String, int)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setExp(java.lang.String, int)}.
      */
     @Test
     public void testSetExpStringInt() {
@@ -187,7 +187,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#setLocation(java.lang.String, org.bukkit.Location)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setLocation(java.lang.String, org.bukkit.Location)}.
      */
     @Test
     public void testSetLocationStringLocation() {
@@ -197,7 +197,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#getInventory(java.lang.String)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getInventory(java.lang.String)}.
      */
     @Test
     public void testGetInventoryString() {
@@ -205,7 +205,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#isInventory(java.lang.String)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#isInventory(java.lang.String)}.
      */
     @Test
     public void testIsInventory() {
@@ -213,7 +213,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#setGameMode(java.lang.String, org.bukkit.GameMode)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setGameMode(java.lang.String, org.bukkit.GameMode)}.
      */
     @Test
     public void testSetGameMode() {
@@ -222,7 +222,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#getGameMode(java.lang.String)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getGameMode(java.lang.String)}.
      */
     @Test
     public void testGetGameMode() {
@@ -232,7 +232,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#setAdvancement(java.lang.String, java.lang.String, java.util.List)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setAdvancement(java.lang.String, java.lang.String, java.util.List)}.
      */
     @Test
     public void testSetAdvancement() {
@@ -243,7 +243,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#clearAdvancement(java.lang.String)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#clearAdvancement(java.lang.String)}.
      */
     @Test
     public void testClearAdvancement() {
@@ -256,7 +256,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#getAdvancements(java.lang.String)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getAdvancements(java.lang.String)}.
      */
     @Test
     public void testGetAdvancements() {
@@ -264,7 +264,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#getEnderChest(java.lang.String)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getEnderChest(java.lang.String)}.
      */
     @Test
     public void testGetEnderChestString() {
@@ -272,7 +272,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#setEnderChest(java.lang.String, java.util.List)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setEnderChest(java.lang.String, java.util.List)}.
      */
     @Test
     public void testSetEnderChestStringListOfItemStack() {
@@ -283,7 +283,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#getEnderChest()}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getEnderChest()}.
      */
     @Test
     public void testGetEnderChest() {
@@ -291,7 +291,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#setEnderChest(java.util.Map)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setEnderChest(java.util.Map)}.
      */
     @Test
     public void testSetEnderChestMapOfStringListOfItemStack() {
@@ -303,7 +303,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#clearStats(java.lang.String)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#clearStats(java.lang.String)}.
      */
     @Test
     public void testClearStats() {
@@ -324,7 +324,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#getUntypedStats(java.lang.String)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getUntypedStats(java.lang.String)}.
      */
     @Test
     public void testGetUntypedStats() {
@@ -332,7 +332,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#setUntypedStats(java.lang.String, java.util.Map)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setUntypedStats(java.lang.String, java.util.Map)}.
      */
     @Test
     public void testSetUntypedStats() {
@@ -342,7 +342,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#getBlockStats(java.lang.String)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getBlockStats(java.lang.String)}.
      */
     @Test
     public void testGetBlockStats() {
@@ -353,7 +353,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#getItemStats(java.lang.String)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getItemStats(java.lang.String)}.
      */
     @Test
     public void testGetItemStats() {
@@ -363,7 +363,7 @@ public class InventoryStorageTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.dataObjects.InventoryStorage#getEntityStats(java.lang.String)}.
+     * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getEntityStats(java.lang.String)}.
      */
     @Test
     public void testGetEntityStats() {

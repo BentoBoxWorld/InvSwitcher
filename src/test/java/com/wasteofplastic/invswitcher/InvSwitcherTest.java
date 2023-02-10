@@ -169,7 +169,12 @@ public class InvSwitcherTest {
      */
     @Test
     public void testOnDisable() {
+        addon.onLoad();
+        addon.getSettings().setWorlds(Set.of("bskyblock-world"));
+        addon.allLoaded();
         addon.onDisable();
+        PowerMockito.verifyStatic(Bukkit.class);
+        Bukkit.getOnlinePlayers();
     }
 
     /**

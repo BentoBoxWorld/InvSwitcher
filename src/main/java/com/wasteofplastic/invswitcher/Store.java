@@ -44,7 +44,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import com.wasteofplastic.invswitcher.dataObjects.InventoryStorage;
+import com.wasteofplastic.invswitcher.dataobjects.InventoryStorage;
 
 import world.bentobox.bentobox.database.Database;
 import world.bentobox.bentobox.util.Util;

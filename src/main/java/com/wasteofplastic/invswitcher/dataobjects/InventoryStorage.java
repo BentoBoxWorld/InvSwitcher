@@ -1,4 +1,4 @@
-package com.wasteofplastic.invswitcher.dataObjects;
+package com.wasteofplastic.invswitcher.dataobjects;
 
 import java.util.ArrayList;
 import java.util.Collections;
