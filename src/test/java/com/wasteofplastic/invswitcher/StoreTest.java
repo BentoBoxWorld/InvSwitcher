@@ -1,7 +1,6 @@
 package com.wasteofplastic.invswitcher;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -87,8 +86,8 @@ public class StoreTest {
         when(addon.getWorlds()).thenReturn(Collections.singleton(world));
 
         PowerMockito.mockStatic(Util.class);
-        when(Util.getWorld(eq(world))).thenReturn(world);
-        when(Util.getWorld(eq(fromWorld))).thenReturn(fromWorld);
+        when(Util.getWorld(world)).thenReturn(world);
+        when(Util.getWorld(fromWorld)).thenReturn(fromWorld);
     }
 
     @After
