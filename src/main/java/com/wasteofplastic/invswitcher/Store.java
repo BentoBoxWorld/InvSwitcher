@@ -367,38 +367,11 @@ public class Store {
 
     @SuppressWarnings("deprecation")
     private void resetStats(Player player, Statistic s) {
-        switch (s.getType())
-        {
-        case BLOCK:
-            for (Material m : Material.values())
-            {
-                if (m.isBlock() && !m.isLegacy())
-                {
-                    player.setStatistic(s, m, 0);
-                }
-            }
-            break;
-        case ITEM:
-            for (Material m : Material.values())
-            {
-                if (m.isItem() && !m.isLegacy())
-                {
-                    player.setStatistic(s, m, 0);
-                }
-            }
-            break;
-        case ENTITY:
-            for (EntityType en : EntityType.values())
-            {
-                if (en.isAlive())
-                {
-                    player.setStatistic(s, en, 0);
-                }
-            }
-            break;
-        case UNTYPED:
-            player.setStatistic(s, 0);
-            break;
+        switch (s.getType()) {
+        case BLOCK -> Arrays.stream(Material.values()).filter(Material::isBlock).filter(m -> !m.isLegacy()).forEach(m -> player.setStatistic(s, m, 0));
+        case ITEM -> Arrays.stream(Material.values()).filter(Material::isItem).filter(m -> !m.isLegacy()).forEach(m -> player.setStatistic(s, m, 0));
+        case ENTITY -> Arrays.stream(EntityType.values()).filter(EntityType::isAlive).forEach(en -> player.setStatistic(s, en, 0));
+        case UNTYPED -> player.setStatistic(s, 0);
         }
     }
 
