@@ -174,12 +174,6 @@ public class InventoryStorage implements DataObject {
         return inventory != null && inventory.containsKey(overworldName);
     }
 
-    public void getLocation(String worldName) {
-        if (location != null) {
-            location.get(worldName);
-        }
-    }
-
     public void setGameMode(String worldName, GameMode gameMode) {
         this.gameMode.put(worldName, gameMode);
     }
