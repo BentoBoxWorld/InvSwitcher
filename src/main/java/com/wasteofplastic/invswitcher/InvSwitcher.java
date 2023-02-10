@@ -15,7 +15,14 @@ import world.bentobox.bentobox.api.addons.Addon;
 import world.bentobox.bentobox.api.configuration.Config;
 import world.bentobox.bentobox.database.DatabaseSetup.DatabaseType;
 
+/**
+ * Inventory switcher for worlds. Switches advancements too.
+ *
+ * @author tastybento
+ *
+ */
 public class InvSwitcher extends Addon {
+
     private Store store;
 
     private Settings settings;
