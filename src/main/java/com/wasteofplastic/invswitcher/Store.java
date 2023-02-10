@@ -320,7 +320,6 @@ public class Store {
                 player.setStatistic(s, store.getUntypedStats(worldName).get(s));
             }
         }
-        default -> {}
         }
     }
 
