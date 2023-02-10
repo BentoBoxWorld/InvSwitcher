@@ -350,7 +350,8 @@ public class Store {
         if (this.addon.getSettings().isStatistics())
         {
             // Reset Statistics
-            resetStats(player);
+            Arrays.stream(Statistic.values()).forEach(s ->
+            resetStats(player, s));
         }
     }
 
@@ -365,46 +366,40 @@ public class Store {
     }
 
     @SuppressWarnings("deprecation")
-    private void resetStats(Player player) {
-        Arrays.stream(Statistic.values()).forEach(s ->
+    private void resetStats(Player player, Statistic s) {
+        switch (s.getType())
         {
-            switch (s.getType())
+        case BLOCK:
+            for (Material m : Material.values())
             {
-            case BLOCK:
-                for (Material m : Material.values())
+                if (m.isBlock() && !m.isLegacy())
                 {
-                    if (m.isBlock() && !m.isLegacy())
-                    {
-                        player.setStatistic(s, m, 0);
-                    }
+                    player.setStatistic(s, m, 0);
                 }
-                break;
-            case ITEM:
-                for (Material m : Material.values())
-                {
-                    if (m.isItem() && !m.isLegacy())
-                    {
-                        player.setStatistic(s, m, 0);
-                    }
-                }
-                break;
-            case ENTITY:
-                for (EntityType en : EntityType.values())
-                {
-                    if (en.isAlive())
-                    {
-                        player.setStatistic(s, en, 0);
-                    }
-                }
-                break;
-            case UNTYPED:
-                player.setStatistic(s, 0);
-                break;
-            default:
-                break;
             }
-        });
-
+            break;
+        case ITEM:
+            for (Material m : Material.values())
+            {
+                if (m.isItem() && !m.isLegacy())
+                {
+                    player.setStatistic(s, m, 0);
+                }
+            }
+            break;
+        case ENTITY:
+            for (EntityType en : EntityType.values())
+            {
+                if (en.isAlive())
+                {
+                    player.setStatistic(s, en, 0);
+                }
+            }
+            break;
+        case UNTYPED:
+            player.setStatistic(s, 0);
+            break;
+        }
     }
 
     //new Exp Math from 1.8
