@@ -27,7 +27,7 @@ public class InvSwitcher extends Addon {
 
     private Settings settings;
 
-    private Config<Settings> config = new Config<>(this, Settings.class);
+    private final Config<Settings> config = new Config<>(this, Settings.class);
 
     private Set<World> worlds = new HashSet<>();
 

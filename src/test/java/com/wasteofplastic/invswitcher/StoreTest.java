@@ -50,8 +50,6 @@ public class StoreTest {
     @Mock
     private World world;
 
-    private com.wasteofplastic.invswitcher.Settings sets;
-
     @Before
     public void setUp() {
         BentoBox plugin = mock(BentoBox.class);
@@ -81,7 +79,7 @@ public class StoreTest {
         World fromWorld = mock(World.class);
         when(fromWorld.getName()).thenReturn("from_the_end_nether");
 
-        sets = new com.wasteofplastic.invswitcher.Settings();
+        com.wasteofplastic.invswitcher.Settings sets = new com.wasteofplastic.invswitcher.Settings();
         when(addon.getSettings()).thenReturn(sets);
         when(addon.getWorlds()).thenReturn(Collections.singleton(world));
 
@@ -125,8 +123,8 @@ public class StoreTest {
         verify(player).setTotalExperience(0);
     }
 
-    /**
-     * Test method for {@link Store#storeInventory(Player, World)}.
+    /*
+      Test method for {@link Store#storeInventory(Player, World)}.
      */
     /*
      * TODO: Works in Eclipse, fails in MVN...

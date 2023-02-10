@@ -48,10 +48,9 @@ public class PlayerListenerTest {
     private World notWorld;
 
     /**
-     * @throws java.lang.Exception
      */
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         // Util
         PowerMockito.mockStatic(Util.class, Mockito.RETURNS_MOCKS);
         when(Util.sameWorld(world, world)).thenReturn(true);

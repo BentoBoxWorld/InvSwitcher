@@ -31,10 +31,9 @@ public class InventoryStorageTest {
     private InventoryStorage is;
 
     /**
-     * @throws java.lang.Exception
      */
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         is = new InventoryStorage();
     }
 
@@ -125,7 +124,7 @@ public class InventoryStorageTest {
     public void testSetHealthMapOfStringDouble() {
         Map<String, Double> map = Map.of("test", 234D);
         is.setHealth(map);
-        assertEquals(234D, is.getHealth().get("test").doubleValue(), 0D);
+        assertEquals(234D, is.getHealth().get("test"), 0D);
     }
 
     /**
@@ -165,7 +164,7 @@ public class InventoryStorageTest {
     @Test
     public void testSetHealthStringDouble() {
         is.setHealth("test", 10D);
-        assertEquals(10D, is.getHealth().get("test").doubleValue(), 0D);
+        assertEquals(10D, is.getHealth().get("test"), 0D);
     }
 
     /**

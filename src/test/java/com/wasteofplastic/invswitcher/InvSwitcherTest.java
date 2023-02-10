@@ -1,6 +1,3 @@
-/**
- *
- */
 package com.wasteofplastic.invswitcher;
 
 import static org.junit.Assert.assertEquals;
@@ -87,7 +84,7 @@ public class InvSwitcherTest {
             //Added the new files to the jar.
             try (FileInputStream fis = new FileInputStream(path.toFile())) {
                 byte[] buffer = new byte[1024];
-                int bytesRead = 0;
+                int bytesRead;
                 JarEntry entry = new JarEntry(path.toString());
                 tempJarOutputStream.putNextEntry(entry);
                 while((bytesRead = fis.read(buffer)) != -1) {
@@ -98,10 +95,9 @@ public class InvSwitcherTest {
     }
 
     /**
-     * @throws java.lang.Exception
      */
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         // Set up plugin
         Whitebox.setInternalState(BentoBox.class, "instance", plugin);
         when(plugin.getLogger()).thenReturn(Logger.getAnonymousLogger());

@@ -40,6 +40,7 @@ import org.bukkit.World;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -125,8 +126,9 @@ public class Store {
         // Health
         double health = store.getHealth().getOrDefault(overworldName, player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
 
-        if (health > player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue()) {
-            health = player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
+        AttributeInstance attr = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+        if (attr != null && health > attr.getValue()) {
+            health = attr.getValue();
         }
         if (health < 0D) {
             health = 0D;
@@ -257,42 +259,41 @@ public class Store {
         Arrays.stream(Statistic.values()).forEach(s -> {
             Map<Material, Integer> map;
             Map<EntityType, Integer> entMap;
-            switch(s.getType()) {
-            case BLOCK:
-                map = Arrays.stream(Material.values()).filter(Material::isBlock)
-                .filter(m -> !m.isLegacy())
-                .filter(m -> player.getStatistic(s, m) > 0)
-                .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
-                if (!map.isEmpty()) {
-                    store.getBlockStats(worldName).put(s, map);
+            switch (s.getType()) {
+                case BLOCK -> {
+                    map = Arrays.stream(Material.values()).filter(Material::isBlock)
+                            .filter(m -> !m.isLegacy())
+                            .filter(m -> player.getStatistic(s, m) > 0)
+                            .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
+                    if (!map.isEmpty()) {
+                        store.getBlockStats(worldName).put(s, map);
+                    }
                 }
-                break;
-            case ITEM:
-                map = Arrays.stream(Material.values()).filter(Material::isItem)
-                .filter(m -> !m.isLegacy())
-                .filter(m -> player.getStatistic(s, m) > 0)
-                .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
-                if (!map.isEmpty()) {
-                    store.getItemStats(worldName).put(s, map);
+                case ITEM -> {
+                    map = Arrays.stream(Material.values()).filter(Material::isItem)
+                            .filter(m -> !m.isLegacy())
+                            .filter(m -> player.getStatistic(s, m) > 0)
+                            .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
+                    if (!map.isEmpty()) {
+                        store.getItemStats(worldName).put(s, map);
+                    }
                 }
-                break;
-            case ENTITY:
-                entMap = Arrays.stream(EntityType.values()).filter(EntityType::isAlive)
-                .filter(m -> player.getStatistic(s, m) > 0)
-                .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
-                if (!entMap.isEmpty()) {
-                    store.getEntityStats(worldName).put(s, entMap);
+                case ENTITY -> {
+                    entMap = Arrays.stream(EntityType.values()).filter(EntityType::isAlive)
+                            .filter(m -> player.getStatistic(s, m) > 0)
+                            .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
+                    if (!entMap.isEmpty()) {
+                        store.getEntityStats(worldName).put(s, entMap);
+                    }
                 }
-                break;
-            case UNTYPED:
-                int sc = player.getStatistic(s);
-                if (sc > 0) {
-                    store.getUntypedStats(worldName).put(s, sc);
+                case UNTYPED -> {
+                    int sc = player.getStatistic(s);
+                    if (sc > 0) {
+                        store.getUntypedStats(worldName).put(s, sc);
+                    }
                 }
-                break;
-            default:
-                break;
-
+                default -> {
+                }
             }
         });
 
