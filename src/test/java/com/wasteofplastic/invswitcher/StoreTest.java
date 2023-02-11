@@ -162,7 +162,9 @@ public class StoreTest {
      */
     @Test
     public void testRemoveFromCache() {
+        testIsWorldStored();
         s.removeFromCache(player);
+        assertFalse(s.isWorldStored(player, world));
     }
 
     /**
