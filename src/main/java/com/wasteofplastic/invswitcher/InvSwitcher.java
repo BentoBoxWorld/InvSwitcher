@@ -15,12 +15,19 @@ import world.bentobox.bentobox.api.addons.Addon;
 import world.bentobox.bentobox.api.configuration.Config;
 import world.bentobox.bentobox.database.DatabaseSetup.DatabaseType;
 
+/**
+ * Inventory switcher for worlds. Switches advancements too.
+ *
+ * @author tastybento
+ *
+ */
 public class InvSwitcher extends Addon {
+
     private Store store;
 
     private Settings settings;
 
-    private Config<Settings> config = new Config<>(this, Settings.class);
+    private final Config<Settings> config = new Config<>(this, Settings.class);
 
     private Set<World> worlds = new HashSet<>();
 
@@ -75,7 +82,6 @@ public class InvSwitcher extends Addon {
         if (this.getPlugin().getSettings().getDatabaseType().equals(DatabaseType.YAML)) {
             this.setState(State.DISABLED);
             this.logError("This addon is incompatible with YAML database. Please use another type, like JSON.");
-            return;
         }
     }
 

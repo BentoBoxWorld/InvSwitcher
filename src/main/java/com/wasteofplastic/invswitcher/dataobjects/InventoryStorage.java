@@ -1,4 +1,4 @@
-package com.wasteofplastic.invswitcher.dataObjects;
+package com.wasteofplastic.invswitcher.dataobjects;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -172,12 +172,6 @@ public class InventoryStorage implements DataObject {
      */
     public boolean isInventory(String overworldName) {
         return inventory != null && inventory.containsKey(overworldName);
-    }
-
-    public void getLocation(String worldName) {
-        if (location != null) {
-            location.get(worldName);
-        }
     }
 
     public void setGameMode(String worldName, GameMode gameMode) {

@@ -30,13 +30,11 @@ public class Settings implements ConfigObject {
     private boolean gamemode = true;
     @ConfigEntry(path = "options.experience")
     private boolean experience = true;
-    @ConfigEntry(path = "options.location")
-    private boolean location = true;
     @ConfigEntry(path = "options.ender-chest")
     private boolean enderChest = true;
     @ConfigEntry(path = "options.statistics")
     private boolean statistics = true;
-    
+
     /**
      * @return the worlds
      */
@@ -120,18 +118,6 @@ public class Settings implements ConfigObject {
      */
     public void setExperience(boolean experience) {
         this.experience = experience;
-    }
-    /**
-     * @return the location
-     */
-    public boolean isLocation() {
-        return location;
-    }
-    /**
-     * @param location the location to set
-     */
-    public void setLocation(boolean location) {
-        this.location = location;
     }
     /**
      * @return the enderChest
