@@ -2,6 +2,7 @@ package com.wasteofplastic.invswitcher.listeners;
 
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -17,10 +18,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import com.wasteofplastic.invswitcher.InvSwitcher;
 import com.wasteofplastic.invswitcher.Store;
@@ -31,8 +31,7 @@ import world.bentobox.bentobox.util.Util;
  * @author tastybento
  *
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(Util.class)
+@RunWith(MockitoJUnitRunner.class)
 public class PlayerListenerTest {
 
     @Mock
@@ -52,8 +51,11 @@ public class PlayerListenerTest {
     @Before
     public void setUp() {
         // Util
-        PowerMockito.mockStatic(Util.class, Mockito.RETURNS_MOCKS);
-        when(Util.sameWorld(world, world)).thenReturn(true);
+        // Mock the static method
+        try (MockedStatic<Util> mockedBukkit = mockStatic(Util.class, Mockito.RETURNS_MOCKS)) {
+            when(Util.sameWorld(any(), any())).thenReturn(true);
+        }
+        when(world.getName()).thenReturn("world");
         // Player
         when(player.getWorld()).thenReturn(world);
         // Addon
@@ -87,9 +89,13 @@ public class PlayerListenerTest {
     @Test
     public void testOnWorldEnterDifferentWorld() {
         PlayerChangedWorldEvent event = new PlayerChangedWorldEvent(player, notWorld);
-        pl.onWorldEnter(event);
-        verify(store).storeInventory(any(), any());
-        verify(store).getInventory(any(), any());
+        // Mock the static method
+        try (MockedStatic<Util> mockedBukkit = mockStatic(Util.class, Mockito.RETURNS_MOCKS)) {
+            when(Util.sameWorld(world, world)).thenReturn(true);
+            pl.onWorldEnter(event);
+            verify(store).storeInventory(any(), any());
+            verify(store).getInventory(any(), any());
+        }
     }
 
     /**

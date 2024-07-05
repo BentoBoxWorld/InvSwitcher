@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -15,6 +16,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,10 +36,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import com.wasteofplastic.invswitcher.listeners.PlayerListener;
 
@@ -52,8 +53,7 @@ import world.bentobox.bentobox.managers.AddonsManager;
  * @author tastybento
  *
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({Bukkit.class, BentoBox.class})
+@RunWith(MockitoJUnitRunner.class)
 public class InvSwitcherTest {
 
     private static File jFile;
@@ -95,11 +95,20 @@ public class InvSwitcherTest {
     }
 
     /**
+     * @throws SecurityException 
+     * @throws NoSuchFieldException 
+     * @throws IllegalAccessException 
+     * @throws IllegalArgumentException 
      */
     @Before
-    public void setUp() {
+    public void setUp()
+            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         // Set up plugin
-        Whitebox.setInternalState(BentoBox.class, "instance", plugin);
+        // Use reflection to set the private static field "instance" in BentoBox
+        Field instanceField = BentoBox.class.getDeclaredField("instance");
+
+        instanceField.setAccessible(true);
+        instanceField.set(null, plugin);
         when(plugin.getLogger()).thenReturn(Logger.getAnonymousLogger());
 
         // The database type has to be created one line before the thenReturn() to work!
@@ -116,10 +125,6 @@ public class InvSwitcherTest {
         addon.setDescription(desc);
         // Addons manager
         when(plugin.getAddonsManager()).thenReturn(am);
-
-        // Bukkit
-        PowerMockito.mockStatic(Bukkit.class);
-        when(Bukkit.getWorld(anyString())).thenReturn(world);
 
         // World
         when(world.getName()).thenReturn("bskyblock-world");
@@ -165,12 +170,17 @@ public class InvSwitcherTest {
      */
     @Test
     public void testOnDisable() {
-        addon.onLoad();
-        addon.getSettings().setWorlds(Set.of("bskyblock-world"));
-        addon.allLoaded();
-        addon.onDisable();
-        PowerMockito.verifyStatic(Bukkit.class);
-        Bukkit.getOnlinePlayers();
+        // Mock the static method
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            when(Bukkit.getWorld(anyString())).thenReturn(world);
+            // Run code to test
+            addon.onLoad();
+            addon.getSettings().setWorlds(Set.of("bskyblock-world"));
+            addon.allLoaded();
+            addon.onDisable();
+            // Verify that the static method was never called
+            mockedBukkit.verify(() -> Bukkit.getOnlinePlayers());
+        }
     }
 
     /**
@@ -188,12 +198,17 @@ public class InvSwitcherTest {
      */
     @Test
     public void testAllLoaded() {
-        addon.onLoad();
-        addon.getSettings().setWorlds(Set.of("bskyblock-world"));
-        addon.allLoaded();
-        verify(plugin).log("[InvSwitcher] Hooking into the following worlds:");
-        verify(plugin, times(3)).log("[InvSwitcher] bskyblock-world");
-        verify(am).registerListener(eq(addon), any(PlayerListener.class));
+        // Mock the static method
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            when(Bukkit.getWorld(anyString())).thenReturn(world);
+            // Run code to test
+            addon.onLoad();
+            addon.getSettings().setWorlds(Set.of("bskyblock-world"));
+            addon.allLoaded();
+            verify(plugin).log("[InvSwitcher] Hooking into the following worlds:");
+            verify(plugin, times(3)).log("[InvSwitcher] bskyblock-world");
+            verify(am).registerListener(eq(addon), any(PlayerListener.class));
+        }
 
     }
 

@@ -1,11 +1,14 @@
 package com.wasteofplastic.invswitcher;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyFloat;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -13,9 +16,9 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -23,6 +26,7 @@ import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.World.Environment;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -33,11 +37,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.Settings;
@@ -48,8 +50,7 @@ import world.bentobox.bentobox.util.Util;
  * @author tastybento
  *
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({Bukkit.class, Util.class})
+@RunWith(MockitoJUnitRunner.class)
 public class StoreTest {
 
     @Mock
@@ -58,24 +59,29 @@ public class StoreTest {
     private Player player;
     @Mock
     private World world;
+    @Mock
+    private Settings settings;
 
     private Store s;
+
     private com.wasteofplastic.invswitcher.Settings sets;
 
     @Mock
     private Logger logger;
 
     @Before
-    public void setUp() {
-        // Bukkit
-        PowerMockito.mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS);
+    public void setUp()
+            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
 
         // BentoBox
         BentoBox plugin = mock(BentoBox.class);
-        Whitebox.setInternalState(BentoBox.class, "instance", plugin);
-        Settings settings = mock(Settings.class);
+        // Use reflection to set the private static field "instance" in BentoBox
+        Field instanceField = BentoBox.class.getDeclaredField("instance");
+
+        instanceField.setAccessible(true);
+        instanceField.set(null, plugin);
+
         when(plugin.getSettings()).thenReturn(settings);
-        when(settings.getDatabaseType()).thenReturn(DatabaseType.YAML);
 
         // Player mock
         UUID uuid = UUID.randomUUID();
@@ -93,22 +99,25 @@ public class StoreTest {
 
         // World mock
         when(world.getName()).thenReturn("world_the_end_nether");
+        when(world.getEnvironment()).thenReturn(Environment.NORMAL);
 
         // World 2
         World fromWorld = mock(World.class);
-        when(fromWorld.getName()).thenReturn("from_the_end_nether");
 
         // Settings
         sets = new com.wasteofplastic.invswitcher.Settings();
         when(addon.getSettings()).thenReturn(sets);
-        when(addon.getWorlds()).thenReturn(Collections.singleton(world));
 
         // Addon
         when(addon.getLogger()).thenReturn(logger);
 
-        PowerMockito.mockStatic(Util.class);
-        when(Util.getWorld(world)).thenReturn(world);
-        when(Util.getWorld(fromWorld)).thenReturn(fromWorld);
+        //PowerMockito.mockStatic(Util.class);
+        try (MockedStatic<Util> utilities = Mockito.mockStatic(Util.class)) {
+            utilities.when(() -> Util.getWorld(world)).thenReturn(world);
+            utilities.when(() -> Util.getWorld(fromWorld)).thenReturn(fromWorld);
+        }
+        DatabaseType mockDbt = mock(DatabaseType.class);
+        when(settings.getDatabaseType()).thenReturn(mockDbt);
 
         // Class under test
         s = new Store(addon);
@@ -141,7 +150,11 @@ public class StoreTest {
     @Test
     public void testIsWorldStored() {
         assertFalse(s.isWorldStored(player, world));
-        s.storeInventory(player, world);
+        // Mock the static method
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            // Run the code under test
+            s.storeInventory(player, world);
+        }
         assertTrue(s.isWorldStored(player, world));
     }
 
@@ -181,7 +194,14 @@ public class StoreTest {
         sets.setHealth(false);
         sets.setInventory(false);
         sets.setStatistics(false);
-        s.storeInventory(player, world);
+        // Mock the static method
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class)) {
+            // Run the code under test
+            s.storeInventory(player, world);
+
+            // Verify that the static method was never called
+            mockedBukkit.verify(() -> Bukkit.advancementIterator(), never());
+        }
         verify(player, never()).getInventory();
         verify(player, never()).getEnderChest();
         verify(player, never()).getFoodLevel();
@@ -190,8 +210,7 @@ public class StoreTest {
         verify(player, never()).getHealth();
         verify(player, never()).getGameMode();
         verify(player, never()).getAdvancementProgress(any());
-        PowerMockito.verifyStatic(Bukkit.class, never());
-        Bukkit.advancementIterator();
+
         // No Player clearing
         verify(player, never()).setExp(anyFloat());
         verify(player, never()).setLevel(anyInt());
@@ -216,7 +235,14 @@ public class StoreTest {
         sets.setHealth(true);
         sets.setInventory(true);
         sets.setStatistics(true);
-        s.storeInventory(player, world);
+        // Mock the static method
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            // Run the code under test
+            s.storeInventory(player, world);
+
+            // Verify that the static method was called
+            mockedBukkit.verify(() -> Bukkit.advancementIterator(), times(2));
+        }
         verify(player, times(2)).getInventory();
         verify(player, times(2)).getEnderChest();
         verify(player).getFoodLevel();
@@ -224,8 +250,6 @@ public class StoreTest {
         verify(player, times(2)).getLevel();
         verify(player).getHealth();
         verify(player).getGameMode();
-        PowerMockito.verifyStatic(Bukkit.class, times(2));
-        Bukkit.advancementIterator();
         // Player clearing
         verify(player).setExp(0);
         verify(player).setLevel(0);
@@ -242,9 +266,14 @@ public class StoreTest {
      */
     @Test
     public void testSaveOnlinePlayers() {
-        s.saveOnlinePlayers();
-        PowerMockito.verifyStatic(Bukkit.class);
-        Bukkit.getOnlinePlayers();
+        // Mock the static method
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class)) {
+            // Run the code under test
+            s.saveOnlinePlayers();
+
+            // Verify that the static method was called
+            mockedBukkit.verify(() -> Bukkit.getOnlinePlayers());
+        }
     }
 
 }
