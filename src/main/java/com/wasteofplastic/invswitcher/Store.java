@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2021 tastybento
+ * Copyright (c) 2017 - 2024 tastybento
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -252,7 +252,6 @@ public class Store {
         database.saveObjectAsync(store);
     }
 
-    @SuppressWarnings("deprecation")
     private void saveStats(InventoryStorage store, Player player, String worldName) {
         store.clearStats(worldName);
         // Statistics
