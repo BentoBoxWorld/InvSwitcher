@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2021 tastybento
+ * Copyright (c) 2017 - 2024 tastybento
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -58,11 +58,6 @@ import world.bentobox.bentobox.util.Util;
 public class Store {
     private static final CharSequence THE_END = "_the_end";
     private static final CharSequence NETHER = "_nether";
-    @SuppressWarnings("deprecation")
-    private static final List<Material> BLOCKS = Arrays.stream(Material.values()).filter(Material::isBlock).filter(m -> !m.isLegacy()).toList();
-    @SuppressWarnings("deprecation")
-    private static final List<Material> ITEMS = Arrays.stream(Material.values()).filter(Material::isItem).filter(m -> !m.isLegacy()).toList();
-    private static final List<EntityType> LIVING_ENTITIES = Arrays.stream(EntityType.values()).filter(EntityType::isAlive).toList();
     private final Database<InventoryStorage> database;
     private final Map<UUID, InventoryStorage> cache;
     private final InvSwitcher addon;
@@ -265,21 +260,24 @@ public class Store {
             Map<EntityType, Integer> entMap;
             switch (s.getType()) {
             case BLOCK -> {
-                map = BLOCKS.stream().filter(m -> player.getStatistic(s, m) > 0)
+                map = Arrays.stream(Material.values()).filter(Material::isBlock).filter(m -> !m.isLegacy())
+                        .filter(m -> player.getStatistic(s, m) > 0)
                         .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
                 if (!map.isEmpty()) {
                     store.getBlockStats(worldName).put(s, map);
                 }
             }
             case ITEM -> {
-                map = ITEMS.stream().filter(m -> player.getStatistic(s, m) > 0)
+                map = Arrays.stream(Material.values()).filter(Material::isItem).filter(m -> !m.isLegacy())
+                        .filter(m -> player.getStatistic(s, m) > 0)
                         .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
                 if (!map.isEmpty()) {
                     store.getItemStats(worldName).put(s, map);
                 }
             }
             case ENTITY -> {
-                entMap = LIVING_ENTITIES.stream().filter(m -> player.getStatistic(s, m) > 0)
+                entMap = Arrays.stream(EntityType.values()).filter(EntityType::isAlive)
+                        .filter(m -> player.getStatistic(s, m) > 0)
                         .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
                 if (!entMap.isEmpty()) {
                     store.getEntityStats(worldName).put(s, entMap);
@@ -364,11 +362,15 @@ public class Store {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private void resetStats(Player player, Statistic s) {
         switch (s.getType()) {
-        case BLOCK -> BLOCKS.forEach(m -> player.setStatistic(s, m, 0));
-        case ITEM -> ITEMS.forEach(m -> player.setStatistic(s, m, 0));
-        case ENTITY -> LIVING_ENTITIES.forEach(en -> player.setStatistic(s, en, 0));
+        case BLOCK -> Arrays.stream(Material.values()).filter(Material::isBlock).filter(m -> !m.isLegacy())
+                .forEach(m -> player.setStatistic(s, m, 0));
+        case ITEM -> Arrays.stream(Material.values()).filter(Material::isItem).filter(m -> !m.isLegacy())
+                .forEach(m -> player.setStatistic(s, m, 0));
+        case ENTITY ->
+            Arrays.stream(EntityType.values()).filter(EntityType::isAlive).forEach(en -> player.setStatistic(s, en, 0));
         case UNTYPED -> player.setStatistic(s, 0);
         }
     }
