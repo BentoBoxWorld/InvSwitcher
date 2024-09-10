@@ -141,7 +141,7 @@ public class PlayerListenerTest {
     public void testOnPlayerQuit() {
         PlayerQuitEvent event = new PlayerQuitEvent(player, "");
         pl.onPlayerQuit(event);
-        verify(store).storeAndSave(player, world);
+        verify(store).storeAndSave(player, world, false);
         verify(store).removeFromCache(player);
     }
 
@@ -153,7 +153,7 @@ public class PlayerListenerTest {
         when(player.getWorld()).thenReturn(notWorld);
         PlayerQuitEvent event = new PlayerQuitEvent(player, "");
         pl.onPlayerQuit(event);
-        verify(store, never()).storeAndSave(player, world);
+        verify(store, never()).storeAndSave(player, world, false);
         verify(store).removeFromCache(player);
     }
 
