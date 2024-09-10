@@ -262,14 +262,14 @@ public class StoreTest {
     }
 
     /**
-     * Test method for {@link com.wasteofplastic.invswitcher.Store#saveOnlinePlayers()}.
+     * Test method for {@link com.wasteofplastic.invswitcher.Store#saveOnShutdown()}.
      */
     @Test
     public void testSaveOnlinePlayers() {
         // Mock the static method
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class)) {
             // Run the code under test
-            s.saveOnlinePlayers();
+            s.saveOnShutdown();
 
             // Verify that the static method was called
             mockedBukkit.verify(() -> Bukkit.getOnlinePlayers());

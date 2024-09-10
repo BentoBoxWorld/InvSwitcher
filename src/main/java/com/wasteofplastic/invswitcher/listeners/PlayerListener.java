@@ -71,7 +71,7 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled=true)
     public void onPlayerQuit(final PlayerQuitEvent event) {
         if (addon.getWorlds().contains(event.getPlayer().getWorld())) {
-            addon.getStore().storeAndSave(event.getPlayer(), event.getPlayer().getWorld());
+            addon.getStore().storeAndSave(event.getPlayer(), event.getPlayer().getWorld(), false);
         }
         addon.getStore().removeFromCache(event.getPlayer());
     }
