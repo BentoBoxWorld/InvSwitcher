@@ -57,7 +57,6 @@ import world.bentobox.bentobox.util.Util;
  *
  */
 public class Store {
-    private static final Material[] MAT = Material.values();
     private static final CharSequence THE_END = "_the_end";
     private static final CharSequence NETHER = "_nether";
     private final Database<InventoryStorage> database;
@@ -198,7 +197,7 @@ public class Store {
      * @param world - the world that is associated with these items/elements
      */
     public void storeInventory(Player player, World world) {
-        storeAndSave(player, world);
+        storeAndSave(player, world, false);
         clearPlayer(player);
         // Done!
     }
@@ -207,8 +206,9 @@ public class Store {
      * Store and save the player to the database
      * @param player - player
      * @param world - world to save
+     * @param shutdown - true if this is a shutdown save
      */
-    public void storeAndSave(Player player, World world) {
+    public void storeAndSave(Player player, World world, boolean shutdown) {
         // Get the player's store
         InventoryStorage store = getInv(player);
         // Do not differentiate between world environments
@@ -249,57 +249,66 @@ public class Store {
             store.setEnderChest(overworldName, contents);
         }
         if (addon.getSettings().isStatistics()) {
-            saveStats(store, player, overworldName).thenAccept(database::saveObjectAsync);
+            saveStats(store, player, overworldName, shutdown).thenAccept(database::saveObjectAsync);
             return;
         }
         database.saveObjectAsync(store);
     }
 
-    private CompletableFuture<InventoryStorage> saveStats(InventoryStorage store, Player player, String worldName) {
+    private CompletableFuture<InventoryStorage> saveStats(InventoryStorage store, Player player, String worldName,
+            boolean shutdown) {
         CompletableFuture<InventoryStorage> result = new CompletableFuture<>();
         store.clearStats(worldName);
+
         // Statistics
-        Bukkit.getScheduler().runTaskAsynchronously(addon.getPlugin(), () -> {
-            Arrays.stream(Statistic.values()).forEach(s -> {
-                Map<Material, Integer> map;
-                Map<EntityType, Integer> entMap;
-                switch (s.getType()) {
-                case BLOCK -> {
-                    map = Arrays.stream(MAT).filter(Material::isBlock).filter(m -> !m.isLegacy())
-                            .filter(m -> player.getStatistic(s, m) > 0)
-                            .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
-                    if (!map.isEmpty()) {
-                        store.getBlockStats(worldName).put(s, map);
-                    }
-                }
-                case ITEM -> {
-                    map = Arrays.stream(MAT).filter(Material::isItem).filter(m -> !m.isLegacy())
-                            .filter(m -> player.getStatistic(s, m) > 0)
-                            .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
-                    if (!map.isEmpty()) {
-                        store.getItemStats(worldName).put(s, map);
-                    }
-                }
-                case ENTITY -> {
-                    entMap = Arrays.stream(EntityType.values()).filter(EntityType::isAlive)
-                            .filter(m -> player.getStatistic(s, m) > 0)
-                            .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
-                    if (!entMap.isEmpty()) {
-                        store.getEntityStats(worldName).put(s, entMap);
-                    }
-                }
-                case UNTYPED -> {
-                    int sc = player.getStatistic(s);
-                    if (sc > 0) {
-                        store.getUntypedStats(worldName).put(s, sc);
-                    }
-                }
-                }
-            });
-            result.complete(store);
-        });
+        if (shutdown) {
+            saveStatistics(result, store, player, worldName);
+        } else {
+            // Cannot schedule tasks on shutdown
+            Bukkit.getScheduler().runTaskAsynchronously(addon.getPlugin(),
+                    () -> saveStatistics(result, store, player, worldName));
+        }
         return result;
 
+    }
+
+    private void saveStatistics(CompletableFuture<InventoryStorage> result, InventoryStorage store, Player player,
+            String worldName) {
+        Arrays.stream(Statistic.values()).forEach(s -> {
+            Map<Material, Integer> map;
+            Map<EntityType, Integer> entMap;
+            switch (s.getType()) {
+            case BLOCK -> {
+                map = InvSwitcher.MAT.stream().filter(Material::isBlock).filter(m -> player.getStatistic(s, m) > 0)
+                        .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
+                if (!map.isEmpty()) {
+                    store.getBlockStats(worldName).put(s, map);
+                }
+            }
+            case ITEM -> {
+                map = InvSwitcher.MAT.stream().filter(Material::isItem).filter(m -> player.getStatistic(s, m) > 0)
+                        .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
+                if (!map.isEmpty()) {
+                    store.getItemStats(worldName).put(s, map);
+                }
+            }
+            case ENTITY -> {
+                entMap = Arrays.stream(EntityType.values()).filter(EntityType::isAlive)
+                        .filter(m -> player.getStatistic(s, m) > 0)
+                        .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
+                if (!entMap.isEmpty()) {
+                    store.getEntityStats(worldName).put(s, entMap);
+                }
+            }
+            case UNTYPED -> {
+                int sc = player.getStatistic(s);
+                if (sc > 0) {
+                    store.getUntypedStats(worldName).put(s, sc);
+                }
+            }
+            }
+        });
+        result.complete(store);
     }
 
     /**
@@ -461,7 +470,7 @@ public class Store {
     /**
      * Save all online players
      */
-    public void saveOnlinePlayers() {
-        Bukkit.getOnlinePlayers().forEach(p -> this.storeAndSave(p, p.getWorld()));
+    public void saveOnShutdown() {
+        Bukkit.getOnlinePlayers().forEach(p -> this.storeAndSave(p, p.getWorld(), true));
     }
 }
