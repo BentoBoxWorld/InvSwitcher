@@ -125,9 +125,10 @@ public class Store {
 
     private void setHeath(InventoryStorage store, Player player, String overworldName) {
         // Health
-        double health = store.getHealth().getOrDefault(overworldName, player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
+        double health = store.getHealth().getOrDefault(overworldName,
+                player.getAttribute(Attribute.MAX_HEALTH).getValue());
 
-        AttributeInstance attr = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+        AttributeInstance attr = player.getAttribute(Attribute.MAX_HEALTH);
         if (attr != null && health > attr.getValue()) {
             health = attr.getValue();
         }
