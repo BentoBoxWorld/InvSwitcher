@@ -41,6 +41,8 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import com.wasteofplastic.invswitcher.mocks.ServerMocks;
+
 import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.Settings;
 import world.bentobox.bentobox.database.DatabaseSetup.DatabaseType;
@@ -72,6 +74,8 @@ public class StoreTest {
     @Before
     public void setUp()
             throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+
+        ServerMocks.newServer();
 
         // BentoBox
         BentoBox plugin = mock(BentoBox.class);
@@ -124,7 +128,8 @@ public class StoreTest {
     }
 
     @After
-    public void clear() throws IOException{
+    public void tearDown() throws IOException {
+        ServerMocks.unsetBukkitServer();
         //remove any database data
         File file = new File("database");
         Path pathToBeDeleted = file.toPath();
