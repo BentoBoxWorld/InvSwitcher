@@ -1,15 +1,12 @@
 package com.wasteofplastic.invswitcher;
 
 
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.World;
 
 import com.wasteofplastic.invswitcher.listeners.PlayerListener;
@@ -25,9 +22,6 @@ import world.bentobox.bentobox.database.DatabaseSetup.DatabaseType;
  *
  */
 public class InvSwitcher extends Addon {
-
-    protected static final List<Material> MAT = Arrays.stream(Material.values())
-            .filter(m -> !m.name().startsWith("LEGACY")).toList();
 
     private Store store;
 
