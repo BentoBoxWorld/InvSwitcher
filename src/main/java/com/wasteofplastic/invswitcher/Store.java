@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Registry;
 import org.bukkit.Statistic;
 import org.bukkit.World;
 import org.bukkit.advancement.Advancement;
@@ -275,26 +276,26 @@ public class Store {
 
     private void saveStatistics(CompletableFuture<InventoryStorage> result, InventoryStorage store, Player player,
             String worldName) {
-        Arrays.stream(Statistic.values()).forEach(s -> {
+        Registry.STATISTIC.forEach(s -> {
             Map<Material, Integer> map;
             Map<EntityType, Integer> entMap;
             switch (s.getType()) {
             case BLOCK -> {
-                map = InvSwitcher.MAT.stream().filter(Material::isBlock).filter(m -> player.getStatistic(s, m) > 0)
+                map = Registry.MATERIAL.stream().filter(Material::isBlock).filter(m -> player.getStatistic(s, m) > 0)
                         .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
                 if (!map.isEmpty()) {
                     store.getBlockStats(worldName).put(s, map);
                 }
             }
             case ITEM -> {
-                map = InvSwitcher.MAT.stream().filter(Material::isItem).filter(m -> player.getStatistic(s, m) > 0)
+                map = Registry.MATERIAL.stream().filter(Material::isItem).filter(m -> player.getStatistic(s, m) > 0)
                         .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
                 if (!map.isEmpty()) {
                     store.getItemStats(worldName).put(s, map);
                 }
             }
             case ENTITY -> {
-                entMap = Arrays.stream(EntityType.values()).filter(EntityType::isAlive)
+                entMap = Registry.ENTITY_TYPE.stream().filter(EntityType::isAlive)
                         .filter(m -> player.getStatistic(s, m) > 0)
                         .collect(Collectors.toMap(k -> k, v -> player.getStatistic(s, v)));
                 if (!entMap.isEmpty()) {
