@@ -7,6 +7,7 @@ worlds:
 - bskyblock_world
 - skyblock-world
 - caveblock-world
+- poseidon_world
 options:
   # 
   # Per-world settings. Gamemode means Survivial, Creative, etc.
