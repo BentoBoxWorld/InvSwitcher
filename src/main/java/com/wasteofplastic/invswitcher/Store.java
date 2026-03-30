@@ -30,11 +30,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Registry;
 import org.bukkit.Statistic;
@@ -49,7 +51,9 @@ import org.bukkit.inventory.ItemStack;
 
 import com.wasteofplastic.invswitcher.dataobjects.InventoryStorage;
 
+import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.database.Database;
+import world.bentobox.bentobox.database.objects.Island;
 import world.bentobox.bentobox.util.Util;
 
 /**
@@ -62,12 +66,109 @@ public class Store {
     private static final CharSequence NETHER = "_nether";
     private final Database<InventoryStorage> database;
     private final Map<UUID, InventoryStorage> cache;
+    private final Map<UUID, String> currentKey;
     private final InvSwitcher addon;
 
     public Store(InvSwitcher addon) {
         this.addon = addon;
         database = new Database<>(addon, InventoryStorage.class);
         cache = new HashMap<>();
+        currentKey = new HashMap<>();
+    }
+
+    /**
+     * Compute the storage key for a player based on their current location.
+     * Returns "worldName/islandId" if per-island mode is active and the player
+     * owns multiple concurrent islands, otherwise returns just "worldName".
+     * @param player - player
+     * @param world - world
+     * @return storage key
+     */
+    public String getStorageKey(Player player, World world) {
+        return getStorageKey(player, world, player.getLocation(), null);
+    }
+
+    /**
+     * Compute the storage key for a player targeting a specific island.
+     * @param player - player
+     * @param world - world
+     * @param island - target island (may be null)
+     * @return storage key
+     */
+    public String getStorageKey(Player player, World world, Island island) {
+        return getStorageKey(player, world, player.getLocation(), island);
+    }
+
+    /**
+     * Compute the storage key for a player at a specific location, optionally targeting a known island.
+     * @param player - player
+     * @param world - world
+     * @param location - location to check
+     * @param island - target island, or null to detect from location
+     * @return storage key
+     */
+    String getStorageKey(Player player, World world, Location location, Island island) {
+        String overworldName = getOverworldName(world);
+
+        if (!addon.getSettings().isIslandsActive()) {
+            return overworldName;
+        }
+
+        // Check if player owns multiple concurrent islands in this world
+        World overworld = Util.getWorld(world);
+        int count = addon.getIslands().getNumberOfConcurrentIslands(player.getUniqueId(),
+                Objects.requireNonNull(overworld));
+        if (count <= 1) {
+            return overworldName;
+        }
+
+        // If a specific island was provided, use it
+        if (island != null && island.getOwner() != null
+                && island.getOwner().equals(player.getUniqueId())) {
+            return overworldName + "/" + island.getUniqueId();
+        }
+
+        // If in generic nether/end (not island nether/end), preserve current key
+        if (world.getEnvironment() != World.Environment.NORMAL) {
+            boolean isIslandDimension = (world.getEnvironment() == World.Environment.NETHER)
+                ? BentoBox.getInstance().getIWM().isIslandNether(world)
+                : BentoBox.getInstance().getIWM().isIslandEnd(world);
+            if (!isIslandDimension) {
+                String current = currentKey.get(player.getUniqueId());
+                return (current != null) ? current : overworldName;
+            }
+        }
+
+        // Detect island from location
+        Optional<Island> islandOpt = addon.getIslands().getIslandAt(location);
+        if (islandOpt.isPresent()) {
+            Island loc = islandOpt.get();
+            if (loc.getOwner() != null && loc.getOwner().equals(player.getUniqueId())) {
+                return overworldName + "/" + loc.getUniqueId();
+            }
+        }
+
+        // Fallback: use current key if available, else world name
+        String current = currentKey.get(player.getUniqueId());
+        return (current != null) ? current : overworldName;
+    }
+
+    /**
+     * Get the overworld name from any world by stripping nether/end suffixes.
+     * @param world - world
+     * @return overworld name
+     */
+    private String getOverworldName(World world) {
+        return (world.getName().replace(THE_END, "")).replace(NETHER, "");
+    }
+
+    /**
+     * Get the current storage key for a player.
+     * @param player - player
+     * @return the current storage key, or null if not set
+     */
+    public String getCurrentKey(Player player) {
+        return currentKey.get(player.getUniqueId());
     }
 
     /**
@@ -79,8 +180,8 @@ public class Store {
     public boolean isWorldStored(Player player, World world) {
         // Get the store
         InventoryStorage store = getInv(player);
-        String overworldName = (world.getName().replace(THE_END, "")).replace(NETHER, "");
-        return store.isInventory(overworldName);
+        String key = getStorageKey(player, world);
+        return store.isInventory(key);
     }
 
     /**
@@ -89,38 +190,70 @@ public class Store {
      * @param world - world
      */
     public void getInventory(Player player, World world) {
+        getInventory(player, world, null);
+    }
+
+    /**
+     * Gets items for world and island. Changes the inventory of player immediately.
+     * @param player - player
+     * @param world - world
+     * @param island - target island, or null to detect from location
+     */
+    public void getInventory(Player player, World world, Island island) {
         // Get the store
         InventoryStorage store = getInv(player);
 
-        // Do not differentiate between world environments.
-        String overworldName = Objects.requireNonNull(Util.getWorld(world)).getName();
+        String islandKey = (island != null) ? getStorageKey(player, world, island) : getStorageKey(player, world);
+        String worldKey = getOverworldName(world);
 
-        // Inventory
-        if (addon.getSettings().isInventory()) {
-            player.getInventory().setContents(store.getInventory(overworldName).toArray(new ItemStack[0]));
+        // Always track the island-level key so future saves and island detection work correctly
+        currentKey.put(player.getUniqueId(), islandKey);
+
+        // Backward compat: if island-specific key has no data, migrate from world-only key.
+        // This only happens once — the world-only data is cleared after migration so that
+        // other islands don't also inherit a duplicate copy.
+        String islandLoadKey = islandKey;
+        if (islandKey.contains("/") && !store.isInventory(islandKey)) {
+            if (store.isInventory(worldKey)) {
+                islandLoadKey = worldKey;
+                // Clear the world-only data so it can't be claimed by another island
+                store.clearWorldData(worldKey);
+            }
         }
-        if (addon.getSettings().isHealth()) {
-            setHeath(store, player, overworldName);
+
+        // Each option uses the island key or the world key based on its island sub-setting
+        Settings settings = addon.getSettings();
+        if (settings.isInventory()) {
+            String k = settings.isIslandsInventory() ? islandLoadKey : worldKey;
+            player.getInventory().setContents(store.getInventory(k).toArray(new ItemStack[0]));
         }
-        if (addon.getSettings().isFood()) {
-            setFood(store, player, overworldName);
+        if (settings.isHealth()) {
+            String k = settings.isIslandsHealth() ? islandLoadKey : worldKey;
+            setHeath(store, player, k);
         }
-        if (addon.getSettings().isExperience()) {
-            // Experience
-            setTotalExperience(player, store.getExp().getOrDefault(overworldName, 0));
+        if (settings.isFood()) {
+            String k = settings.isIslandsFood() ? islandLoadKey : worldKey;
+            setFood(store, player, k);
         }
-        if (addon.getSettings().isGamemode()) {
-            // Game modes
-            player.setGameMode(store.getGameMode(overworldName));
+        if (settings.isExperience()) {
+            String k = settings.isIslandsExperience() ? islandLoadKey : worldKey;
+            setTotalExperience(player, store.getExp().getOrDefault(k, 0));
         }
-        if (addon.getSettings().isAdvancements()) {
-            setAdvancements(store, player, overworldName);
+        if (settings.isGamemode()) {
+            String k = settings.isIslandsGamemode() ? islandLoadKey : worldKey;
+            player.setGameMode(store.getGameMode(k));
         }
-        if (addon.getSettings().isEnderChest()) {
-            player.getEnderChest().setContents(store.getEnderChest(overworldName).toArray(new ItemStack[0]));
+        if (settings.isAdvancements()) {
+            String k = settings.isIslandsAdvancements() ? islandLoadKey : worldKey;
+            setAdvancements(store, player, k);
         }
-        if (addon.getSettings().isStatistics()) {
-            getStats(store, player, overworldName);
+        if (settings.isEnderChest()) {
+            String k = settings.isIslandsEnderChest() ? islandLoadKey : worldKey;
+            player.getEnderChest().setContents(store.getEnderChest(k).toArray(new ItemStack[0]));
+        }
+        if (settings.isStatistics()) {
+            String k = settings.isIslandsStatistics() ? islandLoadKey : worldKey;
+            getStats(store, player, k);
         }
     }
 
@@ -169,6 +302,7 @@ public class Store {
 
     public void removeFromCache(Player player) {
         cache.remove(player.getUniqueId());
+        currentKey.remove(player.getUniqueId());
     }
 
     /**
@@ -213,45 +347,53 @@ public class Store {
     public void storeAndSave(Player player, World world, boolean shutdown) {
         // Get the player's store
         InventoryStorage store = getInv(player);
-        // Do not differentiate between world environments
-        String worldName = world.getName();
-        String overworldName = (world.getName().replace(THE_END, "")).replace(NETHER, "");
-        if (addon.getSettings().isInventory()) {
-            // Copy the player's items to the store
+        // Use the current tracked key if available (ensures we save to the correct island slot),
+        // otherwise compute from location
+        String islandKey = currentKey.getOrDefault(player.getUniqueId(), getStorageKey(player, world));
+        String worldKey = getOverworldName(world);
+        // Each option saves to the island key or the world key based on its island sub-setting
+        Settings settings = addon.getSettings();
+        if (settings.isInventory()) {
+            String k = settings.isIslandsInventory() ? islandKey : worldKey;
             List<ItemStack> contents = Arrays.asList(player.getInventory().getContents());
-            store.setInventory(overworldName, contents);
+            store.setInventory(k, contents);
         }
-        if (addon.getSettings().isHealth()) {
-            store.setHealth(overworldName, player.getHealth());
+        if (settings.isHealth()) {
+            String k = settings.isIslandsHealth() ? islandKey : worldKey;
+            store.setHealth(k, player.getHealth());
         }
-        if (addon.getSettings().isFood()) {
-            store.setFood(overworldName, player.getFoodLevel());
+        if (settings.isFood()) {
+            String k = settings.isIslandsFood() ? islandKey : worldKey;
+            store.setFood(k, player.getFoodLevel());
         }
-        if (addon.getSettings().isExperience()) {
-            store.setExp(overworldName, getTotalExperience(player));
+        if (settings.isExperience()) {
+            String k = settings.isIslandsExperience() ? islandKey : worldKey;
+            store.setExp(k, getTotalExperience(player));
         }
-        if (addon.getSettings().isGamemode()) {
-            store.setGameMode(overworldName, player.getGameMode());
+        if (settings.isGamemode()) {
+            String k = settings.isIslandsGamemode() ? islandKey : worldKey;
+            store.setGameMode(k, player.getGameMode());
         }
-        if (addon.getSettings().isAdvancements()) {
-            // Advancements
-            store.clearAdvancement(worldName);
+        if (settings.isAdvancements()) {
+            String k = settings.isIslandsAdvancements() ? islandKey : worldKey;
+            store.clearAdvancement(k);
             Iterator<Advancement> it = Bukkit.advancementIterator();
             while (it.hasNext()) {
                 Advancement a = it.next();
                 AdvancementProgress p = player.getAdvancementProgress(a);
                 if (!p.getAwardedCriteria().isEmpty()) {
-                    store.setAdvancement(worldName, a.getKey().toString(), new ArrayList<>(p.getAwardedCriteria()));
+                    store.setAdvancement(k, a.getKey().toString(), new ArrayList<>(p.getAwardedCriteria()));
                 }
             }
         }
-        if (addon.getSettings().isEnderChest()) {
-            // Copy the player's ender chest items to the store
+        if (settings.isEnderChest()) {
+            String k = settings.isIslandsEnderChest() ? islandKey : worldKey;
             List<ItemStack> contents = Arrays.asList(player.getEnderChest().getContents());
-            store.setEnderChest(overworldName, contents);
+            store.setEnderChest(k, contents);
         }
-        if (addon.getSettings().isStatistics()) {
-            saveStats(store, player, overworldName, shutdown).thenAccept(database::saveObjectAsync);
+        if (settings.isStatistics()) {
+            String k = settings.isIslandsStatistics() ? islandKey : worldKey;
+            saveStats(store, player, k, shutdown).thenAccept(database::saveObjectAsync);
             return;
         }
         database.saveObjectAsync(store);
