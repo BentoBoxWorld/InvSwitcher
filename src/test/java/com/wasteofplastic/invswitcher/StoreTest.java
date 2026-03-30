@@ -137,7 +137,7 @@ public class StoreTest {
         when(settings.getDatabaseType()).thenReturn(mockDbt);
 
         // Disable island switching by default for existing tests
-        sets.setIslands(false);
+        sets.setIslandsActive(false);
 
         // Class under test
         s = new Store(addon);
@@ -301,14 +301,14 @@ public class StoreTest {
 
     @Test
     public void testGetStorageKeyIslandsDisabled() {
-        sets.setIslands(false);
+        sets.setIslandsActive(false);
         String key = s.getStorageKey(player, world);
         assertEquals("world", key); // nether suffix stripped
     }
 
     @Test
     public void testGetStorageKeySingleIsland() {
-        sets.setIslands(true);
+        sets.setIslandsActive(true);
         try (MockedStatic<Util> utilities = Mockito.mockStatic(Util.class)) {
             utilities.when(() -> Util.getWorld(world)).thenReturn(world);
             when(islandsManager.getNumberOfConcurrentIslands(playerUUID, world)).thenReturn(1);
@@ -319,7 +319,7 @@ public class StoreTest {
 
     @Test
     public void testGetStorageKeyMultipleIslandsOnOwnIsland() {
-        sets.setIslands(true);
+        sets.setIslandsActive(true);
         Island island = mock(Island.class);
         when(island.getOwner()).thenReturn(playerUUID);
         when(island.getUniqueId()).thenReturn("island-123");
@@ -338,7 +338,7 @@ public class StoreTest {
 
     @Test
     public void testGetStorageKeyMultipleIslandsOnOtherPlayerIsland() {
-        sets.setIslands(true);
+        sets.setIslandsActive(true);
         Island island = mock(Island.class);
         UUID otherPlayer = UUID.randomUUID();
         when(island.getOwner()).thenReturn(otherPlayer);
@@ -358,7 +358,7 @@ public class StoreTest {
 
     @Test
     public void testGetStorageKeyWithSpecificIsland() {
-        sets.setIslands(true);
+        sets.setIslandsActive(true);
         Island island = mock(Island.class);
         when(island.getOwner()).thenReturn(playerUUID);
         when(island.getUniqueId()).thenReturn("island-456");
@@ -374,7 +374,7 @@ public class StoreTest {
 
     @Test
     public void testGetStorageKeyGenericNether() {
-        sets.setIslands(true);
+        sets.setIslandsActive(true);
         // Set up a nether world
         World netherWorld = mock(World.class);
         when(netherWorld.getName()).thenReturn("world_nether");
@@ -409,14 +409,14 @@ public class StoreTest {
 
     @Test
     public void testGetCurrentKeySetAfterGetInventory() {
-        sets.setIslands(false);
+        sets.setIslandsActive(false);
         s.getInventory(player, world);
         assertEquals("world", s.getCurrentKey(player));
     }
 
     @Test
     public void testRemoveFromCacheClearsCurrentKey() {
-        sets.setIslands(false);
+        sets.setIslandsActive(false);
         s.getInventory(player, world);
         assertNotNull(s.getCurrentKey(player));
         s.removeFromCache(player);

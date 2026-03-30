@@ -181,7 +181,7 @@ public class PlayerListenerTest {
 
     @Test
     public void testOnIslandEnterDisabled() {
-        when(settings.isIslands()).thenReturn(false);
+        when(settings.isIslandsActive()).thenReturn(false);
         Island island = mock(Island.class);
         IslandEnterEvent event = new IslandEnterEvent(island, playerUUID, false, null, island, null);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class)) {
@@ -193,7 +193,7 @@ public class PlayerListenerTest {
 
     @Test
     public void testOnIslandEnterNotOwner() {
-        when(settings.isIslands()).thenReturn(true);
+        when(settings.isIslandsActive()).thenReturn(true);
         Island island = mock(Island.class);
         UUID otherOwner = UUID.randomUUID();
         when(island.getOwner()).thenReturn(otherOwner);
@@ -207,7 +207,7 @@ public class PlayerListenerTest {
 
     @Test
     public void testOnIslandEnterSingleIsland() {
-        when(settings.isIslands()).thenReturn(true);
+        when(settings.isIslandsActive()).thenReturn(true);
         Island island = mock(Island.class);
         when(island.getOwner()).thenReturn(playerUUID);
 
@@ -224,7 +224,7 @@ public class PlayerListenerTest {
 
     @Test
     public void testOnIslandEnterMultipleIslandsSameKey() {
-        when(settings.isIslands()).thenReturn(true);
+        when(settings.isIslandsActive()).thenReturn(true);
         Island island = mock(Island.class);
         when(island.getOwner()).thenReturn(playerUUID);
         when(island.getUniqueId()).thenReturn("island-1");
@@ -247,7 +247,7 @@ public class PlayerListenerTest {
 
     @Test
     public void testOnIslandEnterMultipleIslandsDifferentKey() {
-        when(settings.isIslands()).thenReturn(true);
+        when(settings.isIslandsActive()).thenReturn(true);
         Island island = mock(Island.class);
         when(island.getOwner()).thenReturn(playerUUID);
         when(island.getUniqueId()).thenReturn("island-2");
@@ -272,7 +272,7 @@ public class PlayerListenerTest {
 
     @Test
     public void testOnPlayerRespawnDisabled() {
-        when(settings.isIslands()).thenReturn(false);
+        when(settings.isIslandsActive()).thenReturn(false);
         Location respawnLoc = mock(Location.class);
         when(respawnLoc.getWorld()).thenReturn(world);
         PlayerRespawnEvent event = new PlayerRespawnEvent(player, respawnLoc, false);
@@ -282,7 +282,7 @@ public class PlayerListenerTest {
 
     @Test
     public void testOnPlayerRespawnSameIsland() {
-        when(settings.isIslands()).thenReturn(true);
+        when(settings.isIslandsActive()).thenReturn(true);
         Location respawnLoc = mock(Location.class);
         when(respawnLoc.getWorld()).thenReturn(world);
 
@@ -299,7 +299,7 @@ public class PlayerListenerTest {
 
     @Test
     public void testOnPlayerRespawnDifferentIsland() {
-        when(settings.isIslands()).thenReturn(true);
+        when(settings.isIslandsActive()).thenReturn(true);
         Location respawnLoc = mock(Location.class);
         when(respawnLoc.getWorld()).thenReturn(world);
 
@@ -317,7 +317,7 @@ public class PlayerListenerTest {
 
     @Test
     public void testOnPlayerRespawnNoIsland() {
-        when(settings.isIslands()).thenReturn(true);
+        when(settings.isIslandsActive()).thenReturn(true);
         Location respawnLoc = mock(Location.class);
         when(respawnLoc.getWorld()).thenReturn(world);
         when(islandsManager.getIslandAt(respawnLoc)).thenReturn(Optional.empty());

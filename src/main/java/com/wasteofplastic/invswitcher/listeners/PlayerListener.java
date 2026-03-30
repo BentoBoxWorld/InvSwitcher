@@ -69,7 +69,7 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onIslandEnter(IslandEnterEvent event) {
         BentoBox.getInstance().logDebug("IslandEnterEvent triggered for player " + event.getPlayerUUID() + " on island " + event.getIsland().getUniqueId());
-        if (!addon.getSettings().isIslands()) {
+        if (!addon.getSettings().isIslandsActive()) {
             return;
         }
 
@@ -133,7 +133,7 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerRespawn(PlayerRespawnEvent event) {
-        if (!addon.getSettings().isIslands()) {
+        if (!addon.getSettings().isIslandsActive()) {
             return;
         }
 

@@ -21,4 +21,15 @@ options:
   ender-chest: true
   statistics: true
   # Switch inventories based on island. Only applies if players own more than one island.
-  islands: true
+  # Each sub-option controls whether that aspect is switched per-island.
+  # The world-level option must also be true for the island option to have any effect.
+  islands:
+    active: true
+    inventory: true
+    health: false
+    food: false
+    advancements: false
+    gamemode: false
+    experience: false
+    ender-chest: true
+    statistics: false

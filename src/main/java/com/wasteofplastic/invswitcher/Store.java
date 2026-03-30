@@ -110,7 +110,7 @@ public class Store {
     String getStorageKey(Player player, World world, Location location, Island island) {
         String overworldName = getOverworldName(world);
 
-        if (!addon.getSettings().isIslands()) {
+        if (!addon.getSettings().isIslandsActive()) {
             return overworldName;
         }
 
@@ -203,50 +203,57 @@ public class Store {
         // Get the store
         InventoryStorage store = getInv(player);
 
-        String key = (island != null) ? getStorageKey(player, world, island) : getStorageKey(player, world);
+        String islandKey = (island != null) ? getStorageKey(player, world, island) : getStorageKey(player, world);
+        String worldKey = getOverworldName(world);
 
-        // Always track the resolved key (including island suffix) so future saves go to the right slot
-        currentKey.put(player.getUniqueId(), key);
+        // Always track the island-level key so future saves and island detection work correctly
+        currentKey.put(player.getUniqueId(), islandKey);
 
         // Backward compat: if island-specific key has no data, migrate from world-only key.
         // This only happens once — the world-only data is cleared after migration so that
         // other islands don't also inherit a duplicate copy.
-        String loadKey = key;
-        if (key.contains("/") && !store.isInventory(key)) {
-            String overworldName = getOverworldName(world);
-            if (store.isInventory(overworldName)) {
-                loadKey = overworldName;
+        String islandLoadKey = islandKey;
+        if (islandKey.contains("/") && !store.isInventory(islandKey)) {
+            if (store.isInventory(worldKey)) {
+                islandLoadKey = worldKey;
                 // Clear the world-only data so it can't be claimed by another island
-                store.clearWorldData(overworldName);
+                store.clearWorldData(worldKey);
             }
         }
 
-        // Inventory
-        if (addon.getSettings().isInventory()) {
-            player.getInventory().setContents(store.getInventory(loadKey).toArray(new ItemStack[0]));
+        // Each option uses the island key or the world key based on its island sub-setting
+        Settings settings = addon.getSettings();
+        if (settings.isInventory()) {
+            String k = settings.isIslandsInventory() ? islandLoadKey : worldKey;
+            player.getInventory().setContents(store.getInventory(k).toArray(new ItemStack[0]));
         }
-        if (addon.getSettings().isHealth()) {
-            setHeath(store, player, loadKey);
+        if (settings.isHealth()) {
+            String k = settings.isIslandsHealth() ? islandLoadKey : worldKey;
+            setHeath(store, player, k);
         }
-        if (addon.getSettings().isFood()) {
-            setFood(store, player, loadKey);
+        if (settings.isFood()) {
+            String k = settings.isIslandsFood() ? islandLoadKey : worldKey;
+            setFood(store, player, k);
         }
-        if (addon.getSettings().isExperience()) {
-            // Experience
-            setTotalExperience(player, store.getExp().getOrDefault(loadKey, 0));
+        if (settings.isExperience()) {
+            String k = settings.isIslandsExperience() ? islandLoadKey : worldKey;
+            setTotalExperience(player, store.getExp().getOrDefault(k, 0));
         }
-        if (addon.getSettings().isGamemode()) {
-            // Game modes
-            player.setGameMode(store.getGameMode(loadKey));
+        if (settings.isGamemode()) {
+            String k = settings.isIslandsGamemode() ? islandLoadKey : worldKey;
+            player.setGameMode(store.getGameMode(k));
         }
-        if (addon.getSettings().isAdvancements()) {
-            setAdvancements(store, player, loadKey);
+        if (settings.isAdvancements()) {
+            String k = settings.isIslandsAdvancements() ? islandLoadKey : worldKey;
+            setAdvancements(store, player, k);
         }
-        if (addon.getSettings().isEnderChest()) {
-            player.getEnderChest().setContents(store.getEnderChest(loadKey).toArray(new ItemStack[0]));
+        if (settings.isEnderChest()) {
+            String k = settings.isIslandsEnderChest() ? islandLoadKey : worldKey;
+            player.getEnderChest().setContents(store.getEnderChest(k).toArray(new ItemStack[0]));
         }
-        if (addon.getSettings().isStatistics()) {
-            getStats(store, player, loadKey);
+        if (settings.isStatistics()) {
+            String k = settings.isIslandsStatistics() ? islandLoadKey : worldKey;
+            getStats(store, player, k);
         }
     }
 
@@ -342,43 +349,51 @@ public class Store {
         InventoryStorage store = getInv(player);
         // Use the current tracked key if available (ensures we save to the correct island slot),
         // otherwise compute from location
-        String key = currentKey.getOrDefault(player.getUniqueId(), getStorageKey(player, world));
-        if (addon.getSettings().isInventory()) {
-            // Copy the player's items to the store
+        String islandKey = currentKey.getOrDefault(player.getUniqueId(), getStorageKey(player, world));
+        String worldKey = getOverworldName(world);
+        // Each option saves to the island key or the world key based on its island sub-setting
+        Settings settings = addon.getSettings();
+        if (settings.isInventory()) {
+            String k = settings.isIslandsInventory() ? islandKey : worldKey;
             List<ItemStack> contents = Arrays.asList(player.getInventory().getContents());
-            store.setInventory(key, contents);
+            store.setInventory(k, contents);
         }
-        if (addon.getSettings().isHealth()) {
-            store.setHealth(key, player.getHealth());
+        if (settings.isHealth()) {
+            String k = settings.isIslandsHealth() ? islandKey : worldKey;
+            store.setHealth(k, player.getHealth());
         }
-        if (addon.getSettings().isFood()) {
-            store.setFood(key, player.getFoodLevel());
+        if (settings.isFood()) {
+            String k = settings.isIslandsFood() ? islandKey : worldKey;
+            store.setFood(k, player.getFoodLevel());
         }
-        if (addon.getSettings().isExperience()) {
-            store.setExp(key, getTotalExperience(player));
+        if (settings.isExperience()) {
+            String k = settings.isIslandsExperience() ? islandKey : worldKey;
+            store.setExp(k, getTotalExperience(player));
         }
-        if (addon.getSettings().isGamemode()) {
-            store.setGameMode(key, player.getGameMode());
+        if (settings.isGamemode()) {
+            String k = settings.isIslandsGamemode() ? islandKey : worldKey;
+            store.setGameMode(k, player.getGameMode());
         }
-        if (addon.getSettings().isAdvancements()) {
-            // Advancements
-            store.clearAdvancement(key);
+        if (settings.isAdvancements()) {
+            String k = settings.isIslandsAdvancements() ? islandKey : worldKey;
+            store.clearAdvancement(k);
             Iterator<Advancement> it = Bukkit.advancementIterator();
             while (it.hasNext()) {
                 Advancement a = it.next();
                 AdvancementProgress p = player.getAdvancementProgress(a);
                 if (!p.getAwardedCriteria().isEmpty()) {
-                    store.setAdvancement(key, a.getKey().toString(), new ArrayList<>(p.getAwardedCriteria()));
+                    store.setAdvancement(k, a.getKey().toString(), new ArrayList<>(p.getAwardedCriteria()));
                 }
             }
         }
-        if (addon.getSettings().isEnderChest()) {
-            // Copy the player's ender chest items to the store
+        if (settings.isEnderChest()) {
+            String k = settings.isIslandsEnderChest() ? islandKey : worldKey;
             List<ItemStack> contents = Arrays.asList(player.getEnderChest().getContents());
-            store.setEnderChest(key, contents);
+            store.setEnderChest(k, contents);
         }
-        if (addon.getSettings().isStatistics()) {
-            saveStats(store, player, key, shutdown).thenAccept(database::saveObjectAsync);
+        if (settings.isStatistics()) {
+            String k = settings.isIslandsStatistics() ? islandKey : worldKey;
+            saveStats(store, player, k, shutdown).thenAccept(database::saveObjectAsync);
             return;
         }
         database.saveObjectAsync(store);
