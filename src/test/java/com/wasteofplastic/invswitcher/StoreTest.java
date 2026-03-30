@@ -1,7 +1,9 @@
 package com.wasteofplastic.invswitcher;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyFloat;
@@ -20,10 +22,13 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
@@ -46,6 +51,9 @@ import com.wasteofplastic.invswitcher.mocks.ServerMocks;
 import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.Settings;
 import world.bentobox.bentobox.database.DatabaseSetup.DatabaseType;
+import world.bentobox.bentobox.database.objects.Island;
+import world.bentobox.bentobox.managers.IslandWorldManager;
+import world.bentobox.bentobox.managers.IslandsManager;
 import world.bentobox.bentobox.util.Util;
 
 /**
@@ -63,10 +71,14 @@ public class StoreTest {
     private World world;
     @Mock
     private Settings settings;
+    @Mock
+    private IslandsManager islandsManager;
 
     private Store s;
 
     private com.wasteofplastic.invswitcher.Settings sets;
+
+    private UUID playerUUID;
 
     @Mock
     private Logger logger;
@@ -88,8 +100,8 @@ public class StoreTest {
         when(plugin.getSettings()).thenReturn(settings);
 
         // Player mock
-        UUID uuid = UUID.randomUUID();
-        when(player.getUniqueId()).thenReturn(uuid);
+        playerUUID = UUID.randomUUID();
+        when(player.getUniqueId()).thenReturn(playerUUID);
         AttributeInstance attribute = mock(AttributeInstance.class);
         // Health
         when(attribute.getValue()).thenReturn(18D);
@@ -114,6 +126,7 @@ public class StoreTest {
 
         // Addon
         when(addon.getLogger()).thenReturn(logger);
+        when(addon.getIslands()).thenReturn(islandsManager);
 
         //PowerMockito.mockStatic(Util.class);
         try (MockedStatic<Util> utilities = Mockito.mockStatic(Util.class)) {
@@ -122,6 +135,9 @@ public class StoreTest {
         }
         DatabaseType mockDbt = mock(DatabaseType.class);
         when(settings.getDatabaseType()).thenReturn(mockDbt);
+
+        // Disable island switching by default for existing tests
+        sets.setIslands(false);
 
         // Class under test
         s = new Store(addon);
@@ -279,6 +295,132 @@ public class StoreTest {
             // Verify that the static method was called
             mockedBukkit.verify(() -> Bukkit.getOnlinePlayers());
         }
+    }
+
+    // --- Per-island storage key tests ---
+
+    @Test
+    public void testGetStorageKeyIslandsDisabled() {
+        sets.setIslands(false);
+        String key = s.getStorageKey(player, world);
+        assertEquals("world", key); // nether suffix stripped
+    }
+
+    @Test
+    public void testGetStorageKeySingleIsland() {
+        sets.setIslands(true);
+        try (MockedStatic<Util> utilities = Mockito.mockStatic(Util.class)) {
+            utilities.when(() -> Util.getWorld(world)).thenReturn(world);
+            when(islandsManager.getNumberOfConcurrentIslands(playerUUID, world)).thenReturn(1);
+            String key = s.getStorageKey(player, world);
+            assertEquals("world", key); // just overworld name, no island suffix
+        }
+    }
+
+    @Test
+    public void testGetStorageKeyMultipleIslandsOnOwnIsland() {
+        sets.setIslands(true);
+        Island island = mock(Island.class);
+        when(island.getOwner()).thenReturn(playerUUID);
+        when(island.getUniqueId()).thenReturn("island-123");
+        Location loc = mock(Location.class);
+        when(player.getLocation()).thenReturn(loc);
+
+        try (MockedStatic<Util> utilities = Mockito.mockStatic(Util.class)) {
+            utilities.when(() -> Util.getWorld(world)).thenReturn(world);
+            when(islandsManager.getNumberOfConcurrentIslands(playerUUID, world)).thenReturn(2);
+            when(islandsManager.getIslandAt(loc)).thenReturn(Optional.of(island));
+
+            String key = s.getStorageKey(player, world);
+            assertEquals("world/island-123", key);
+        }
+    }
+
+    @Test
+    public void testGetStorageKeyMultipleIslandsOnOtherPlayerIsland() {
+        sets.setIslands(true);
+        Island island = mock(Island.class);
+        UUID otherPlayer = UUID.randomUUID();
+        when(island.getOwner()).thenReturn(otherPlayer);
+        Location loc = mock(Location.class);
+        when(player.getLocation()).thenReturn(loc);
+
+        try (MockedStatic<Util> utilities = Mockito.mockStatic(Util.class)) {
+            utilities.when(() -> Util.getWorld(world)).thenReturn(world);
+            when(islandsManager.getNumberOfConcurrentIslands(playerUUID, world)).thenReturn(2);
+            when(islandsManager.getIslandAt(loc)).thenReturn(Optional.of(island));
+
+            String key = s.getStorageKey(player, world);
+            // Not on own island, falls back to overworld name
+            assertEquals("world", key);
+        }
+    }
+
+    @Test
+    public void testGetStorageKeyWithSpecificIsland() {
+        sets.setIslands(true);
+        Island island = mock(Island.class);
+        when(island.getOwner()).thenReturn(playerUUID);
+        when(island.getUniqueId()).thenReturn("island-456");
+
+        try (MockedStatic<Util> utilities = Mockito.mockStatic(Util.class)) {
+            utilities.when(() -> Util.getWorld(world)).thenReturn(world);
+            when(islandsManager.getNumberOfConcurrentIslands(playerUUID, world)).thenReturn(2);
+
+            String key = s.getStorageKey(player, world, island);
+            assertEquals("world/island-456", key);
+        }
+    }
+
+    @Test
+    public void testGetStorageKeyGenericNether() {
+        sets.setIslands(true);
+        // Set up a nether world
+        World netherWorld = mock(World.class);
+        when(netherWorld.getName()).thenReturn("world_nether");
+        when(netherWorld.getEnvironment()).thenReturn(Environment.NETHER);
+
+        // Set up overworld for Util.getWorld
+        World overworld = mock(World.class);
+        when(overworld.getName()).thenReturn("world");
+
+        // Set up BentoBox IWM
+        BentoBox plugin = mock(BentoBox.class);
+        IslandWorldManager iwm = mock(IslandWorldManager.class);
+        when(plugin.getIWM()).thenReturn(iwm);
+        when(iwm.isIslandNether(netherWorld)).thenReturn(false); // generic nether
+
+        try (MockedStatic<Util> utilities = Mockito.mockStatic(Util.class);
+             MockedStatic<BentoBox> bentoBoxStatic = mockStatic(BentoBox.class)) {
+            utilities.when(() -> Util.getWorld(netherWorld)).thenReturn(overworld);
+            bentoBoxStatic.when(BentoBox::getInstance).thenReturn(plugin);
+            when(islandsManager.getNumberOfConcurrentIslands(playerUUID, overworld)).thenReturn(2);
+
+            // No current key set yet, should fall back to overworld name
+            String key = s.getStorageKey(player, netherWorld);
+            assertEquals("world", key);
+        }
+    }
+
+    @Test
+    public void testGetCurrentKeyNullByDefault() {
+        assertNull(s.getCurrentKey(player));
+    }
+
+    @Test
+    public void testGetCurrentKeySetAfterGetInventory() {
+        sets.setIslands(false);
+        s.getInventory(player, world);
+        assertEquals("world", s.getCurrentKey(player));
+    }
+
+    @Test
+    public void testRemoveFromCacheClearsCurrentKey() {
+        sets.setIslands(false);
+        s.getInventory(player, world);
+        assertNotNull(s.getCurrentKey(player));
+        s.removeFromCache(player);
+        assertNull(s.getCurrentKey(player));
     }
 
 }

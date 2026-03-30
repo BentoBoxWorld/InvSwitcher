@@ -34,6 +34,9 @@ public class Settings implements ConfigObject {
     private boolean enderChest = true;
     @ConfigEntry(path = "options.statistics")
     private boolean statistics = true;
+    @ConfigComment("Switch inventories based on island. Only applies if players own more than one island.")
+    @ConfigEntry(path = "options.islands")
+    private boolean islands = true;
 
     /**
      * @return the worlds
@@ -143,6 +146,17 @@ public class Settings implements ConfigObject {
     public void setStatistics(boolean statistics) {
         this.statistics = statistics;
     }
-
+    /**
+     * @return whether per-island inventory switching is enabled
+     */
+    public boolean isIslands() {
+        return islands;
+    }
+    /**
+     * @param islands whether to enable per-island inventory switching
+     */
+    public void setIslands(boolean islands) {
+        this.islands = islands;
+    }
 
 }

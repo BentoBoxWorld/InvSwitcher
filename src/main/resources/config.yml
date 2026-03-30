@@ -20,3 +20,5 @@ options:
   experience: true
   ender-chest: true
   statistics: true
+  # Switch inventories based on island. Only applies if players own more than one island.
+  islands: true
