@@ -35,6 +35,28 @@ public class Settings implements ConfigObject {
     @ConfigEntry(path = "options.statistics")
     private boolean statistics = true;
 
+    @ConfigComment("Switch inventories based on island. Only applies if players own more than one island.")
+    @ConfigComment("Each sub-option controls whether that aspect is switched per-island.")
+    @ConfigComment("The world-level option must also be true for the island option to have any effect.")
+    @ConfigEntry(path = "options.islands.active")
+    private boolean islandsActive = true;
+    @ConfigEntry(path = "options.islands.inventory")
+    private boolean islandsInventory = true;
+    @ConfigEntry(path = "options.islands.health")
+    private boolean islandsHealth = false;
+    @ConfigEntry(path = "options.islands.food")
+    private boolean islandsFood = false;
+    @ConfigEntry(path = "options.islands.advancements")
+    private boolean islandsAdvancements = false;
+    @ConfigEntry(path = "options.islands.gamemode")
+    private boolean islandsGamemode = false;
+    @ConfigEntry(path = "options.islands.experience")
+    private boolean islandsExperience = false;
+    @ConfigEntry(path = "options.islands.ender-chest")
+    private boolean islandsEnderChest = true;
+    @ConfigEntry(path = "options.islands.statistics")
+    private boolean islandsStatistics = false;
+
     /**
      * @return the worlds
      */
@@ -143,6 +165,65 @@ public class Settings implements ConfigObject {
     public void setStatistics(boolean statistics) {
         this.statistics = statistics;
     }
-
+    /**
+     * @return whether per-island switching is active
+     */
+    public boolean isIslandsActive() {
+        return islandsActive;
+    }
+    /**
+     * @param islandsActive whether to enable per-island switching
+     */
+    public void setIslandsActive(boolean islandsActive) {
+        this.islandsActive = islandsActive;
+    }
+    public boolean isIslandsInventory() {
+        return islandsInventory;
+    }
+    public void setIslandsInventory(boolean islandsInventory) {
+        this.islandsInventory = islandsInventory;
+    }
+    public boolean isIslandsHealth() {
+        return islandsHealth;
+    }
+    public void setIslandsHealth(boolean islandsHealth) {
+        this.islandsHealth = islandsHealth;
+    }
+    public boolean isIslandsFood() {
+        return islandsFood;
+    }
+    public void setIslandsFood(boolean islandsFood) {
+        this.islandsFood = islandsFood;
+    }
+    public boolean isIslandsAdvancements() {
+        return islandsAdvancements;
+    }
+    public void setIslandsAdvancements(boolean islandsAdvancements) {
+        this.islandsAdvancements = islandsAdvancements;
+    }
+    public boolean isIslandsGamemode() {
+        return islandsGamemode;
+    }
+    public void setIslandsGamemode(boolean islandsGamemode) {
+        this.islandsGamemode = islandsGamemode;
+    }
+    public boolean isIslandsExperience() {
+        return islandsExperience;
+    }
+    public void setIslandsExperience(boolean islandsExperience) {
+        this.islandsExperience = islandsExperience;
+    }
+    public boolean isIslandsEnderChest() {
+        return islandsEnderChest;
+    }
+    public void setIslandsEnderChest(boolean islandsEnderChest) {
+        this.islandsEnderChest = islandsEnderChest;
+    }
+    public boolean isIslandsStatistics() {
+        return islandsStatistics;
+    }
+    public void setIslandsStatistics(boolean islandsStatistics) {
+        this.islandsStatistics = islandsStatistics;
+    }
 
 }

@@ -1,8 +1,8 @@
 package com.wasteofplastic.invswitcher;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,16 +28,18 @@ import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import com.wasteofplastic.invswitcher.listeners.PlayerListener;
 
@@ -48,12 +49,15 @@ import world.bentobox.bentobox.api.addons.Addon.State;
 import world.bentobox.bentobox.api.addons.AddonDescription;
 import world.bentobox.bentobox.database.DatabaseSetup.DatabaseType;
 import world.bentobox.bentobox.managers.AddonsManager;
+import org.mockbukkit.mockbukkit.MockBukkit;
+import org.mockbukkit.mockbukkit.ServerMock;
 
 /**
  * @author tastybento
  *
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class InvSwitcherTest {
 
     private static File jFile;
@@ -72,7 +76,9 @@ public class InvSwitcherTest {
     @Mock
     private World world;
 
-    @BeforeClass
+    private MockedStatic<BentoBox> mockedBentoBox;
+
+    @BeforeAll
     public static void beforeClass() throws IOException {
         // Make the addon jar
         jFile = new File("addon.jar");
@@ -95,20 +101,15 @@ public class InvSwitcherTest {
     }
 
     /**
-     * @throws SecurityException 
-     * @throws NoSuchFieldException 
-     * @throws IllegalAccessException 
-     * @throws IllegalArgumentException 
+     * @throws Exception
      */
-    @Before
-    public void setUp()
-            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
-        // Set up plugin
-        // Use reflection to set the private static field "instance" in BentoBox
-        Field instanceField = BentoBox.class.getDeclaredField("instance");
+    @BeforeEach
+    public void setUp() throws Exception {
+        ServerMock server = MockBukkit.mock();
 
-        instanceField.setAccessible(true);
-        instanceField.set(null, plugin);
+        // Set up plugin
+        mockedBentoBox = Mockito.mockStatic(BentoBox.class);
+        mockedBentoBox.when(BentoBox::getInstance).thenReturn(plugin);
         when(plugin.getLogger()).thenReturn(Logger.getAnonymousLogger());
 
         // The database type has to be created one line before the thenReturn() to work!
@@ -133,12 +134,16 @@ public class InvSwitcherTest {
     /**
      * @throws java.lang.Exception
      */
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
+        if (mockedBentoBox != null) {
+            mockedBentoBox.close();
+        }
+        MockBukkit.unmock();
         deleteAll(new File("database"));
     }
 
-    @AfterClass
+    @AfterAll
     public static void cleanUp() throws Exception {
         deleteAll(new File("database"));
         new File("addon.jar").delete();

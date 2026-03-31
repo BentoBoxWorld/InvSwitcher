@@ -1,37 +1,52 @@
 package com.wasteofplastic.invswitcher.listeners;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.bukkit.event.player.PlayerRespawnEvent;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import com.wasteofplastic.invswitcher.InvSwitcher;
+import com.wasteofplastic.invswitcher.Settings;
 import com.wasteofplastic.invswitcher.Store;
 
+import world.bentobox.bentobox.BentoBox;
+import world.bentobox.bentobox.api.events.island.IslandEnterEvent;
+import world.bentobox.bentobox.database.objects.Island;
+import world.bentobox.bentobox.managers.IslandsManager;
 import world.bentobox.bentobox.util.Util;
 
 /**
  * @author tastybento
  *
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class PlayerListenerTest {
 
     @Mock
@@ -45,11 +60,24 @@ public class PlayerListenerTest {
     private World world;
     @Mock
     private World notWorld;
+    @Mock
+    private Settings settings;
+    @Mock
+    private IslandsManager islandsManager;
+
+    private UUID playerUUID;
+    private MockedStatic<BentoBox> mockedBentoBox;
 
     /**
      */
-    @Before
+    @BeforeEach
     public void setUp() {
+        // BentoBox static mock (needed for logDebug calls in PlayerListener)
+        BentoBox bbPlugin = mock(BentoBox.class);
+        mockedBentoBox = Mockito.mockStatic(BentoBox.class);
+        mockedBentoBox.when(BentoBox::getInstance).thenReturn(bbPlugin);
+        playerUUID = UUID.randomUUID();
+        when(player.getUniqueId()).thenReturn(playerUUID);
         // Util
         // Mock the static method
         try (MockedStatic<Util> mockedBukkit = mockStatic(Util.class, Mockito.RETURNS_MOCKS)) {
@@ -61,7 +89,16 @@ public class PlayerListenerTest {
         // Addon
         when(addon.getStore()).thenReturn(store);
         when(addon.getWorlds()).thenReturn(Set.of(world));
+        when(addon.getSettings()).thenReturn(settings);
+        when(addon.getIslands()).thenReturn(islandsManager);
         pl = new PlayerListener(addon);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        if (mockedBentoBox != null) {
+            mockedBentoBox.close();
+        }
     }
 
     /**
@@ -155,6 +192,165 @@ public class PlayerListenerTest {
         pl.onPlayerQuit(event);
         verify(store, never()).storeAndSave(player, world, false);
         verify(store).removeFromCache(player);
+    }
+
+    // --- Island Enter Event Tests ---
+
+    @Test
+    public void testOnIslandEnterDisabled() {
+        when(settings.isIslandsActive()).thenReturn(false);
+        Island island = mock(Island.class);
+        IslandEnterEvent event = new IslandEnterEvent(island, playerUUID, false, null, island, null);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class)) {
+            mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(player);
+            pl.onIslandEnter(event);
+        }
+        verify(store, never()).storeInventory(any(), any());
+    }
+
+    @Test
+    public void testOnIslandEnterNotOwner() {
+        when(settings.isIslandsActive()).thenReturn(true);
+        Island island = mock(Island.class);
+        UUID otherOwner = UUID.randomUUID();
+        when(island.getOwner()).thenReturn(otherOwner);
+        IslandEnterEvent event = new IslandEnterEvent(island, playerUUID, false, null, island, null);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class)) {
+            mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(player);
+            pl.onIslandEnter(event);
+        }
+        verify(store, never()).storeInventory(any(), any());
+    }
+
+    @Test
+    public void testOnIslandEnterSingleIsland() {
+        when(settings.isIslandsActive()).thenReturn(true);
+        Island island = mock(Island.class);
+        when(island.getOwner()).thenReturn(playerUUID);
+
+        IslandEnterEvent event = new IslandEnterEvent(island, playerUUID, false, null, island, null);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class);
+             MockedStatic<Util> utilities = mockStatic(Util.class)) {
+            mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(player);
+            utilities.when(() -> Util.getWorld(world)).thenReturn(world);
+            when(islandsManager.getNumberOfConcurrentIslands(playerUUID, world)).thenReturn(1);
+            pl.onIslandEnter(event);
+        }
+        verify(store, never()).storeInventory(any(), any());
+    }
+
+    @Test
+    public void testOnIslandEnterMultipleIslandsSameKey() {
+        when(settings.isIslandsActive()).thenReturn(true);
+        Island island = mock(Island.class);
+        when(island.getOwner()).thenReturn(playerUUID);
+        when(island.getUniqueId()).thenReturn("island-1");
+
+        // Current key already matches
+        when(store.getStorageKey(player, world, island)).thenReturn("world/island-1");
+        when(store.getCurrentKey(player)).thenReturn("world/island-1");
+
+        IslandEnterEvent event = new IslandEnterEvent(island, playerUUID, false, null, island, null);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class);
+             MockedStatic<Util> utilities = mockStatic(Util.class)) {
+            mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(player);
+            utilities.when(() -> Util.getWorld(world)).thenReturn(world);
+            when(islandsManager.getNumberOfConcurrentIslands(playerUUID, world)).thenReturn(2);
+            pl.onIslandEnter(event);
+        }
+        // Same key, no switch
+        verify(store, never()).storeInventory(any(), any());
+    }
+
+    @Test
+    public void testOnIslandEnterMultipleIslandsDifferentKey() {
+        when(settings.isIslandsActive()).thenReturn(true);
+        Island island = mock(Island.class);
+        when(island.getOwner()).thenReturn(playerUUID);
+        when(island.getUniqueId()).thenReturn("island-2");
+
+        when(store.getStorageKey(player, world, island)).thenReturn("world/island-2");
+        when(store.getCurrentKey(player)).thenReturn("world/island-1");
+
+        IslandEnterEvent event = new IslandEnterEvent(island, playerUUID, false, null, island, null);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class);
+             MockedStatic<Util> utilities = mockStatic(Util.class)) {
+            mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(player);
+            utilities.when(() -> Util.getWorld(world)).thenReturn(world);
+            when(islandsManager.getNumberOfConcurrentIslands(playerUUID, world)).thenReturn(2);
+            pl.onIslandEnter(event);
+        }
+        // Different key, switch should happen
+        verify(store).storeInventory(player, world);
+        verify(store).getInventory(player, world, island);
+    }
+
+    // --- Respawn Event Tests ---
+
+    @Test
+    public void testOnPlayerRespawnDisabled() {
+        when(settings.isIslandsActive()).thenReturn(false);
+        Location respawnLoc = mock(Location.class);
+        when(respawnLoc.getWorld()).thenReturn(world);
+        PlayerRespawnEvent event = mock(PlayerRespawnEvent.class);
+        when(event.getPlayer()).thenReturn(player);
+        when(event.getRespawnLocation()).thenReturn(respawnLoc);
+        pl.onPlayerRespawn(event);
+        verify(store, never()).storeAndSave(any(), any(), any(boolean.class));
+    }
+
+    @Test
+    public void testOnPlayerRespawnSameIsland() {
+        when(settings.isIslandsActive()).thenReturn(true);
+        Location respawnLoc = mock(Location.class);
+        when(respawnLoc.getWorld()).thenReturn(world);
+
+        Island island = mock(Island.class);
+        when(islandsManager.getIslandAt(respawnLoc)).thenReturn(Optional.of(island));
+        when(store.getStorageKey(player, world, island)).thenReturn("world/island-1");
+        when(store.getCurrentKey(player)).thenReturn("world/island-1");
+
+        PlayerRespawnEvent event = mock(PlayerRespawnEvent.class);
+        when(event.getPlayer()).thenReturn(player);
+        when(event.getRespawnLocation()).thenReturn(respawnLoc);
+        pl.onPlayerRespawn(event);
+        // Same island, no switch
+        verify(store, never()).storeAndSave(any(), any(), any(boolean.class));
+    }
+
+    @Test
+    public void testOnPlayerRespawnDifferentIsland() {
+        when(settings.isIslandsActive()).thenReturn(true);
+        Location respawnLoc = mock(Location.class);
+        when(respawnLoc.getWorld()).thenReturn(world);
+
+        Island island = mock(Island.class);
+        when(islandsManager.getIslandAt(respawnLoc)).thenReturn(Optional.of(island));
+        when(store.getStorageKey(player, world, island)).thenReturn("world/island-2");
+        when(store.getCurrentKey(player)).thenReturn("world/island-1");
+
+        PlayerRespawnEvent event = mock(PlayerRespawnEvent.class);
+        when(event.getPlayer()).thenReturn(player);
+        when(event.getRespawnLocation()).thenReturn(respawnLoc);
+        pl.onPlayerRespawn(event);
+        // Different island, switch should happen
+        verify(store).storeAndSave(player, world, false);
+        verify(store).getInventory(player, world, island);
+    }
+
+    @Test
+    public void testOnPlayerRespawnNoIsland() {
+        when(settings.isIslandsActive()).thenReturn(true);
+        Location respawnLoc = mock(Location.class);
+        when(respawnLoc.getWorld()).thenReturn(world);
+        when(islandsManager.getIslandAt(respawnLoc)).thenReturn(Optional.empty());
+
+        PlayerRespawnEvent event = mock(PlayerRespawnEvent.class);
+        when(event.getPlayer()).thenReturn(player);
+        when(event.getRespawnLocation()).thenReturn(respawnLoc);
+        pl.onPlayerRespawn(event);
+        // No island at respawn, no switch
+        verify(store, never()).storeAndSave(any(), any(), any(boolean.class));
     }
 
 }
