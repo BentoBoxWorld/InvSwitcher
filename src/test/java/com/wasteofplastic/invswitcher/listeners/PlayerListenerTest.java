@@ -1,6 +1,6 @@
 package com.wasteofplastic.invswitcher.listeners;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -20,18 +20,22 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import com.wasteofplastic.invswitcher.InvSwitcher;
 import com.wasteofplastic.invswitcher.Settings;
 import com.wasteofplastic.invswitcher.Store;
 
+import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.api.events.island.IslandEnterEvent;
 import world.bentobox.bentobox.database.objects.Island;
 import world.bentobox.bentobox.managers.IslandsManager;
@@ -41,7 +45,8 @@ import world.bentobox.bentobox.util.Util;
  * @author tastybento
  *
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class PlayerListenerTest {
 
     @Mock
@@ -61,11 +66,16 @@ public class PlayerListenerTest {
     private IslandsManager islandsManager;
 
     private UUID playerUUID;
+    private MockedStatic<BentoBox> mockedBentoBox;
 
     /**
      */
-    @Before
+    @BeforeEach
     public void setUp() {
+        // BentoBox static mock (needed for logDebug calls in PlayerListener)
+        BentoBox bbPlugin = mock(BentoBox.class);
+        mockedBentoBox = Mockito.mockStatic(BentoBox.class);
+        mockedBentoBox.when(BentoBox::getInstance).thenReturn(bbPlugin);
         playerUUID = UUID.randomUUID();
         when(player.getUniqueId()).thenReturn(playerUUID);
         // Util
@@ -82,6 +92,13 @@ public class PlayerListenerTest {
         when(addon.getSettings()).thenReturn(settings);
         when(addon.getIslands()).thenReturn(islandsManager);
         pl = new PlayerListener(addon);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        if (mockedBentoBox != null) {
+            mockedBentoBox.close();
+        }
     }
 
     /**
@@ -275,7 +292,9 @@ public class PlayerListenerTest {
         when(settings.isIslandsActive()).thenReturn(false);
         Location respawnLoc = mock(Location.class);
         when(respawnLoc.getWorld()).thenReturn(world);
-        PlayerRespawnEvent event = new PlayerRespawnEvent(player, respawnLoc, false);
+        PlayerRespawnEvent event = mock(PlayerRespawnEvent.class);
+        when(event.getPlayer()).thenReturn(player);
+        when(event.getRespawnLocation()).thenReturn(respawnLoc);
         pl.onPlayerRespawn(event);
         verify(store, never()).storeAndSave(any(), any(), any(boolean.class));
     }
@@ -291,7 +310,9 @@ public class PlayerListenerTest {
         when(store.getStorageKey(player, world, island)).thenReturn("world/island-1");
         when(store.getCurrentKey(player)).thenReturn("world/island-1");
 
-        PlayerRespawnEvent event = new PlayerRespawnEvent(player, respawnLoc, false);
+        PlayerRespawnEvent event = mock(PlayerRespawnEvent.class);
+        when(event.getPlayer()).thenReturn(player);
+        when(event.getRespawnLocation()).thenReturn(respawnLoc);
         pl.onPlayerRespawn(event);
         // Same island, no switch
         verify(store, never()).storeAndSave(any(), any(), any(boolean.class));
@@ -308,7 +329,9 @@ public class PlayerListenerTest {
         when(store.getStorageKey(player, world, island)).thenReturn("world/island-2");
         when(store.getCurrentKey(player)).thenReturn("world/island-1");
 
-        PlayerRespawnEvent event = new PlayerRespawnEvent(player, respawnLoc, false);
+        PlayerRespawnEvent event = mock(PlayerRespawnEvent.class);
+        when(event.getPlayer()).thenReturn(player);
+        when(event.getRespawnLocation()).thenReturn(respawnLoc);
         pl.onPlayerRespawn(event);
         // Different island, switch should happen
         verify(store).storeAndSave(player, world, false);
@@ -322,7 +345,9 @@ public class PlayerListenerTest {
         when(respawnLoc.getWorld()).thenReturn(world);
         when(islandsManager.getIslandAt(respawnLoc)).thenReturn(Optional.empty());
 
-        PlayerRespawnEvent event = new PlayerRespawnEvent(player, respawnLoc, false);
+        PlayerRespawnEvent event = mock(PlayerRespawnEvent.class);
+        when(event.getPlayer()).thenReturn(player);
+        when(event.getRespawnLocation()).thenReturn(respawnLoc);
         pl.onPlayerRespawn(event);
         // No island at respawn, no switch
         verify(store, never()).storeAndSave(any(), any(), any(boolean.class));
