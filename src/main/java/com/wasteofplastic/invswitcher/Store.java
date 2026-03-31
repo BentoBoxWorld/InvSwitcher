@@ -306,6 +306,23 @@ public class Store {
     }
 
     /**
+     * Upgrade a world-only currentKey to an island-specific key when a player transitions
+     * from single-island to multi-island mode. Clears stale world-only data from the store
+     * (storeAndSave will re-save world-level types like health/food to the world key).
+     * @param player - player
+     * @param world - world
+     * @param oldIsland - the island the player was on (their original island)
+     */
+    public void upgradeWorldKeyToIsland(Player player, World world, Island oldIsland) {
+        InventoryStorage store = getInv(player);
+        String worldKey = getOverworldName(world);
+        // Clear stale world-only data; storeAndSave will re-save world-level types
+        store.clearWorldData(worldKey);
+        // Update currentKey so subsequent storeAndSave saves per-island data to the correct key
+        currentKey.put(player.getUniqueId(), worldKey + "/" + oldIsland.getUniqueId());
+    }
+
+    /**
      * Get the inventory storage object for player from the database or make a new one
      * @param player - player
      * @return inventory storage object

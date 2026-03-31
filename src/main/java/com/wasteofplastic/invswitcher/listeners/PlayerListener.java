@@ -16,7 +16,6 @@ import org.bukkit.entity.Player;
 
 import com.wasteofplastic.invswitcher.InvSwitcher;
 
-import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.api.events.island.IslandEnterEvent;
 import world.bentobox.bentobox.database.objects.Island;
 import world.bentobox.bentobox.util.Util;
@@ -68,7 +67,6 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onIslandEnter(IslandEnterEvent event) {
-        BentoBox.getInstance().logDebug("IslandEnterEvent triggered for player " + event.getPlayerUUID() + " on island " + event.getIsland().getUniqueId());
         if (!addon.getSettings().isIslandsActive()) {
             return;
         }
@@ -80,7 +78,6 @@ public class PlayerListener implements Listener {
 
         World world = player.getWorld();
         if (!addon.getWorlds().contains(world)) {
-            BentoBox.getInstance().logDebug("World " + world.getName() + " is not in the list of worlds to manage. Ignoring island enter event.");
             return;
         }
 
@@ -88,7 +85,6 @@ public class PlayerListener implements Listener {
 
         // Only switch if the player owns the island they're entering
         if (island.getOwner() == null || !island.getOwner().equals(player.getUniqueId())) {
-            BentoBox.getInstance().logDebug("Player " + player.getName() + " does not own island " + island.getUniqueId() + ". No inventory switch.");
             return;
         }
 
@@ -97,7 +93,6 @@ public class PlayerListener implements Listener {
         int count = addon.getIslands().getNumberOfConcurrentIslands(
                 player.getUniqueId(), Objects.requireNonNull(overworld));
         if (count <= 1) {
-            BentoBox.getInstance().logDebug("Player " + player.getName() + " owns only one island in world " + overworld.getName() + ". No inventory switch.");
             return;
         }
 
@@ -105,12 +100,26 @@ public class PlayerListener implements Listener {
         String newKey = addon.getStore().getStorageKey(player, world, island);
         String currentKeyValue = addon.getStore().getCurrentKey(player);
         if (newKey.equals(currentKeyValue)) {
-            BentoBox.getInstance().logDebug("Player " + player.getName() + " is entering island " + island.getUniqueId() + " which has the same inventory key as their current location. No inventory switch.");
             return; // same island, no switch
         }
 
+        // If currentKey is a world-only key (no "/"), the player is transitioning from
+        // single-island to multi-island mode. Upgrade the key so storeInventory saves to
+        // the correct island-specific key instead of the world key.
+        if (currentKeyValue != null && !currentKeyValue.contains("/")) {
+            Island oldIsland = addon.getIslands().getIsland(overworld, player.getUniqueId());
+            if (oldIsland != null && !oldIsland.getUniqueId().equals(island.getUniqueId())) {
+                addon.getStore().upgradeWorldKeyToIsland(player, world, oldIsland);
+            } else {
+                // Primary island is the one being entered; find another owned island
+                addon.getIslands().getIslands(overworld, player.getUniqueId()).stream()
+                        .filter(i -> !i.getUniqueId().equals(island.getUniqueId()))
+                        .findFirst()
+                        .ifPresent(i -> addon.getStore().upgradeWorldKeyToIsland(player, world, i));
+            }
+        }
+
         // Switch: store old, load new
-        BentoBox.getInstance().logDebug("Switching inventory for player " + player.getName() + " from key " + currentKeyValue + " to new key " + newKey);
         addon.getStore().storeInventory(player, world);
         addon.getStore().getInventory(player, world, island);
     }

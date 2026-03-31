@@ -421,4 +421,95 @@ public class StoreTest {
         assertNull(s.getCurrentKey(player));
     }
 
+    /**
+     * Test upgradeWorldKeyToIsland clears world data and updates currentKey.
+     */
+    @Test
+    public void testUpgradeWorldKeyToIsland() {
+        sets.setIslandsActive(true);
+        sets.setStatistics(false);
+
+        Island oldIsland = mock(Island.class);
+        when(oldIsland.getOwner()).thenReturn(playerUUID);
+        when(oldIsland.getUniqueId()).thenReturn("island-primary");
+
+        try (MockedStatic<Util> utilities = Mockito.mockStatic(Util.class);
+             MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            utilities.when(() -> Util.getWorld(world)).thenReturn(world);
+            when(islandsManager.getNumberOfConcurrentIslands(playerUUID, world)).thenReturn(1);
+
+            // Simulate login and play — data saved under world-only key
+            s.getInventory(player, world);
+            assertEquals("world", s.getCurrentKey(player));
+            s.storeInventory(player, world);
+            assertTrue(s.isWorldStored(player, world));
+
+            // Upgrade: transitions from world-only to island-specific key
+            s.upgradeWorldKeyToIsland(player, world, oldIsland);
+
+            // currentKey should now be island-specific
+            assertEquals("world/island-primary", s.getCurrentKey(player));
+            // World-only data should be cleared
+            assertFalse(s.isWorldStored(player, world));
+        }
+    }
+
+    /**
+     * Full scenario: player has 1 island, creates 2nd, goes to new island, returns to original.
+     * Simulates what onIslandEnter does: upgradeWorldKey, storeInventory, getInventory.
+     */
+    @Test
+    public void testFullScenarioSingleToMultipleIslands() {
+        sets.setIslandsActive(true);
+        sets.setStatistics(false);
+        sets.setHealth(false);
+        sets.setFood(false);
+        sets.setExperience(false);
+        sets.setGamemode(false);
+        sets.setAdvancements(false);
+        sets.setEnderChest(false);
+
+        Island primaryIsland = mock(Island.class);
+        when(primaryIsland.getOwner()).thenReturn(playerUUID);
+        when(primaryIsland.getUniqueId()).thenReturn("island-primary");
+
+        Island newIsland = mock(Island.class);
+        when(newIsland.getOwner()).thenReturn(playerUUID);
+        when(newIsland.getUniqueId()).thenReturn("island-new");
+
+        Location loc = mock(Location.class);
+        when(player.getLocation()).thenReturn(loc);
+
+        try (MockedStatic<Util> utilities = Mockito.mockStatic(Util.class);
+             MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            utilities.when(() -> Util.getWorld(world)).thenReturn(world);
+            when(islandsManager.getNumberOfConcurrentIslands(playerUUID, world)).thenReturn(1);
+
+            // Step 1: Player has 1 island. Login and play.
+            s.getInventory(player, world);
+            s.storeInventory(player, world);
+            assertTrue(s.isWorldStored(player, world));
+
+            // Step 2: Player creates 2nd island and teleports to it.
+            // onIslandEnter detects world-only key and upgrades BEFORE store/load.
+            when(islandsManager.getNumberOfConcurrentIslands(playerUUID, world)).thenReturn(2);
+            s.upgradeWorldKeyToIsland(player, world, primaryIsland);
+            assertEquals("world/island-primary", s.getCurrentKey(player));
+
+            // Now storeInventory saves to the island-specific key for the OLD island
+            s.storeInventory(player, world);
+            // Load new island — no world data to migrate, so player gets empty inventory
+            s.getInventory(player, world, newIsland);
+            assertEquals("world/island-new", s.getCurrentKey(player));
+
+            // Step 3: Player teleports back to primary island.
+            s.storeInventory(player, world);
+            s.getInventory(player, world, primaryIsland);
+            assertEquals("world/island-primary", s.getCurrentKey(player));
+
+            // Verify inventory was loaded (setContents called for the primary island load)
+            verify(player.getInventory(), atLeastOnce()).setContents(any(ItemStack[].class));
+        }
+    }
+
 }
