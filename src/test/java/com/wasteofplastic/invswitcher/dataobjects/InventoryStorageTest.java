@@ -16,10 +16,12 @@ import org.bukkit.Material;
 import org.bukkit.Statistic;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockbukkit.mockbukkit.MockBukkit;
 
 /**
  * @author tastybentos
@@ -35,7 +37,13 @@ public class InventoryStorageTest {
      */
     @BeforeEach
     public void setUp() {
+        MockBukkit.mock();
         is = new InventoryStorage();
+    }
+
+    @AfterEach
+    public void tearDown() {
+        MockBukkit.unmock();
     }
 
     /**
