@@ -21,7 +21,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -78,6 +80,8 @@ public class StoreTest {
 
     private Settings sets;
 
+    private Set<World> bentoboxWorlds;
+
     private UUID playerUUID;
 
     @Mock
@@ -130,6 +134,11 @@ public class StoreTest {
         }
         DatabaseType mockDbt = mock(DatabaseType.class);
         when(bbSettings.getDatabaseType()).thenReturn(mockDbt);
+
+        // Register world as a BentoBox world
+        bentoboxWorlds = new HashSet<>();
+        bentoboxWorlds.add(world);
+        when(addon.getWorlds()).thenReturn(bentoboxWorlds);
 
         // Disable island switching by default for existing tests
         sets.setIslandsActive(false);
@@ -378,6 +387,7 @@ public class StoreTest {
         World netherWorld = mock(World.class);
         when(netherWorld.getName()).thenReturn("world_nether");
         when(netherWorld.getEnvironment()).thenReturn(Environment.NETHER);
+        bentoboxWorlds.add(netherWorld);
 
         // Set up overworld for Util.getWorld
         World overworld = mock(World.class);
@@ -510,6 +520,85 @@ public class StoreTest {
             // Verify inventory was loaded (setContents called for the primary island load)
             verify(player.getInventory(), atLeastOnce()).setContents(any(ItemStack[].class));
         }
+    }
+
+    // --- Non-BentoBox world tests ---
+
+    @Test
+    public void testGetStorageKeyNonBentoBoxWorld() {
+        World otherWorld = mock(World.class);
+        when(otherWorld.getName()).thenReturn("em_adventurers_guild");
+        // otherWorld is NOT in bentoboxWorlds
+        String key = s.getStorageKey(player, otherWorld);
+        assertEquals(Store.DEFAULT_WORLD_KEY, key);
+    }
+
+    @Test
+    public void testAllNonBentoBoxWorldsShareKey() {
+        World world1 = mock(World.class);
+        when(world1.getName()).thenReturn("world");
+        World world2 = mock(World.class);
+        when(world2.getName()).thenReturn("em_adventurers_guild");
+        World world3 = mock(World.class);
+        when(world3.getName()).thenReturn("em_diamond_arena");
+        // None are in bentoboxWorlds
+        assertEquals(Store.DEFAULT_WORLD_KEY, s.getStorageKey(player, world1));
+        assertEquals(Store.DEFAULT_WORLD_KEY, s.getStorageKey(player, world2));
+        assertEquals(Store.DEFAULT_WORLD_KEY, s.getStorageKey(player, world3));
+    }
+
+    @Test
+    public void testBentoBoxToNonBentoBoxRestoresInventory() {
+        sets.setStatistics(false);
+        sets.setAdvancements(false);
+
+        World nonBBWorld = mock(World.class);
+        when(nonBBWorld.getName()).thenReturn("em_adventurers_guild");
+
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            // Step 1: Enter BentoBox world from non-BB world — saves "outside" inventory
+            s.storeInventory(player, nonBBWorld);
+            s.getInventory(player, world);
+            assertEquals("world", s.getCurrentKey(player));
+
+            // Step 2: Leave BentoBox world to a DIFFERENT non-BB world
+            s.storeInventory(player, world);
+            s.getInventory(player, nonBBWorld);
+            // Should load from DEFAULT_WORLD_KEY (where step 1 saved)
+            assertEquals(Store.DEFAULT_WORLD_KEY, s.getCurrentKey(player));
+
+            // Verify inventory was loaded (setContents called)
+            verify(player.getInventory(), atLeastOnce()).setContents(any(ItemStack[].class));
+        }
+    }
+
+    @Test
+    public void testMigrationFromOldWorldKey() {
+        sets.setStatistics(false);
+        sets.setAdvancements(false);
+
+        // Simulate old data: inventory was saved under "overworld" (old behavior)
+        World overworld = mock(World.class);
+        when(overworld.getName()).thenReturn("overworld");
+        // Temporarily add overworld to BentoBox worlds so storeAndSave uses "overworld" key
+        bentoboxWorlds.add(overworld);
+
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            s.storeInventory(player, overworld);
+            assertTrue(s.isWorldStored(player, overworld));
+        }
+
+        // Now remove overworld from BentoBox worlds (simulating the fix being applied)
+        bentoboxWorlds.remove(overworld);
+
+        // Loading for a non-BB world should migrate from the old "overworld" key
+        World otherWorld = mock(World.class);
+        when(otherWorld.getName()).thenReturn("em_adventurers_guild");
+        s.getInventory(player, otherWorld);
+        assertEquals(Store.DEFAULT_WORLD_KEY, s.getCurrentKey(player));
+
+        // Verify inventory was loaded (migration found the old "overworld" data)
+        verify(player.getInventory(), atLeastOnce()).setContents(any(ItemStack[].class));
     }
 
 }

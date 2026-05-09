@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -64,6 +65,7 @@ import world.bentobox.bentobox.util.Util;
 public class Store {
     private static final CharSequence THE_END = "_the_end";
     private static final CharSequence NETHER = "_nether";
+    static final String DEFAULT_WORLD_KEY = "default";
     private final Database<InventoryStorage> database;
     private final Map<UUID, InventoryStorage> cache;
     private final Map<UUID, String> currentKey;
@@ -108,6 +110,9 @@ public class Store {
      * @return storage key
      */
     String getStorageKey(Player player, World world, Location location, Island island) {
+        if (!addon.getWorlds().contains(world)) {
+            return DEFAULT_WORLD_KEY;
+        }
         String overworldName = getOverworldName(world);
 
         if (!addon.getSettings().isIslandsActive()) {
@@ -159,7 +164,25 @@ public class Store {
      * @return overworld name
      */
     private String getOverworldName(World world) {
+        if (!addon.getWorlds().contains(world)) {
+            return DEFAULT_WORLD_KEY;
+        }
         return (world.getName().replace(THE_END, "")).replace(NETHER, "");
+    }
+
+    private String findOldNonBentoBoxKey(InventoryStorage store) {
+        if (store.getInventory() == null) {
+            return null;
+        }
+        Set<String> bentoboxOverworlds = addon.getWorlds().stream()
+            .map(w -> (w.getName().replace(THE_END, "")).replace(NETHER, ""))
+            .collect(Collectors.toSet());
+        return store.getInventory().keySet().stream()
+            .filter(k -> !k.contains("/"))
+            .filter(k -> !bentoboxOverworlds.contains(k))
+            .filter(k -> !DEFAULT_WORLD_KEY.equals(k))
+            .findFirst()
+            .orElse(null);
     }
 
     /**
@@ -209,10 +232,20 @@ public class Store {
         // Always track the island-level key so future saves and island detection work correctly
         currentKey.put(player.getUniqueId(), islandKey);
 
+        // Migration: non-BentoBox worlds previously stored data under individual world names.
+        // Now they share DEFAULT_WORLD_KEY. Find and migrate old data on first access.
+        String islandLoadKey = islandKey;
+        if (DEFAULT_WORLD_KEY.equals(islandKey) && !store.isInventory(islandKey)) {
+            String oldKey = findOldNonBentoBoxKey(store);
+            if (oldKey != null) {
+                islandLoadKey = oldKey;
+                store.clearWorldData(oldKey);
+            }
+        }
+
         // Backward compat: if island-specific key has no data, migrate from world-only key.
         // This only happens once — the world-only data is cleared after migration so that
         // other islands don't also inherit a duplicate copy.
-        String islandLoadKey = islandKey;
         if (islandKey.contains("/") && !store.isInventory(islandKey)) {
             if (store.isInventory(worldKey)) {
                 islandLoadKey = worldKey;
