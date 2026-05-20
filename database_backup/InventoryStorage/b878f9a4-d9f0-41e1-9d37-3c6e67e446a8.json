@@ -1,0 +1,24 @@
+{
+  "uniqueId": "b878f9a4-d9f0-41e1-9d37-3c6e67e446a8",
+  "inventory": {
+    "world/island-primary": [
+      "is:\n  ==: org.bukkit.inventory.ItemStack\n",
+      null,
+      "is:\n  ==: org.bukkit.inventory.ItemStack\n",
+      null,
+      null,
+      "is:\n  ==: org.bukkit.inventory.ItemStack\n"
+    ]
+  },
+  "health": {},
+  "food": {},
+  "exp": {},
+  "location": {},
+  "gameMode": {},
+  "advancements": {},
+  "enderChest": {},
+  "untypedStats": {},
+  "blockStats": {},
+  "itemStats": {},
+  "entityStats": {}
+}

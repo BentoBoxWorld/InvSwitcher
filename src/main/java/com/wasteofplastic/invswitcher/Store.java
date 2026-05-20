@@ -320,7 +320,15 @@ public class Store {
 
     private void setAdvancements(InventoryStorage store, Player player, String overworldName) {
         // Advancements
-        store.getAdvancements(overworldName).forEach((k, v) -> {
+        Map<String, List<String>> advancements = store.getAdvancements(overworldName);
+        if (advancements.isEmpty()) {
+            return;
+        }
+        // Save current experience before granting advancements, because some advancements
+        // reward XP when their criteria are awarded, which would incorrectly increase the
+        // player's experience points.
+        int savedExp = getTotalExperience(player);
+        advancements.forEach((k, v) -> {
             Iterator<Advancement> it = Bukkit.advancementIterator();
             while (it.hasNext()) {
                 Advancement a = it.next();
@@ -330,7 +338,8 @@ public class Store {
                 }
             }
         });
-
+        // Restore experience to prevent advancement rewards from modifying it
+        setTotalExperience(player, savedExp);
     }
 
     public void removeFromCache(Player player) {
