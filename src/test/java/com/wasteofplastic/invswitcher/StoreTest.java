@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -30,8 +31,11 @@ import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
+import org.bukkit.advancement.Advancement;
+import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -198,6 +202,46 @@ public class StoreTest {
         verify(player).setHealth(18);
         verify(player).getInventory();
         verify(player).setTotalExperience(0);
+    }
+
+    /**
+     * Test that advancement grants during {@link Store#getInventory} do not modify the player's
+     * experience points. Some advancements reward XP when their criteria are awarded; the store
+     * must save and restore XP around the advancement grant step.
+     */
+    @Test
+    public void testGetInventoryAdvancementsPreservesExperience() {
+        sets.setAdvancements(true);
+        sets.setExperience(true);
+        sets.setStatistics(false);
+        sets.setIslandsActive(false);
+
+        // Mock an advancement with awarded criteria
+        Advancement advancement = mock(Advancement.class);
+        NamespacedKey advKey = NamespacedKey.minecraft("story_mine_stone");
+        when(advancement.getKey()).thenReturn(advKey);
+
+        AdvancementProgress progress = mock(AdvancementProgress.class);
+        Set<String> criteria = new HashSet<>(Set.of("mine_stone"));
+        when(progress.getAwardedCriteria()).thenReturn(criteria);
+        when(player.getAdvancementProgress(advancement)).thenReturn(progress);
+
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            // Return a fresh iterator each time so both storeInventory and getInventory can iterate
+            mockedBukkit.when(Bukkit::advancementIterator).thenAnswer(inv -> List.of(advancement).iterator());
+
+            // Store inventory (saves advancement data and clears player including XP reset)
+            s.storeInventory(player, world);
+
+            // Load inventory — experience set, advancements granted, XP restored
+            s.getInventory(player, world);
+        }
+
+        // setTotalExperience should be called exactly 3 times:
+        // 1. clearPlayer during storeInventory (XP reset to 0)
+        // 2. experience loading during getInventory (XP set to stored value 0)
+        // 3. XP restoration inside setAdvancements after granting advancement criteria
+        verify(player, times(3)).setTotalExperience(0);
     }
 
     /**
