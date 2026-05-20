@@ -46,6 +46,10 @@ release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
 
+ # Test artifacts
+database/
+database_backup/
+
  # Intellij
 *.iml
 *.java___jb_tmp___
