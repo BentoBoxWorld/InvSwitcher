@@ -17,6 +17,12 @@ import org.bukkit.entity.Player;
 import com.wasteofplastic.invswitcher.InvSwitcher;
 
 import world.bentobox.bentobox.api.events.island.IslandEnterEvent;
+import world.bentobox.bentobox.api.events.player.PlayerBaseEvent;
+import world.bentobox.bentobox.api.events.player.PlayerResetEnderChestEvent;
+import world.bentobox.bentobox.api.events.player.PlayerResetExpEvent;
+import world.bentobox.bentobox.api.events.player.PlayerResetHealthEvent;
+import world.bentobox.bentobox.api.events.player.PlayerResetHungerEvent;
+import world.bentobox.bentobox.api.events.player.PlayerResetInventoryEvent;
 import world.bentobox.bentobox.database.objects.Island;
 import world.bentobox.bentobox.util.Util;
 
@@ -183,5 +189,100 @@ public class PlayerListener implements Listener {
         addon.getStore().removeFromCache(event.getPlayer());
     }
 
+    /**
+     * Intercepts BentoBox's inventory reset when the player is not in the BentoBox world.
+     * Cancels the direct clear and instead wipes the stored inventory data for that world.
+     * @param event - event
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onPlayerResetInventory(PlayerResetInventoryEvent event) {
+        if (!shouldInterceptPlayerReset(event)) return;
+        event.setCancelled(true);
+        Player player = Bukkit.getPlayer(event.getPlayerUUID());
+        if (player != null) {
+            addon.getStore().clearStoredInventoryForWorld(player, event.getWorld(), event.getIsland());
+        }
+    }
+
+    /**
+     * Intercepts BentoBox's ender chest reset when the player is not in the BentoBox world.
+     * Cancels the direct clear and instead wipes the stored ender chest data for that world.
+     * @param event - event
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onPlayerResetEnderChest(PlayerResetEnderChestEvent event) {
+        if (!shouldInterceptPlayerReset(event)) return;
+        event.setCancelled(true);
+        Player player = Bukkit.getPlayer(event.getPlayerUUID());
+        if (player != null) {
+            addon.getStore().clearStoredEnderChestForWorld(player, event.getWorld(), event.getIsland());
+        }
+    }
+
+    /**
+     * Intercepts BentoBox's experience reset when the player is not in the BentoBox world.
+     * Cancels the direct clear and instead zeroes the stored experience for that world.
+     * @param event - event
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onPlayerResetExp(PlayerResetExpEvent event) {
+        if (!shouldInterceptPlayerReset(event)) return;
+        event.setCancelled(true);
+        Player player = Bukkit.getPlayer(event.getPlayerUUID());
+        if (player != null) {
+            addon.getStore().clearStoredExpForWorld(player, event.getWorld(), event.getIsland());
+        }
+    }
+
+    /**
+     * Intercepts BentoBox's health reset when the player is not in the BentoBox world.
+     * Cancels the direct reset and instead removes the stored health for that world
+     * (so the player receives max health when they next enter the world).
+     * @param event - event
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onPlayerResetHealth(PlayerResetHealthEvent event) {
+        if (!shouldInterceptPlayerReset(event)) return;
+        event.setCancelled(true);
+        Player player = Bukkit.getPlayer(event.getPlayerUUID());
+        if (player != null) {
+            addon.getStore().clearStoredHealthForWorld(player, event.getWorld(), event.getIsland());
+        }
+    }
+
+    /**
+     * Intercepts BentoBox's hunger reset when the player is not in the BentoBox world.
+     * Cancels the direct reset and instead sets stored food to full (20) for that world.
+     * @param event - event
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onPlayerResetHunger(PlayerResetHungerEvent event) {
+        if (!shouldInterceptPlayerReset(event)) return;
+        event.setCancelled(true);
+        Player player = Bukkit.getPlayer(event.getPlayerUUID());
+        if (player != null) {
+            addon.getStore().clearStoredFoodForWorld(player, event.getWorld(), event.getIsland());
+        }
+    }
+
+    /**
+     * Determines whether InvSwitcher should intercept a BentoBox player reset event.
+     * Returns true if the event's world is managed by InvSwitcher, the player is online,
+     * and the player is currently in a different world (not the event world).
+     * @param event - the reset event
+     * @return true if InvSwitcher should cancel the event and handle it itself
+     */
+    private boolean shouldInterceptPlayerReset(PlayerBaseEvent event) {
+        World eventWorld = event.getWorld();
+        if (!addon.getWorlds().contains(eventWorld)) {
+            return false;
+        }
+        Player player = Bukkit.getPlayer(event.getPlayerUUID());
+        if (player == null) {
+            return false;
+        }
+        // Only intercept if the player is not currently in the event world
+        return !Util.sameWorld(player.getWorld(), eventWorld);
+    }
 
 }

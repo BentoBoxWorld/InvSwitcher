@@ -645,4 +645,180 @@ public class StoreTest {
         verify(player.getInventory(), atLeastOnce()).setContents(any(ItemStack[].class));
     }
 
+    // --- clearStoredXForWorld Tests ---
+
+    /**
+     * When inventory is enabled and the event fires for a world the player is not in,
+     * the stored inventory for that world should be cleared.
+     * After clearing, loading inventory for that world should give empty contents.
+     */
+    @Test
+    public void testClearStoredInventoryForWorld() {
+        sets.setStatistics(false);
+        sets.setAdvancements(false);
+        Island island = mock(Island.class);
+        // First save something in the store
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            s.storeInventory(player, world);
+            assertTrue(s.isWorldStored(player, world), "Inventory should be stored before clearing");
+
+            // Clear stored inventory for the world
+            s.clearStoredInventoryForWorld(player, world, island);
+
+            // isWorldStored returns true even after clearing (entry exists but is empty list)
+            assertTrue(s.isWorldStored(player, world));
+
+            // Load inventory back - should set empty contents to player
+            s.getInventory(player, world);
+            // setContents should have been called with empty array
+            verify(player.getInventory(), atLeastOnce()).setContents(any(ItemStack[].class));
+        }
+    }
+
+    /**
+     * When ender chest is enabled, clearStoredEnderChestForWorld should work without error.
+     */
+    @Test
+    public void testClearStoredEnderChestForWorld() {
+        sets.setStatistics(false);
+        sets.setAdvancements(false);
+        Island island = mock(Island.class);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            s.storeInventory(player, world);
+            // Should not throw
+            s.clearStoredEnderChestForWorld(player, world, island);
+        }
+    }
+
+    /**
+     * When experience is enabled, clearStoredExpForWorld should zero out the stored exp.
+     */
+    @Test
+    public void testClearStoredExpForWorld() {
+        sets.setStatistics(false);
+        sets.setAdvancements(false);
+        Island island = mock(Island.class);
+        when(player.getTotalExperience()).thenReturn(500);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            s.storeInventory(player, world);
+            // Should not throw
+            s.clearStoredExpForWorld(player, world, island);
+        }
+    }
+
+    /**
+     * When health is enabled, clearStoredHealthForWorld should work without error.
+     */
+    @Test
+    public void testClearStoredHealthForWorld() {
+        sets.setStatistics(false);
+        sets.setAdvancements(false);
+        Island island = mock(Island.class);
+        when(player.getHealth()).thenReturn(10.0);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            s.storeInventory(player, world);
+            // Should not throw
+            s.clearStoredHealthForWorld(player, world, island);
+        }
+    }
+
+    /**
+     * When food is enabled, clearStoredFoodForWorld should work without error.
+     */
+    @Test
+    public void testClearStoredFoodForWorld() {
+        sets.setStatistics(false);
+        sets.setAdvancements(false);
+        Island island = mock(Island.class);
+        when(player.getFoodLevel()).thenReturn(8);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            s.storeInventory(player, world);
+            // Should not throw
+            s.clearStoredFoodForWorld(player, world, island);
+        }
+    }
+
+    /**
+     * clearStoredInventoryForWorld should be a no-op when inventory is disabled in settings.
+     * No exceptions should be thrown.
+     */
+    @Test
+    public void testClearStoredInventoryForWorldInventoryDisabled() {
+        sets.setInventory(false);
+        sets.setStatistics(false);
+        sets.setAdvancements(false);
+        Island island = mock(Island.class);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            s.storeInventory(player, world);
+            // With inventory disabled, nothing is stored in the inventory map
+            assertFalse(s.isWorldStored(player, world));
+
+            // Calling clear should be a no-op (no exception, no effect)
+            s.clearStoredInventoryForWorld(player, world, island);
+            assertFalse(s.isWorldStored(player, world));
+        }
+    }
+
+    /**
+     * getStorageKeyForEvent should return the world name when islands mode is inactive.
+     */
+    @Test
+    public void testGetStorageKeyForEventIslandsDisabled() {
+        sets.setIslandsActive(false);
+        Island island = mock(Island.class);
+        String key = s.getStorageKeyForEvent(player, world, island);
+        assertEquals("world", key);
+    }
+
+    /**
+     * getStorageKeyForEvent should return world name when player has only 1 island.
+     */
+    @Test
+    public void testGetStorageKeyForEventSingleIsland() {
+        sets.setIslandsActive(true);
+        Island island = mock(Island.class);
+        try (MockedStatic<Util> mockedUtil = mockStatic(Util.class)) {
+            mockedUtil.when(() -> Util.getWorld(world)).thenReturn(world);
+            when(islandsManager.getNumberOfConcurrentIslands(playerUUID, world)).thenReturn(1);
+            String key = s.getStorageKeyForEvent(player, world, island);
+            assertEquals("world", key);
+        }
+    }
+
+    /**
+     * getStorageKeyForEvent should return island-specific key when player owns the island
+     * and has multiple islands.
+     */
+    @Test
+    public void testGetStorageKeyForEventMultipleIslandsOwner() {
+        sets.setIslandsActive(true);
+        Island island = mock(Island.class);
+        when(island.getOwner()).thenReturn(playerUUID);
+        when(island.getUniqueId()).thenReturn("island-abc");
+        try (MockedStatic<Util> mockedUtil = mockStatic(Util.class)) {
+            mockedUtil.when(() -> Util.getWorld(world)).thenReturn(world);
+            when(islandsManager.getNumberOfConcurrentIslands(playerUUID, world)).thenReturn(2);
+            String key = s.getStorageKeyForEvent(player, world, island);
+            assertEquals("world/island-abc", key);
+        }
+    }
+
+    /**
+     * getStorageKeyForEvent should return just the world name when player does not own the island
+     * (e.g., kicked from a team). Uses the world-level key since the player is a member, not owner.
+     */
+    @Test
+    public void testGetStorageKeyForEventMultipleIslandsNotOwner() {
+        sets.setIslandsActive(true);
+        Island island = mock(Island.class);
+        UUID otherOwner = UUID.randomUUID();
+        when(island.getOwner()).thenReturn(otherOwner); // player is NOT the owner
+        try (MockedStatic<Util> mockedUtil = mockStatic(Util.class)) {
+            mockedUtil.when(() -> Util.getWorld(world)).thenReturn(world);
+            when(islandsManager.getNumberOfConcurrentIslands(playerUUID, world)).thenReturn(2);
+            String key = s.getStorageKeyForEvent(player, world, island);
+            assertEquals("world", key); // Falls back to world name
+        }
+    }
+
 }

@@ -1,6 +1,8 @@
 package com.wasteofplastic.invswitcher.listeners;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -37,6 +39,11 @@ import com.wasteofplastic.invswitcher.Store;
 
 import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.api.events.island.IslandEnterEvent;
+import world.bentobox.bentobox.api.events.player.PlayerResetEnderChestEvent;
+import world.bentobox.bentobox.api.events.player.PlayerResetExpEvent;
+import world.bentobox.bentobox.api.events.player.PlayerResetHealthEvent;
+import world.bentobox.bentobox.api.events.player.PlayerResetHungerEvent;
+import world.bentobox.bentobox.api.events.player.PlayerResetInventoryEvent;
 import world.bentobox.bentobox.database.objects.Island;
 import world.bentobox.bentobox.managers.IslandsManager;
 import world.bentobox.bentobox.util.Util;
@@ -64,6 +71,8 @@ public class PlayerListenerTest {
     private Settings settings;
     @Mock
     private IslandsManager islandsManager;
+    @Mock
+    private Island island;
 
     private UUID playerUUID;
     private MockedStatic<BentoBox> mockedBentoBox;
@@ -351,6 +360,161 @@ public class PlayerListenerTest {
         pl.onPlayerRespawn(event);
         // No island at respawn, no switch
         verify(store, never()).storeAndSave(any(), any(), any(boolean.class));
+    }
+
+    // --- Player Reset Event Tests ---
+
+    /**
+     * When the event world is not managed by InvSwitcher, the event should not be intercepted
+     * and the store clear methods should not be called.
+     */
+    @Test
+    public void testOnPlayerResetInventoryWorldNotManaged() {
+        // notWorld is not in the addon's worlds set
+        when(addon.getWorlds()).thenReturn(Set.of(world)); // only 'world' is managed
+        PlayerResetInventoryEvent event = new PlayerResetInventoryEvent(notWorld, island, playerUUID);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class)) {
+            mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(player);
+            pl.onPlayerResetInventory(event);
+        }
+        assertFalse(event.isCancelled(), "Event should not be cancelled when world is not managed");
+        verify(store, never()).clearStoredInventoryForWorld(any(), any(), any());
+    }
+
+    /**
+     * When the player is offline, the event should not be intercepted.
+     */
+    @Test
+    public void testOnPlayerResetInventoryPlayerOffline() {
+        PlayerResetInventoryEvent event = new PlayerResetInventoryEvent(world, island, playerUUID);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class)) {
+            mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(null); // offline
+            pl.onPlayerResetInventory(event);
+        }
+        assertFalse(event.isCancelled(), "Event should not be cancelled when player is offline");
+        verify(store, never()).clearStoredInventoryForWorld(any(), any(), any());
+    }
+
+    /**
+     * When the player is currently in the event world, BentoBox should handle the reset directly.
+     */
+    @Test
+    public void testOnPlayerResetInventoryPlayerInEventWorld() {
+        // player.getWorld() returns 'world', event world is also 'world'
+        when(player.getWorld()).thenReturn(world);
+        PlayerResetInventoryEvent event = new PlayerResetInventoryEvent(world, island, playerUUID);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class);
+             MockedStatic<Util> mockedUtil = mockStatic(Util.class)) {
+            mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(player);
+            mockedUtil.when(() -> Util.sameWorld(world, world)).thenReturn(true);
+            pl.onPlayerResetInventory(event);
+        }
+        assertFalse(event.isCancelled(), "Event should not be cancelled when player is in event world");
+        verify(store, never()).clearStoredInventoryForWorld(any(), any(), any());
+    }
+
+    /**
+     * When the player is in a non-BentoBox world, the inventory reset event should be cancelled
+     * and the stored inventory for the BentoBox world should be cleared.
+     */
+    @Test
+    public void testOnPlayerResetInventoryPlayerInDifferentWorld() {
+        // player is in notWorld, event fires for world
+        when(player.getWorld()).thenReturn(notWorld);
+        PlayerResetInventoryEvent event = new PlayerResetInventoryEvent(world, island, playerUUID);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class);
+             MockedStatic<Util> mockedUtil = mockStatic(Util.class)) {
+            mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(player);
+            mockedUtil.when(() -> Util.sameWorld(notWorld, world)).thenReturn(false);
+            pl.onPlayerResetInventory(event);
+        }
+        assertTrue(event.isCancelled(), "Event should be cancelled when player is in a different world");
+        verify(store).clearStoredInventoryForWorld(player, world, island);
+    }
+
+    /**
+     * Ender chest reset should be intercepted when the player is in a different world.
+     */
+    @Test
+    public void testOnPlayerResetEnderChestPlayerInDifferentWorld() {
+        when(player.getWorld()).thenReturn(notWorld);
+        PlayerResetEnderChestEvent event = new PlayerResetEnderChestEvent(world, island, playerUUID);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class);
+             MockedStatic<Util> mockedUtil = mockStatic(Util.class)) {
+            mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(player);
+            mockedUtil.when(() -> Util.sameWorld(notWorld, world)).thenReturn(false);
+            pl.onPlayerResetEnderChest(event);
+        }
+        assertTrue(event.isCancelled(), "Event should be cancelled when player is in a different world");
+        verify(store).clearStoredEnderChestForWorld(player, world, island);
+    }
+
+    /**
+     * Ender chest reset should not be intercepted when the player is in the event world.
+     */
+    @Test
+    public void testOnPlayerResetEnderChestPlayerInEventWorld() {
+        when(player.getWorld()).thenReturn(world);
+        PlayerResetEnderChestEvent event = new PlayerResetEnderChestEvent(world, island, playerUUID);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class);
+             MockedStatic<Util> mockedUtil = mockStatic(Util.class)) {
+            mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(player);
+            mockedUtil.when(() -> Util.sameWorld(world, world)).thenReturn(true);
+            pl.onPlayerResetEnderChest(event);
+        }
+        assertFalse(event.isCancelled());
+        verify(store, never()).clearStoredEnderChestForWorld(any(), any(), any());
+    }
+
+    /**
+     * Experience reset should be intercepted when the player is in a different world.
+     */
+    @Test
+    public void testOnPlayerResetExpPlayerInDifferentWorld() {
+        when(player.getWorld()).thenReturn(notWorld);
+        PlayerResetExpEvent event = new PlayerResetExpEvent(world, island, playerUUID);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class);
+             MockedStatic<Util> mockedUtil = mockStatic(Util.class)) {
+            mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(player);
+            mockedUtil.when(() -> Util.sameWorld(notWorld, world)).thenReturn(false);
+            pl.onPlayerResetExp(event);
+        }
+        assertTrue(event.isCancelled(), "Event should be cancelled when player is in a different world");
+        verify(store).clearStoredExpForWorld(player, world, island);
+    }
+
+    /**
+     * Health reset should be intercepted when the player is in a different world.
+     */
+    @Test
+    public void testOnPlayerResetHealthPlayerInDifferentWorld() {
+        when(player.getWorld()).thenReturn(notWorld);
+        PlayerResetHealthEvent event = new PlayerResetHealthEvent(world, island, playerUUID);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class);
+             MockedStatic<Util> mockedUtil = mockStatic(Util.class)) {
+            mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(player);
+            mockedUtil.when(() -> Util.sameWorld(notWorld, world)).thenReturn(false);
+            pl.onPlayerResetHealth(event);
+        }
+        assertTrue(event.isCancelled(), "Event should be cancelled when player is in a different world");
+        verify(store).clearStoredHealthForWorld(player, world, island);
+    }
+
+    /**
+     * Hunger reset should be intercepted when the player is in a different world.
+     */
+    @Test
+    public void testOnPlayerResetHungerPlayerInDifferentWorld() {
+        when(player.getWorld()).thenReturn(notWorld);
+        PlayerResetHungerEvent event = new PlayerResetHungerEvent(world, island, playerUUID);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class);
+             MockedStatic<Util> mockedUtil = mockStatic(Util.class)) {
+            mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(player);
+            mockedUtil.when(() -> Util.sameWorld(notWorld, world)).thenReturn(false);
+            pl.onPlayerResetHunger(event);
+        }
+        assertTrue(event.isCancelled(), "Event should be cancelled when player is in a different world");
+        verify(store).clearStoredFoodForWorld(player, world, island);
     }
 
 }
