@@ -676,4 +676,134 @@ public class Store {
     public void saveOnShutdown() {
         Bukkit.getOnlinePlayers().forEach(p -> this.storeAndSave(p, p.getWorld(), true));
     }
+
+    /**
+     * Compute the storage key for a player and island event world, without using
+     * the player's current location. Used when the player is not in the target world.
+     * @param player - player
+     * @param world  - the BentoBox event world
+     * @param island - the island involved in the event (may be null)
+     * @return storage key for this world/island combination
+     */
+    String getStorageKeyForEvent(Player player, World world, Island island) {
+        String overworldName = getOverworldName(world);
+        if (!addon.getSettings().isIslandsActive()) {
+            return overworldName;
+        }
+        World overworld = Util.getWorld(world);
+        if (overworld == null) {
+            return overworldName;
+        }
+        int count = addon.getIslands().getNumberOfConcurrentIslands(player.getUniqueId(), overworld);
+        if (count <= 1) {
+            return overworldName;
+        }
+        // Only use island-specific key if the player owns the island
+        if (island != null && island.getOwner() != null && island.getOwner().equals(player.getUniqueId())) {
+            return overworldName + "/" + island.getUniqueId();
+        }
+        return overworldName;
+    }
+
+    /**
+     * Clears the stored inventory for a BentoBox world when the player is not currently in
+     * that world. Called when BentoBox fires a {@code PlayerResetInventoryEvent} while the
+     * player is in a non-BentoBox world so the player's current inventory is not affected.
+     * @param player - online player
+     * @param world  - the BentoBox world whose stored inventory should be cleared
+     * @param island - the island involved in the reset (may be null)
+     */
+    public void clearStoredInventoryForWorld(Player player, World world, Island island) {
+        InventoryStorage store = getInv(player);
+        String key = getStorageKeyForEvent(player, world, island);
+        String worldKey = getOverworldName(world);
+        Settings settings = addon.getSettings();
+        if (settings.isInventory()) {
+            String k = settings.isIslandsInventory() ? key : worldKey;
+            store.setInventory(k, Collections.emptyList());
+        }
+        database.saveObjectAsync(store);
+    }
+
+    /**
+     * Clears the stored ender chest for a BentoBox world when the player is not currently in
+     * that world. Called when BentoBox fires a {@code PlayerResetEnderChestEvent} while the
+     * player is in a non-BentoBox world.
+     * @param player - online player
+     * @param world  - the BentoBox world whose stored ender chest should be cleared
+     * @param island - the island involved in the reset (may be null)
+     */
+    public void clearStoredEnderChestForWorld(Player player, World world, Island island) {
+        InventoryStorage store = getInv(player);
+        String key = getStorageKeyForEvent(player, world, island);
+        String worldKey = getOverworldName(world);
+        Settings settings = addon.getSettings();
+        if (settings.isEnderChest()) {
+            String k = settings.isIslandsEnderChest() ? key : worldKey;
+            store.setEnderChest(k, Collections.emptyList());
+        }
+        database.saveObjectAsync(store);
+    }
+
+    /**
+     * Zeroes the stored experience for a BentoBox world when the player is not currently in
+     * that world. Called when BentoBox fires a {@code PlayerResetExpEvent} while the
+     * player is in a non-BentoBox world.
+     * @param player - online player
+     * @param world  - the BentoBox world whose stored experience should be zeroed
+     * @param island - the island involved in the reset (may be null)
+     */
+    public void clearStoredExpForWorld(Player player, World world, Island island) {
+        InventoryStorage store = getInv(player);
+        String key = getStorageKeyForEvent(player, world, island);
+        String worldKey = getOverworldName(world);
+        Settings settings = addon.getSettings();
+        if (settings.isExperience()) {
+            String k = settings.isIslandsExperience() ? key : worldKey;
+            store.setExp(k, 0);
+        }
+        database.saveObjectAsync(store);
+    }
+
+    /**
+     * Removes the stored health for a BentoBox world when the player is not currently in
+     * that world. Called when BentoBox fires a {@code PlayerResetHealthEvent} while the
+     * player is in a non-BentoBox world. Removing the entry means the player will receive
+     * maximum health the next time they enter the world.
+     * @param player - online player
+     * @param world  - the BentoBox world whose stored health should be removed
+     * @param island - the island involved in the reset (may be null)
+     */
+    public void clearStoredHealthForWorld(Player player, World world, Island island) {
+        InventoryStorage store = getInv(player);
+        String key = getStorageKeyForEvent(player, world, island);
+        String worldKey = getOverworldName(world);
+        Settings settings = addon.getSettings();
+        if (settings.isHealth()) {
+            String k = settings.isIslandsHealth() ? key : worldKey;
+            store.getHealth().remove(k);
+        }
+        database.saveObjectAsync(store);
+    }
+
+    /**
+     * Resets the stored food level to full (20) for a BentoBox world when the player is not
+     * currently in that world. Called when BentoBox fires a {@code PlayerResetHungerEvent}
+     * while the player is in a non-BentoBox world.
+     * @param player - online player
+     * @param world  - the BentoBox world whose stored food level should be reset
+     * @param island - the island involved in the reset (may be null)
+     */
+    public void clearStoredFoodForWorld(Player player, World world, Island island) {
+        InventoryStorage store = getInv(player);
+        String key = getStorageKeyForEvent(player, world, island);
+        String worldKey = getOverworldName(world);
+        Settings settings = addon.getSettings();
+        if (settings.isFood()) {
+            String k = settings.isIslandsFood() ? key : worldKey;
+            store.setFood(k, 20);
+        }
+        database.saveObjectAsync(store);
+    }
+
 }
