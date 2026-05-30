@@ -1,10 +1,15 @@
 package com.wasteofplastic.invswitcher.commands.admin;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import com.wasteofplastic.invswitcher.commands.AbstractMoneyCommand;
 
 import world.bentobox.bentobox.api.commands.CompositeCommand;
 import world.bentobox.bentobox.api.localization.TextVariables;
 import world.bentobox.bentobox.api.user.User;
+import world.bentobox.bentobox.util.Util;
 
 /**
  * Shared base for admin economy sub-commands of the form {@code <command> <player> <amount>}.
@@ -29,5 +34,18 @@ public abstract class AbstractAdminMoneyCommand extends AbstractMoneyCommand {
             return null;
         }
         return target;
+    }
+
+    /**
+     * Tab-complete the player parameter (the first argument of these commands) with the names of
+     * online players. The command tree is {@code <admin> eco <sub> <player> [amount]}, so the
+     * player slot is the third token in the dispatched args.
+     */
+    @Override
+    public Optional<List<String>> tabComplete(User user, String alias, List<String> args) {
+        if (args.size() == 3) {
+            return Optional.of(Util.tabLimit(new ArrayList<>(Util.getOnlinePlayerList(user)), args.get(2)));
+        }
+        return Optional.empty();
     }
 }
