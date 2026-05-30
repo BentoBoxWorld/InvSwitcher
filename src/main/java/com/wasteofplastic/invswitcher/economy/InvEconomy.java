@@ -106,9 +106,9 @@ public class InvEconomy implements Economy {
             }
             delegate = found;
             delegateResolved = true;
-            addon.log(found != null
-                    ? "Per-world economy: delegating unmanaged-world transactions to " + found.getName()
-                    : "Per-world economy: no other economy found; InvSwitcher is the only economy.");
+            debug(found != null
+                    ? "delegating unmanaged-world transactions to " + found.getName()
+                    : "no other economy found; InvSwitcher is the only economy.");
         }
         return delegate;
     }

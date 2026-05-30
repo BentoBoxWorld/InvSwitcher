@@ -131,8 +131,10 @@ public class InvSwitcher extends Addon {
         // by those addons, so refreshing it updates them too.
         refreshBentoBoxVaultHook();
 
-        // Dump the current economy provider chain so it is clear that we win the registration.
-        logEconomyRegistrations();
+        // Dump the current economy provider chain (debug only) so it is clear we win the registration.
+        if (getSettings().isEconomyDebug()) {
+            logEconomyRegistrations();
+        }
     }
 
     /**
