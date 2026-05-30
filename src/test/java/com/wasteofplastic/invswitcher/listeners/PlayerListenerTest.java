@@ -44,6 +44,7 @@ import world.bentobox.bentobox.api.events.player.PlayerResetExpEvent;
 import world.bentobox.bentobox.api.events.player.PlayerResetHealthEvent;
 import world.bentobox.bentobox.api.events.player.PlayerResetHungerEvent;
 import world.bentobox.bentobox.api.events.player.PlayerResetInventoryEvent;
+import world.bentobox.bentobox.api.events.player.PlayerResetMoneyEvent;
 import world.bentobox.bentobox.database.objects.Island;
 import world.bentobox.bentobox.managers.IslandsManager;
 import world.bentobox.bentobox.util.Util;
@@ -515,6 +516,56 @@ public class PlayerListenerTest {
         }
         assertTrue(event.isCancelled(), "Event should be cancelled when player is in a different world");
         verify(store).clearStoredFoodForWorld(player, world, island);
+    }
+
+    /**
+     * Money reset should be intercepted when the player is in a different world.
+     */
+    @Test
+    public void testOnPlayerResetMoneyPlayerInDifferentWorld() {
+        when(settings.isMoney()).thenReturn(true);
+        when(player.getWorld()).thenReturn(notWorld);
+        PlayerResetMoneyEvent event = new PlayerResetMoneyEvent(world, island, playerUUID);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class);
+             MockedStatic<Util> mockedUtil = mockStatic(Util.class)) {
+            mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(player);
+            mockedUtil.when(() -> Util.sameWorld(notWorld, world)).thenReturn(false);
+            pl.onPlayerResetMoney(event);
+        }
+        assertTrue(event.isCancelled(), "Event should be cancelled when player is in a different world");
+        verify(store).clearStoredMoneyForWorld(player, world, island);
+    }
+
+    /**
+     * Money reset should be left to BentoBox (not intercepted) when the player is in the event world,
+     * because BentoBox's reset routes correctly through InvSwitcher's economy.
+     */
+    @Test
+    public void testOnPlayerResetMoneyPlayerInEventWorld() {
+        when(settings.isMoney()).thenReturn(true);
+        when(player.getWorld()).thenReturn(world);
+        PlayerResetMoneyEvent event = new PlayerResetMoneyEvent(world, island, playerUUID);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class);
+             MockedStatic<Util> mockedUtil = mockStatic(Util.class)) {
+            mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(player);
+            mockedUtil.when(() -> Util.sameWorld(world, world)).thenReturn(true);
+            pl.onPlayerResetMoney(event);
+        }
+        assertFalse(event.isCancelled());
+        verify(store, never()).clearStoredMoneyForWorld(any(), any(), any());
+    }
+
+    /**
+     * Money reset should be ignored entirely when InvSwitcher money is disabled.
+     */
+    @Test
+    public void testOnPlayerResetMoneyMoneyDisabled() {
+        when(settings.isMoney()).thenReturn(false);
+        when(player.getWorld()).thenReturn(notWorld);
+        PlayerResetMoneyEvent event = new PlayerResetMoneyEvent(world, island, playerUUID);
+        pl.onPlayerResetMoney(event);
+        assertFalse(event.isCancelled());
+        verify(store, never()).clearStoredMoneyForWorld(any(), any(), any());
     }
 
 }

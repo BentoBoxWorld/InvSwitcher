@@ -23,6 +23,7 @@ import world.bentobox.bentobox.api.events.player.PlayerResetExpEvent;
 import world.bentobox.bentobox.api.events.player.PlayerResetHealthEvent;
 import world.bentobox.bentobox.api.events.player.PlayerResetHungerEvent;
 import world.bentobox.bentobox.api.events.player.PlayerResetInventoryEvent;
+import world.bentobox.bentobox.api.events.player.PlayerResetMoneyEvent;
 import world.bentobox.bentobox.database.objects.Island;
 import world.bentobox.bentobox.util.Util;
 
@@ -262,6 +263,29 @@ public class PlayerListener implements Listener {
         Player player = Bukkit.getPlayer(event.getPlayerUUID());
         if (player != null) {
             addon.getStore().clearStoredFoodForWorld(player, event.getWorld(), event.getIsland());
+        }
+    }
+
+    /**
+     * Intercepts BentoBox's money reset when the player is not in the BentoBox world. BentoBox's
+     * default reset reads the player's <em>current</em> world balance and withdraws it from the
+     * event world, which is wrong when the player is elsewhere. Instead, cancel it and zero the
+     * stored balance for the event world directly. When the player is in the event world the
+     * reset is left to BentoBox, which routes correctly through InvSwitcher's economy.
+     * @param event - event
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onPlayerResetMoney(PlayerResetMoneyEvent event) {
+        if (!addon.getSettings().isMoney()) {
+            return;
+        }
+        if (!shouldInterceptPlayerReset(event)) {
+            return;
+        }
+        event.setCancelled(true);
+        Player player = Bukkit.getPlayer(event.getPlayerUUID());
+        if (player != null) {
+            addon.getStore().clearStoredMoneyForWorld(player, event.getWorld(), event.getIsland());
         }
     }
 

@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.Registry;
 import org.bukkit.Statistic;
 import org.bukkit.World;
@@ -65,7 +66,7 @@ import world.bentobox.bentobox.util.Util;
 public class Store {
     private static final CharSequence THE_END = "_the_end";
     private static final CharSequence NETHER = "_nether";
-    static final String DEFAULT_WORLD_KEY = "default";
+    public static final String DEFAULT_WORLD_KEY = "default";
     private final Database<InventoryStorage> database;
     private final Map<UUID, InventoryStorage> cache;
     private final Map<UUID, String> currentKey;
@@ -410,6 +411,9 @@ public class Store {
         // otherwise compute from location
         String islandKey = currentKey.getOrDefault(player.getUniqueId(), getStorageKey(player, world));
         String worldKey = getOverworldName(world);
+        // Persist the key so economy transactions for this player can be routed to the
+        // world they were last in, even after they log out.
+        store.setLastKey(islandKey);
         // Each option saves to the island key or the world key based on its island sub-setting
         Settings settings = addon.getSettings();
         if (settings.isInventory()) {
@@ -804,6 +808,106 @@ public class Store {
             store.setFood(k, 20);
         }
         database.saveObjectAsync(store);
+    }
+
+    /**
+     * Zeroes the stored money balance for a BentoBox world when the player is not currently in
+     * that world. Called when BentoBox fires a {@code PlayerResetMoneyEvent} (e.g. on island
+     * reset) while the player is in a non-BentoBox world, so the correct world's balance is
+     * cleared rather than BentoBox withdrawing from the wrong world.
+     * @param player - online player
+     * @param world  - the BentoBox world whose stored balance should be zeroed
+     * @param island - the island involved in the reset (may be null)
+     */
+    public void clearStoredMoneyForWorld(Player player, World world, Island island) {
+        InventoryStorage store = getInv(player);
+        String key = getStorageKeyForEvent(player, world, island);
+        String worldKey = getOverworldName(world);
+        Settings settings = addon.getSettings();
+        if (settings.isMoney()) {
+            String k = settings.isIslandsMoney() ? key : worldKey;
+            store.setMoney(k, 0D);
+        }
+        database.saveObjectAsync(store);
+    }
+
+    // ------ ECONOMY SUPPORT ------
+
+    /**
+     * Get the {@link InventoryStorage} for any player UUID, online or offline. For online
+     * players this returns the cached session object so economy changes stay consistent
+     * with the rest of their data. For offline players a transient copy is loaded from the
+     * database and is deliberately <b>not</b> cached, so a later login reloads fresh data.
+     * @param uuid - player UUID
+     * @return the player's inventory storage (never null)
+     */
+    public InventoryStorage getStorageObject(UUID uuid) {
+        if (cache.containsKey(uuid)) {
+            return cache.get(uuid);
+        }
+        if (database.objectExists(uuid.toString())) {
+            InventoryStorage store = database.loadObject(uuid.toString());
+            if (store != null) {
+                return store;
+            }
+        }
+        InventoryStorage store = new InventoryStorage();
+        store.setUniqueId(uuid.toString());
+        return store;
+    }
+
+    /**
+     * Persist a storage object asynchronously.
+     * @param store - storage to save
+     */
+    public void saveStorage(InventoryStorage store) {
+        database.saveObjectAsync(store);
+    }
+
+    /**
+     * Resolve the money storage key for a player in a specific world.
+     * @param player - player (online or offline)
+     * @param world  - world to resolve the key for
+     * @return the money key, or {@code null} if the world is not managed by InvSwitcher
+     */
+    public String getMoneyKey(OfflinePlayer player, World world) {
+        if (world == null || !addon.getWorlds().contains(world)) {
+            return null;
+        }
+        String overworldName = getOverworldName(world);
+        Settings settings = addon.getSettings();
+        if (!settings.isIslandsActive() || !settings.isIslandsMoney()) {
+            return overworldName;
+        }
+        // Best-effort per-island routing
+        Player online = player.getPlayer();
+        if (online != null && world.equals(online.getWorld())) {
+            return getStorageKey(online, world);
+        }
+        // Offline or in another world: fall back to the player's last island key for this overworld
+        String last = getStorageObject(player.getUniqueId()).getLastKey();
+        if (last != null && last.startsWith(overworldName + "/")) {
+            return last;
+        }
+        return overworldName;
+    }
+
+    /**
+     * Resolve the money storage key for a player's current (online) or last-known (offline)
+     * world, used when a caller does not specify a world.
+     * @param player - player (online or offline)
+     * @return the money key, or {@code null} if it cannot be resolved to a managed world
+     */
+    public String getCurrentMoneyKey(OfflinePlayer player) {
+        Player online = player.getPlayer();
+        if (online != null) {
+            return getMoneyKey(player, online.getWorld());
+        }
+        String last = getStorageObject(player.getUniqueId()).getLastKey();
+        if (last == null || DEFAULT_WORLD_KEY.equals(last)) {
+            return null;
+        }
+        return last;
     }
 
 }

@@ -707,6 +707,43 @@ public class StoreTest {
     }
 
     /**
+     * When money is enabled, clearStoredMoneyForWorld should zero the stored balance for the world.
+     */
+    @Test
+    public void testClearStoredMoneyForWorld() {
+        sets.setStatistics(false);
+        sets.setAdvancements(false);
+        sets.setMoney(true);
+        Island island = mock(Island.class);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            s.storeInventory(player, world);
+            // Seed a balance for the world
+            s.getStorageObject(playerUUID).setMoney("world", 500D);
+            // Clear it
+            s.clearStoredMoneyForWorld(player, world, island);
+        }
+        assertEquals(0D, s.getStorageObject(playerUUID).getMoney("world"), 0.0001);
+    }
+
+    /**
+     * clearStoredMoneyForWorld should be a no-op when money is disabled in settings.
+     */
+    @Test
+    public void testClearStoredMoneyForWorldMoneyDisabled() {
+        sets.setStatistics(false);
+        sets.setAdvancements(false);
+        sets.setMoney(false);
+        Island island = mock(Island.class);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            s.storeInventory(player, world);
+            s.getStorageObject(playerUUID).setMoney("world", 500D);
+            s.clearStoredMoneyForWorld(player, world, island);
+        }
+        // Balance untouched
+        assertEquals(500D, s.getStorageObject(playerUUID).getMoney("world"), 0.0001);
+    }
+
+    /**
      * When health is enabled, clearStoredHealthForWorld should work without error.
      */
     @Test

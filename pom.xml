@@ -59,6 +59,7 @@
         <!-- More visible way how to change dependency versions -->
         <paper.version>1.21.11-R0.1-SNAPSHOT</paper.version>
         <bentobox.version>3.17.0-SNAPSHOT</bentobox.version>
+        <vault.version>1.7</vault.version>
         <!-- Revision variable removes warning about dynamic version -->
         <revision>${build.version}-SNAPSHOT</revision>
         <!-- Do not change unless you want different name for local builds. -->
@@ -126,6 +127,11 @@
             <id>papermc</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
+        <!-- Vault's own maven repo is unreliable, so we pull it from jitpack -->
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -186,6 +192,14 @@
             <groupId>world.bentobox</groupId>
             <artifactId>bentobox</artifactId>
             <version>${bentobox.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Vault: pulled from jitpack as their maven repo is unreliable -->
+        <!-- See https://github.com/MilkBowl/VaultAPI/issues/69 -->
+        <dependency>
+            <groupId>com.github.MilkBowl</groupId>
+            <artifactId>VaultAPI</artifactId>
+            <version>${vault.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
