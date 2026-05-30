@@ -34,11 +34,12 @@ public class Settings implements ConfigObject {
     private boolean enderChest = true;
     @ConfigEntry(path = "options.statistics")
     private boolean statistics = true;
-    @ConfigComment("Per-world money. Requires the Vault plugin and an economy plugin (e.g. EssentialsX).")
-    @ConfigComment("When enabled, InvSwitcher registers itself as the Vault economy and keeps a separate")
-    @ConfigComment("balance for each switched world. Transactions route to the correct world even when the")
-    @ConfigComment("player is offline or in a different world. Worlds InvSwitcher does not manage are passed")
-    @ConfigComment("through to the previous economy plugin.")
+    @ConfigComment("Per-world money. Requires the Vault plugin. A separate economy plugin (e.g. EssentialsX)")
+    @ConfigComment("is optional: InvSwitcher can be the only economy. When enabled, InvSwitcher registers")
+    @ConfigComment("itself as the Vault economy and keeps a separate balance for each switched world.")
+    @ConfigComment("Transactions route to the correct world even when the player is offline or in a different")
+    @ConfigComment("world. If another economy plugin is present, worlds InvSwitcher does not manage are passed")
+    @ConfigComment("through to it; if not, InvSwitcher handles every world itself.")
     @ConfigEntry(path = "options.money")
     private boolean money = true;
 
@@ -89,6 +90,10 @@ public class Settings implements ConfigObject {
     @ConfigComment("plugin (e.g. EssentialsX). Disable to make InvSwitcher the sole economy for every world.")
     @ConfigEntry(path = "economy.delegate-unmanaged-worlds")
     private boolean delegateUnmanagedWorlds = true;
+    @ConfigComment("Log every economy transaction (deposit/withdraw/balance) to the console for")
+    @ConfigComment("troubleshooting. Verbose - only enable while diagnosing a problem.")
+    @ConfigEntry(path = "economy.debug")
+    private boolean economyDebug = false;
 
     /**
      * @return the worlds
@@ -311,6 +316,12 @@ public class Settings implements ConfigObject {
     }
     public void setDelegateUnmanagedWorlds(boolean delegateUnmanagedWorlds) {
         this.delegateUnmanagedWorlds = delegateUnmanagedWorlds;
+    }
+    public boolean isEconomyDebug() {
+        return economyDebug;
+    }
+    public void setEconomyDebug(boolean economyDebug) {
+        this.economyDebug = economyDebug;
     }
 
 }

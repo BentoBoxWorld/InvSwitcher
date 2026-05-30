@@ -84,50 +84,62 @@ public class InvSwitcher extends Addon {
         store = new Store(this);
         // Register the listeners
         registerListener(new PlayerListener(this));
-        // Set up the per-world economy. Deferred by a tick so that the underlying economy
-        // plugin (e.g. EssentialsX) has finished registering its own provider with Vault,
-        // letting us capture it as the delegate for unmanaged worlds.
-        if (settings.isMoney()) {
+        // Now that worlds are known, register the economy commands and placeholders. The economy
+        // provider itself was registered earlier, in onEnable, so it beats shop plugins that cache
+        // their Vault provider during their own startup.
+        if (economy != null) {
+            registerEconomyCommands();
+        }
+    }
+
+    @Override
+    public void onEnable() {
+        // Verify that we're not running on a YAML database
+        if (this.getPlugin().getSettings().getDatabaseType().equals(DatabaseType.YAML)) {
+            this.setState(State.DISABLED);
+            this.logError("This addon is incompatible with YAML database. Please use another type, like JSON.");
+            return;
+        }
+        // Register the Vault economy provider as early as possible (here in onEnable, not in
+        // allLoaded) so it is in place before economy-consuming plugins (e.g. QuickShop) resolve
+        // and cache their provider. The store, worlds and delegate are resolved lazily by
+        // InvEconomy, so they do not need to exist yet.
+        if (getSettings() != null && getSettings().isMoney()) {
             if (Bukkit.getPluginManager().getPlugin("Vault") == null) {
                 logError("options.money is enabled but the Vault plugin is not installed - per-world money disabled.");
             } else {
-                Bukkit.getScheduler().runTask(getPlugin(), this::setupEconomy);
+                registerEconomyProvider();
             }
         }
     }
 
     /**
-     * Captures the previously-registered Vault economy (to delegate unmanaged worlds to) and
-     * registers InvSwitcher's own per-world economy at the highest priority so it intercepts
-     * every economy call. Runs once.
+     * Creates and registers InvSwitcher's per-world economy at the highest Vault priority so it
+     * intercepts every economy call. Runs once. The provider is lazy - it resolves the store and
+     * the delegate economy on first use - so this can run before those are ready.
      */
-    private void setupEconomy() {
+    private void registerEconomyProvider() {
         if (economy != null) {
             return;
         }
-        // Capture the existing provider BEFORE we register ourselves, skipping our own type
-        // so a re-run can never capture itself into a delegation loop.
-        Economy delegate = null;
-        RegisteredServiceProvider<Economy> rsp = Bukkit.getServicesManager().getRegistration(Economy.class);
-        if (rsp != null && !(rsp.getProvider() instanceof InvEconomy)) {
-            delegate = rsp.getProvider();
-        }
-        if (delegate == null) {
-            logWarning("No previous economy was found - InvSwitcher will be the only economy. "
-                    + "Worlds it does not manage will share a single balance.");
-        } else {
-            log("Per-world economy enabled - delegating unmanaged worlds to " + delegate.getName());
-        }
-        economy = new InvEconomy(this, delegate);
+        economy = new InvEconomy(this);
         Bukkit.getServicesManager().register(Economy.class, economy, getPlugin(), ServicePriority.Highest);
 
-        // BentoBox captured its VaultHook during early hook registration, before we registered -
-        // so it (and addons that use it, e.g. Bank, Level, Upgrades) still points at the previous
-        // economy. Re-run the hook so it re-reads the now-highest provider (us). The VaultHook is a
-        // single shared instance held by those addons, so refreshing it updates them too.
+        // BentoBox captured its VaultHook during early hook registration, before us, so it (and
+        // addons that use it, e.g. Bank) still points at the previous economy. Re-run the hook so
+        // it re-reads the now-highest provider (us). The VaultHook is a single shared instance held
+        // by those addons, so refreshing it updates them too.
         refreshBentoBoxVaultHook();
 
-        // Register commands and placeholders with the game modes whose worlds we manage
+        // Dump the current economy provider chain so it is clear that we win the registration.
+        logEconomyRegistrations();
+    }
+
+    /**
+     * Registers the economy commands and placeholders against the game modes whose worlds
+     * InvSwitcher manages. Called from allLoaded, once worlds are known.
+     */
+    private void registerEconomyCommands() {
         PhManager phManager = new PhManager(this);
         getPlugin().getAddonsManager().getGameModeAddons().stream()
                 .filter(gm -> worlds.contains(gm.getOverWorld()))
@@ -142,15 +154,6 @@ public class InvSwitcher extends Addon {
                     }
                     log("Per-world economy hooking into " + gm.getDescription().getName());
                 });
-    }
-
-    @Override
-    public void onEnable() {
-        // Verify that we're not running on a YAML database
-        if (this.getPlugin().getSettings().getDatabaseType().equals(DatabaseType.YAML)) {
-            this.setState(State.DISABLED);
-            this.logError("This addon is incompatible with YAML database. Please use another type, like JSON.");
-        }
     }
 
 
@@ -177,6 +180,26 @@ public class InvSwitcher extends Addon {
      */
     private void refreshBentoBoxVaultHook() {
         getPlugin().getVault().ifPresent(VaultHook::hook);
+    }
+
+    /**
+     * Logs all registered Vault economy providers (highest priority first) and which one Vault
+     * will hand out. Useful for confirming InvSwitcher won the registration and for spotting
+     * consumers that cached a different provider before we registered.
+     */
+    private void logEconomyRegistrations() {
+        log("Vault economy providers now registered (used by new lookups):");
+        for (RegisteredServiceProvider<Economy> r : Bukkit.getServicesManager().getRegistrations(Economy.class)) {
+            log(" - " + r.getProvider().getName() + " (" + r.getProvider().getClass().getName()
+                    + ") priority=" + r.getPriority() + " registeredBy=" + r.getPlugin().getName());
+        }
+        RegisteredServiceProvider<Economy> top = Bukkit.getServicesManager().getRegistration(Economy.class);
+        if (top != null) {
+            log("Vault.getRegistration(Economy) returns: " + top.getProvider().getName() + " ("
+                    + top.getProvider().getClass().getName() + ")");
+        }
+        log("If a shop/economy plugin still uses the old balance, it cached its provider before now "
+                + "and must be loaded after BentoBox (or re-resolve on ServiceRegisterEvent).");
     }
 
     /**

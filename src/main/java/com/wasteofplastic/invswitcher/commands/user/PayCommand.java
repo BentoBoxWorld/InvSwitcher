@@ -55,16 +55,19 @@ public class PayCommand extends AbstractMoneyCommand {
         if (amount == null) {
             return false;
         }
-        if (!eco.has(user.getPlayer(), amount)) {
+        // Pay within this command's game mode economy (its world), regardless of where either
+        // player is currently standing.
+        String world = getWorld().getName();
+        if (!eco.has(user.getPlayer(), world, amount)) {
             user.sendMessage("invswitcher.errors.insufficient-funds");
             return false;
         }
-        EconomyResponse withdrawal = eco.withdrawPlayer(user.getPlayer(), amount);
+        EconomyResponse withdrawal = eco.withdrawPlayer(user.getPlayer(), world, amount);
         if (!withdrawal.transactionSuccess()) {
             user.sendMessage("invswitcher.errors.insufficient-funds");
             return false;
         }
-        eco.depositPlayer(target.getOfflinePlayer(), amount);
+        eco.depositPlayer(target.getOfflinePlayer(), world, amount);
         user.sendMessage("invswitcher.commands.pay.sent",
                 TextVariables.NUMBER, eco.format(amount), TextVariables.NAME, target.getName());
         if (target.isOnline()) {

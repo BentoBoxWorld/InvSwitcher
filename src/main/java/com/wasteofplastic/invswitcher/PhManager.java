@@ -30,21 +30,24 @@ public class PhManager {
             return false;
         }
         String prefix = gm.getDescription().getName().toLowerCase() + "_invswitcher_";
-        // Raw balance number for the player's current world
+        // Balance is scoped to this game mode's world, so the placeholder is stable regardless of
+        // where the player currently is (e.g. bskyblock_invswitcher_balance is the BSkyBlock balance).
+        String worldName = gm.getOverWorld().getName();
+        // Raw balance number
         plugin.getPlaceholdersManager().registerPlaceholder(addon, prefix + "balance",
-                user -> balance(user, false));
-        // Formatted balance (currency name + decimals) for the player's current world
+                user -> balance(user, worldName, false));
+        // Formatted balance (currency name + decimals)
         plugin.getPlaceholdersManager().registerPlaceholder(addon, prefix + "balance_formatted",
-                user -> balance(user, true));
+                user -> balance(user, worldName, true));
         return true;
     }
 
-    private String balance(User user, boolean formatted) {
+    private String balance(User user, String worldName, boolean formatted) {
         InvEconomy eco = addon.getEconomy();
         if (eco == null || user == null || !user.isPlayer()) {
             return "";
         }
-        double bal = eco.getBalance(user.getPlayer());
+        double bal = eco.getBalance(user.getPlayer(), worldName);
         return formatted ? eco.format(bal) : String.valueOf(bal);
     }
 }

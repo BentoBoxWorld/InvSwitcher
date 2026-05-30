@@ -42,7 +42,7 @@ public class AdminBalanceCommand extends AbstractAdminMoneyCommand {
         }
         user.sendMessage("invswitcher.commands.admin.balance.balance",
                 TextVariables.NAME, target.getName(),
-                TextVariables.NUMBER, eco.format(eco.getBalance(target.getOfflinePlayer())));
+                TextVariables.NUMBER, eco.format(eco.getBalance(target.getOfflinePlayer(), getWorld().getName())));
         return true;
     }
 }

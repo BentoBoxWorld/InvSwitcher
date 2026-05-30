@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
+import org.bukkit.plugin.RegisteredServiceProvider;
 
 import com.wasteofplastic.invswitcher.InvSwitcher;
 import com.wasteofplastic.invswitcher.Settings;
@@ -35,18 +35,28 @@ public class InvEconomy implements Economy {
     private static final String INSUFFICIENT_FUNDS = "Insufficient funds";
 
     private final InvSwitcher addon;
-    private final Store store;
-    /** The economy provider that was registered before us. May be null if none existed. */
-    private final Economy delegate;
+    /** The economy to fall back to for unmanaged worlds (e.g. EssentialsX). Resolved lazily on
+     *  first use, because we register before other economy plugins finish registering. */
+    private Economy delegate;
+    private boolean delegateResolved;
 
     /**
      * @param addon - the InvSwitcher addon
-     * @param delegate - the previously-registered economy, or null if none
      */
-    public InvEconomy(InvSwitcher addon, Economy delegate) {
+    public InvEconomy(InvSwitcher addon) {
         this.addon = addon;
-        this.store = addon.getStore();
+    }
+
+    /**
+     * Package-private constructor that sets the delegate explicitly instead of resolving it
+     * lazily from the services manager. Used by tests.
+     * @param addon - the InvSwitcher addon
+     * @param delegate - the delegate economy (may be null)
+     */
+    InvEconomy(InvSwitcher addon, Economy delegate) {
+        this.addon = addon;
         this.delegate = delegate;
+        this.delegateResolved = true;
     }
 
     private Settings settings() {
@@ -54,10 +64,71 @@ public class InvEconomy implements Economy {
     }
 
     /**
+     * The store, fetched lazily. May be null very early in startup (before allLoaded), but is
+     * always set long before any player can trade.
+     */
+    private Store store() {
+        return addon.getStore();
+    }
+
+    /**
+     * The player's current money key, or null if the world is unmanaged or the store is not yet
+     * ready (very early in startup). A null result routes the call to the delegate.
+     */
+    private String currentKey(OfflinePlayer player) {
+        Store s = store();
+        return s == null ? null : s.getCurrentMoneyKey(player);
+    }
+
+    /**
+     * The player's money key for a named world, or null if unmanaged / store not ready.
+     */
+    private String worldKey(OfflinePlayer player, String worldName) {
+        Store s = store();
+        return s == null ? null : s.getMoneyKey(player, Bukkit.getWorld(worldName));
+    }
+
+    /**
+     * Resolve - once, lazily - the highest-priority economy that is not us, to delegate
+     * unmanaged-world transactions to. Done lazily because when we register (during onEnable)
+     * other economy plugins such as EssentialsX may not have registered their provider yet.
+     * @return the delegate economy, or null if none exists
+     */
+    private Economy delegate() {
+        if (!delegateResolved) {
+            Economy found = null;
+            for (RegisteredServiceProvider<Economy> r : Bukkit.getServicesManager()
+                    .getRegistrations(Economy.class)) {
+                if (!(r.getProvider() instanceof InvEconomy)) {
+                    found = r.getProvider();
+                    break;
+                }
+            }
+            delegate = found;
+            delegateResolved = true;
+            addon.log(found != null
+                    ? "Per-world economy: delegating unmanaged-world transactions to " + found.getName()
+                    : "Per-world economy: no other economy found; InvSwitcher is the only economy.");
+        }
+        return delegate;
+    }
+
+    private void debug(String msg) {
+        if (settings().isEconomyDebug()) {
+            addon.log("[economy] " + msg);
+        }
+    }
+
+    private static String who(OfflinePlayer player) {
+        String name = player.getName() != null ? player.getName() : player.getUniqueId().toString();
+        return name + (player.getPlayer() != null ? " (online)" : " (offline)");
+    }
+
+    /**
      * @return true if unmanaged worlds should be delegated to the previous provider
      */
     private boolean delegating() {
-        return settings().isDelegateUnmanagedWorlds() && delegate != null;
+        return settings().isDelegateUnmanagedWorlds() && delegate() != null;
     }
 
     // ------ STATUS / FORMATTING ------
@@ -74,7 +145,7 @@ public class InvEconomy implements Economy {
 
     @Override
     public boolean hasBankSupport() {
-        return delegate != null && delegate.hasBankSupport();
+        return delegate() != null && delegate().hasBankSupport();
     }
 
     @Override
@@ -118,19 +189,19 @@ public class InvEconomy implements Economy {
      */
     private double seedBalance(OfflinePlayer player, InventoryStorage s) {
         Settings settings = settings();
-        if (settings.isImportExistingBalances() && delegate != null && !s.isImported()) {
+        if (settings.isImportExistingBalances() && delegate() != null && !s.isImported()) {
             s.setImported(true);
-            return delegate.getBalance(player);
+            return delegate().getBalance(player);
         }
         return settings.getStartingBalance();
     }
 
     private double readSelf(OfflinePlayer player, String key) {
-        InventoryStorage s = store.getStorageObject(player.getUniqueId());
+        InventoryStorage s = store().getStorageObject(player.getUniqueId());
         boolean existed = s.hasMoney(key);
         double balance = ensureBalance(player, s, key);
         if (!existed) {
-            store.saveStorage(s);
+            store().saveStorage(s);
         }
         return balance;
     }
@@ -139,10 +210,10 @@ public class InvEconomy implements Economy {
         if (amount < 0) {
             return new EconomyResponse(0, readSelf(player, key), ResponseType.FAILURE, NEGATIVE_DEPOSIT);
         }
-        InventoryStorage s = store.getStorageObject(player.getUniqueId());
+        InventoryStorage s = store().getStorageObject(player.getUniqueId());
         double newBalance = ensureBalance(player, s, key) + amount;
         s.setMoney(key, newBalance);
-        store.saveStorage(s);
+        store().saveStorage(s);
         return new EconomyResponse(amount, newBalance, ResponseType.SUCCESS, null);
     }
 
@@ -150,11 +221,11 @@ public class InvEconomy implements Economy {
         if (amount < 0) {
             return new EconomyResponse(0, readSelf(player, key), ResponseType.FAILURE, NEGATIVE_DEPOSIT);
         }
-        InventoryStorage s = store.getStorageObject(player.getUniqueId());
+        InventoryStorage s = store().getStorageObject(player.getUniqueId());
         // Mark imported so a later seed does not re-import on top of an explicitly set balance
         s.setImported(true);
         s.setMoney(key, amount);
-        store.saveStorage(s);
+        store().saveStorage(s);
         return new EconomyResponse(amount, amount, ResponseType.SUCCESS, null);
     }
 
@@ -162,14 +233,14 @@ public class InvEconomy implements Economy {
         if (amount < 0) {
             return new EconomyResponse(0, readSelf(player, key), ResponseType.FAILURE, NEGATIVE_WITHDRAW);
         }
-        InventoryStorage s = store.getStorageObject(player.getUniqueId());
+        InventoryStorage s = store().getStorageObject(player.getUniqueId());
         double balance = ensureBalance(player, s, key);
         if (balance < amount) {
             return new EconomyResponse(0, balance, ResponseType.FAILURE, INSUFFICIENT_FUNDS);
         }
         double newBalance = balance - amount;
         s.setMoney(key, newBalance);
-        store.saveStorage(s);
+        store().saveStorage(s);
         return new EconomyResponse(amount, newBalance, ResponseType.SUCCESS, null);
     }
 
@@ -187,18 +258,19 @@ public class InvEconomy implements Economy {
 
     @Override
     public double getBalance(OfflinePlayer player) {
-        String key = store.getCurrentMoneyKey(player);
+        String key = currentKey(player);
+        debug("getBalance " + who(player) + " key=" + key + (key == null ? (delegating() ? " -> DELEGATE" : " -> default") : ""));
         if (key == null) {
-            return delegating() ? delegate.getBalance(player) : readSelf(player, Store.DEFAULT_WORLD_KEY);
+            return delegating() ? delegate().getBalance(player) : readSelf(player, Store.DEFAULT_WORLD_KEY);
         }
         return readSelf(player, key);
     }
 
     @Override
     public double getBalance(OfflinePlayer player, String worldName) {
-        String key = store.getMoneyKey(player, Bukkit.getWorld(worldName));
+        String key = worldKey(player, worldName);
         if (key == null) {
-            return delegating() ? delegate.getBalance(player, worldName) : readSelf(player, Store.DEFAULT_WORLD_KEY);
+            return delegating() ? delegate().getBalance(player, worldName) : readSelf(player, Store.DEFAULT_WORLD_KEY);
         }
         return readSelf(player, key);
     }
@@ -215,9 +287,11 @@ public class InvEconomy implements Economy {
 
     @Override
     public EconomyResponse withdrawPlayer(OfflinePlayer player, double amount) {
-        String key = store.getCurrentMoneyKey(player);
+        String key = currentKey(player);
+        debug("withdrawPlayer " + who(player) + " amount=" + amount + " key=" + key
+                + (key == null ? (delegating() ? " -> DELEGATE" : " -> default") : " -> self"));
         if (key == null) {
-            return delegating() ? delegate.withdrawPlayer(player, amount)
+            return delegating() ? delegate().withdrawPlayer(player, amount)
                     : withdrawSelf(player, Store.DEFAULT_WORLD_KEY, amount);
         }
         return withdrawSelf(player, key, amount);
@@ -225,9 +299,11 @@ public class InvEconomy implements Economy {
 
     @Override
     public EconomyResponse withdrawPlayer(OfflinePlayer player, String worldName, double amount) {
-        String key = store.getMoneyKey(player, Bukkit.getWorld(worldName));
+        String key = worldKey(player, worldName);
+        debug("withdrawPlayer(world) " + who(player) + " world=" + worldName + " amount=" + amount + " key=" + key
+                + (key == null ? (delegating() ? " -> DELEGATE" : " -> default") : " -> self"));
         if (key == null) {
-            return delegating() ? delegate.withdrawPlayer(player, worldName, amount)
+            return delegating() ? delegate().withdrawPlayer(player, worldName, amount)
                     : withdrawSelf(player, Store.DEFAULT_WORLD_KEY, amount);
         }
         return withdrawSelf(player, key, amount);
@@ -235,9 +311,11 @@ public class InvEconomy implements Economy {
 
     @Override
     public EconomyResponse depositPlayer(OfflinePlayer player, double amount) {
-        String key = store.getCurrentMoneyKey(player);
+        String key = currentKey(player);
+        debug("depositPlayer " + who(player) + " amount=" + amount + " key=" + key
+                + (key == null ? (delegating() ? " -> DELEGATE" : " -> default") : " -> self"));
         if (key == null) {
-            return delegating() ? delegate.depositPlayer(player, amount)
+            return delegating() ? delegate().depositPlayer(player, amount)
                     : depositSelf(player, Store.DEFAULT_WORLD_KEY, amount);
         }
         return depositSelf(player, key, amount);
@@ -245,9 +323,11 @@ public class InvEconomy implements Economy {
 
     @Override
     public EconomyResponse depositPlayer(OfflinePlayer player, String worldName, double amount) {
-        String key = store.getMoneyKey(player, Bukkit.getWorld(worldName));
+        String key = worldKey(player, worldName);
+        debug("depositPlayer(world) " + who(player) + " world=" + worldName + " amount=" + amount + " key=" + key
+                + (key == null ? (delegating() ? " -> DELEGATE" : " -> default") : " -> self"));
         if (key == null) {
-            return delegating() ? delegate.depositPlayer(player, worldName, amount)
+            return delegating() ? delegate().depositPlayer(player, worldName, amount)
                     : depositSelf(player, Store.DEFAULT_WORLD_KEY, amount);
         }
         return depositSelf(player, key, amount);
@@ -261,12 +341,34 @@ public class InvEconomy implements Economy {
      * @return the economy response
      */
     public EconomyResponse setBalance(OfflinePlayer player, double amount) {
-        String key = store.getCurrentMoneyKey(player);
+        String key = currentKey(player);
         if (key == null) {
             if (delegating()) {
                 // Vault has no set operation; emulate it against the delegate's balance
-                double delta = amount - delegate.getBalance(player);
-                return delta >= 0 ? delegate.depositPlayer(player, delta) : delegate.withdrawPlayer(player, -delta);
+                double delta = amount - delegate().getBalance(player);
+                return delta >= 0 ? delegate().depositPlayer(player, delta) : delegate().withdrawPlayer(player, -delta);
+            }
+            key = Store.DEFAULT_WORLD_KEY;
+        }
+        return setSelf(player, key, amount);
+    }
+
+    /**
+     * Set a player's balance for a specific world. Not part of the Vault interface; used by
+     * InvSwitcher's own admin commands so that, e.g., {@code /bsb eco set} targets the BSkyBlock
+     * balance regardless of where the player or admin is standing.
+     * @param player - player
+     * @param worldName - world to set the balance in
+     * @param amount - new balance
+     * @return the economy response
+     */
+    public EconomyResponse setBalance(OfflinePlayer player, String worldName, double amount) {
+        String key = worldKey(player, worldName);
+        if (key == null) {
+            if (delegating()) {
+                double delta = amount - delegate().getBalance(player, worldName);
+                return delta >= 0 ? delegate().depositPlayer(player, worldName, delta)
+                        : delegate().withdrawPlayer(player, worldName, -delta);
             }
             key = Store.DEFAULT_WORLD_KEY;
         }
@@ -365,64 +467,64 @@ public class InvEconomy implements Economy {
 
     @Override
     public EconomyResponse createBank(String name, OfflinePlayer player) {
-        return delegate != null ? delegate.createBank(name, player) : bankUnsupported();
+        return delegate() != null ? delegate().createBank(name, player) : bankUnsupported();
     }
 
     @Override
     @Deprecated
     public EconomyResponse createBank(String name, String player) {
-        return delegate != null ? delegate.createBank(name, player) : bankUnsupported();
+        return delegate() != null ? delegate().createBank(name, player) : bankUnsupported();
     }
 
     @Override
     public EconomyResponse deleteBank(String name) {
-        return delegate != null ? delegate.deleteBank(name) : bankUnsupported();
+        return delegate() != null ? delegate().deleteBank(name) : bankUnsupported();
     }
 
     @Override
     public EconomyResponse bankBalance(String name) {
-        return delegate != null ? delegate.bankBalance(name) : bankUnsupported();
+        return delegate() != null ? delegate().bankBalance(name) : bankUnsupported();
     }
 
     @Override
     public EconomyResponse bankHas(String name, double amount) {
-        return delegate != null ? delegate.bankHas(name, amount) : bankUnsupported();
+        return delegate() != null ? delegate().bankHas(name, amount) : bankUnsupported();
     }
 
     @Override
     public EconomyResponse bankWithdraw(String name, double amount) {
-        return delegate != null ? delegate.bankWithdraw(name, amount) : bankUnsupported();
+        return delegate() != null ? delegate().bankWithdraw(name, amount) : bankUnsupported();
     }
 
     @Override
     public EconomyResponse bankDeposit(String name, double amount) {
-        return delegate != null ? delegate.bankDeposit(name, amount) : bankUnsupported();
+        return delegate() != null ? delegate().bankDeposit(name, amount) : bankUnsupported();
     }
 
     @Override
     public EconomyResponse isBankOwner(String name, OfflinePlayer player) {
-        return delegate != null ? delegate.isBankOwner(name, player) : bankUnsupported();
+        return delegate() != null ? delegate().isBankOwner(name, player) : bankUnsupported();
     }
 
     @Override
     @Deprecated
     public EconomyResponse isBankOwner(String name, String playerName) {
-        return delegate != null ? delegate.isBankOwner(name, playerName) : bankUnsupported();
+        return delegate() != null ? delegate().isBankOwner(name, playerName) : bankUnsupported();
     }
 
     @Override
     public EconomyResponse isBankMember(String name, OfflinePlayer player) {
-        return delegate != null ? delegate.isBankMember(name, player) : bankUnsupported();
+        return delegate() != null ? delegate().isBankMember(name, player) : bankUnsupported();
     }
 
     @Override
     @Deprecated
     public EconomyResponse isBankMember(String name, String playerName) {
-        return delegate != null ? delegate.isBankMember(name, playerName) : bankUnsupported();
+        return delegate() != null ? delegate().isBankMember(name, playerName) : bankUnsupported();
     }
 
     @Override
     public List<String> getBanks() {
-        return delegate != null ? delegate.getBanks() : Collections.emptyList();
+        return delegate() != null ? delegate().getBanks() : Collections.emptyList();
     }
 }

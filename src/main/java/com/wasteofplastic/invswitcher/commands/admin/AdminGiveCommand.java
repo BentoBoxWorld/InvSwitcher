@@ -44,10 +44,11 @@ public class AdminGiveCommand extends AbstractAdminMoneyCommand {
         if (amount == null) {
             return false;
         }
-        eco.depositPlayer(target.getOfflinePlayer(), amount);
+        String world = getWorld().getName();
+        eco.depositPlayer(target.getOfflinePlayer(), world, amount);
         user.sendMessage("invswitcher.commands.admin.give.success",
                 TextVariables.NAME, target.getName(),
-                TextVariables.NUMBER, eco.format(eco.getBalance(target.getOfflinePlayer())));
+                TextVariables.NUMBER, eco.format(eco.getBalance(target.getOfflinePlayer(), world)));
         return true;
     }
 }

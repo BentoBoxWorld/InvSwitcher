@@ -45,14 +45,15 @@ public class AdminTakeCommand extends AbstractAdminMoneyCommand {
         if (amount == null) {
             return false;
         }
-        EconomyResponse response = eco.withdrawPlayer(target.getOfflinePlayer(), amount);
+        String world = getWorld().getName();
+        EconomyResponse response = eco.withdrawPlayer(target.getOfflinePlayer(), world, amount);
         if (!response.transactionSuccess()) {
             user.sendMessage("invswitcher.errors.insufficient-funds");
             return false;
         }
         user.sendMessage("invswitcher.commands.admin.take.success",
                 TextVariables.NAME, target.getName(),
-                TextVariables.NUMBER, eco.format(eco.getBalance(target.getOfflinePlayer())));
+                TextVariables.NUMBER, eco.format(eco.getBalance(target.getOfflinePlayer(), world)));
         return true;
     }
 }

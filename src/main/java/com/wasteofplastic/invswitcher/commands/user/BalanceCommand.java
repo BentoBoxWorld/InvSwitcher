@@ -34,7 +34,9 @@ public class BalanceCommand extends AbstractMoneyCommand {
             user.sendMessage("invswitcher.errors.no-economy");
             return false;
         }
-        double balance = eco.getBalance(user.getPlayer());
+        // Scope to this command's game mode world, not the player's current location, so
+        // /bsb balance always shows the BSkyBlock balance, /ai balance the AcidIsland balance, etc.
+        double balance = eco.getBalance(user.getPlayer(), getWorld().getName());
         user.sendMessage("invswitcher.commands.balance.balance", TextVariables.NUMBER, eco.format(balance));
         return true;
     }

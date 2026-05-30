@@ -20,11 +20,12 @@ options:
   experience: true
   ender-chest: true
   statistics: true
-  # Per-world money. Requires the Vault plugin and an economy plugin (e.g. EssentialsX).
-  # When enabled, InvSwitcher registers itself as the Vault economy and keeps a separate
-  # balance for each switched world. Transactions route to the correct world even when the
-  # player is offline or in a different world. Worlds InvSwitcher does not manage are passed
-  # through to the previous economy plugin.
+  # Per-world money. Requires the Vault plugin. A separate economy plugin (e.g. EssentialsX) is
+  # optional: InvSwitcher can be the only economy. When enabled, InvSwitcher registers itself as
+  # the Vault economy and keeps a separate balance for each switched world. Transactions route to
+  # the correct world even when the player is offline or in a different world. If another economy
+  # plugin is present, worlds InvSwitcher does not manage are passed through to it; if not,
+  # InvSwitcher handles every world itself.
   money: true
   # Switch inventories based on island. Only applies if players own more than one island.
   # Each sub-option controls whether that aspect is switched per-island.
@@ -57,3 +58,6 @@ economy:
   # Pass transactions for worlds InvSwitcher does not manage through to the previous economy
   # plugin (e.g. EssentialsX). Disable to make InvSwitcher the sole economy for every world.
   delegate-unmanaged-worlds: true
+  # Log every economy transaction (deposit/withdraw/balance) to the console for troubleshooting.
+  # Verbose - only enable while diagnosing a problem.
+  debug: false

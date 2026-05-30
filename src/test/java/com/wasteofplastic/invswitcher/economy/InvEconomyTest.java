@@ -207,6 +207,16 @@ public class InvEconomyTest {
     }
 
     @Test
+    public void testSetBalanceWorld() {
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, RETURNS_MOCKS)) {
+            mockedBukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
+            EconomyResponse r = economy.setBalance(player, "world", 42.0);
+            assertTrue(r.transactionSuccess());
+        }
+        assertEquals(42.0, store.getStorageObject(playerUUID).getMoney("world"), 0.0001);
+    }
+
+    @Test
     public void testWorldAwareManagedRouting() {
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, RETURNS_MOCKS)) {
             mockedBukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
@@ -252,6 +262,20 @@ public class InvEconomyTest {
         assertTrue(r.transactionSuccess());
         assertEquals(75.0, store.getStorageObject(playerUUID).getMoney("world"), 0.0001);
         verify(delegate, never()).depositPlayer(any(Player.class), anyDouble());
+    }
+
+    @Test
+    public void testStoreNotReadyDelegates() {
+        // Provider registered before the store exists (the onEnable window): calls must route to
+        // the delegate rather than NPE.
+        when(addon.getStore()).thenReturn(null);
+        when(delegate.depositPlayer(player, 20.0))
+                .thenReturn(new EconomyResponse(20, 20, ResponseType.SUCCESS, null));
+        when(delegate.getBalance(player)).thenReturn(123.0);
+
+        assertEquals(123.0, economy.getBalance(player), 0.0001);
+        economy.depositPlayer(player, 20.0);
+        verify(delegate).depositPlayer(player, 20.0);
     }
 
     @Test
