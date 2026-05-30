@@ -1,0 +1,38 @@
+###########################################################################################
+# InvSwitcher locale file - Polish
+###########################################################################################
+invswitcher:
+  commands:
+    balance:
+      description: "pokaż swój stan konta dla tego świata"
+      balance: "&a Stan konta: &e[number]"
+    pay:
+      description: "zapłać innemu graczowi"
+      parameters: "<player> <amount>"
+      sent: "&a Zapłaciłeś [number] graczowi [name]"
+      received: "&a Otrzymałeś [number] od gracza [name]"
+    admin:
+      eco:
+        description: "zarządzaj pieniędzmi graczy w tym świecie"
+      give:
+        description: "daj graczowi pieniądze"
+        parameters: "<player> <amount>"
+        success: "&a Przekazano pieniądze graczowi [name]. Nowy stan konta: [number]"
+      take:
+        description: "zabierz graczowi pieniądze"
+        parameters: "<player> <amount>"
+        success: "&a Zabrano pieniądze graczowi [name]. Nowy stan konta: [number]"
+      set:
+        description: "ustaw stan konta gracza"
+        parameters: "<player> <amount>"
+        success: "&a Stan konta gracza [name] ustawiono na [number]"
+      balance:
+        description: "pokaż stan konta gracza"
+        parameters: "<player>"
+        balance: "&a Stan konta gracza [name]: &e[number]"
+  errors:
+    no-economy: "&c Ekonomia jest niedostępna."
+    insufficient-funds: "&c Niewystarczające środki."
+    not-a-number: "&c '[number]' nie jest prawidłową liczbą."
+    must-be-positive: "&c Kwota musi być dodatnia."
+    cannot-pay-self: "&c Nie możesz zapłacić samemu sobie."

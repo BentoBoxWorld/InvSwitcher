@@ -1,0 +1,38 @@
+###########################################################################################
+# InvSwitcher locale file - Dutch
+###########################################################################################
+invswitcher:
+  commands:
+    balance:
+      description: "toon je saldo voor deze wereld"
+      balance: "&a Saldo: &e[number]"
+    pay:
+      description: "betaal een andere speler"
+      parameters: "<player> <amount>"
+      sent: "&a Je hebt [number] aan [name] betaald"
+      received: "&a Je hebt [number] van [name] ontvangen"
+    admin:
+      eco:
+        description: "beheer het geld van spelers in deze wereld"
+      give:
+        description: "geef geld aan een speler"
+        parameters: "<player> <amount>"
+        success: "&a Geld gegeven aan [name]. Nieuw saldo: [number]"
+      take:
+        description: "neem geld af van een speler"
+        parameters: "<player> <amount>"
+        success: "&a Geld afgenomen van [name]. Nieuw saldo: [number]"
+      set:
+        description: "stel het saldo van een speler in"
+        parameters: "<player> <amount>"
+        success: "&a Saldo van [name] ingesteld op [number]"
+      balance:
+        description: "toon het saldo van een speler"
+        parameters: "<player>"
+        balance: "&a Saldo van [name]: &e[number]"
+  errors:
+    no-economy: "&c De economie is niet beschikbaar."
+    insufficient-funds: "&c Onvoldoende geld."
+    not-a-number: "&c '[number]' is geen geldig getal."
+    must-be-positive: "&c Het bedrag moet positief zijn."
+    cannot-pay-self: "&c Je kunt niet aan jezelf betalen."

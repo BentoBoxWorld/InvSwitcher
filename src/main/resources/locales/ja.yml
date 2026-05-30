@@ -1,0 +1,38 @@
+###########################################################################################
+# InvSwitcher locale file - Japanese
+###########################################################################################
+invswitcher:
+  commands:
+    balance:
+      description: "このワールドでの所持金を表示します"
+      balance: "&a 残高: &e[number]"
+    pay:
+      description: "他のプレイヤーに支払います"
+      parameters: "<player> <amount>"
+      sent: "&a [name] に [number] を支払いました"
+      received: "&a [name] から [number] を受け取りました"
+    admin:
+      eco:
+        description: "このワールドのプレイヤーの所持金を管理します"
+      give:
+        description: "プレイヤーにお金を与えます"
+        parameters: "<player> <amount>"
+        success: "&a [name] にお金を与えました。新しい残高: [number]"
+      take:
+        description: "プレイヤーからお金を取り上げます"
+        parameters: "<player> <amount>"
+        success: "&a [name] からお金を取り上げました。新しい残高: [number]"
+      set:
+        description: "プレイヤーの残高を設定します"
+        parameters: "<player> <amount>"
+        success: "&a [name] の残高を [number] に設定しました"
+      balance:
+        description: "プレイヤーの残高を表示します"
+        parameters: "<player>"
+        balance: "&a [name] の残高: &e[number]"
+  errors:
+    no-economy: "&c 経済機能が利用できません。"
+    insufficient-funds: "&c 残高が不足しています。"
+    not-a-number: "&c '[number]' は有効な数値ではありません。"
+    must-be-positive: "&c 金額は正の値である必要があります。"
+    cannot-pay-self: "&c 自分自身に支払うことはできません。"

@@ -1,0 +1,38 @@
+###########################################################################################
+# InvSwitcher locale file - Indonesian
+###########################################################################################
+invswitcher:
+  commands:
+    balance:
+      description: "tampilkan saldo uangmu untuk dunia ini"
+      balance: "&a Saldo: &e[number]"
+    pay:
+      description: "bayar pemain lain"
+      parameters: "<player> <amount>"
+      sent: "&a Kamu membayar [number] kepada [name]"
+      received: "&a Kamu menerima [number] dari [name]"
+    admin:
+      eco:
+        description: "kelola uang pemain untuk dunia ini"
+      give:
+        description: "beri uang kepada pemain"
+        parameters: "<player> <amount>"
+        success: "&a Memberi uang kepada [name]. Saldo baru: [number]"
+      take:
+        description: "ambil uang dari pemain"
+        parameters: "<player> <amount>"
+        success: "&a Mengambil uang dari [name]. Saldo baru: [number]"
+      set:
+        description: "atur saldo pemain"
+        parameters: "<player> <amount>"
+        success: "&a Saldo [name] diatur menjadi [number]"
+      balance:
+        description: "tampilkan saldo pemain"
+        parameters: "<player>"
+        balance: "&a Saldo [name]: &e[number]"
+  errors:
+    no-economy: "&c Ekonomi tidak tersedia."
+    insufficient-funds: "&c Dana tidak cukup."
+    not-a-number: "&c '[number]' bukan angka yang valid."
+    must-be-positive: "&c Jumlah harus positif."
+    cannot-pay-self: "&c Kamu tidak bisa membayar dirimu sendiri."

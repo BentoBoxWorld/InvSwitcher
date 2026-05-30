@@ -1,0 +1,38 @@
+###########################################################################################
+# InvSwitcher locale file - Ukrainian
+###########################################################################################
+invswitcher:
+  commands:
+    balance:
+      description: "показати ваш баланс для цього світу"
+      balance: "&a Баланс: &e[number]"
+    pay:
+      description: "заплатити іншому гравцеві"
+      parameters: "<player> <amount>"
+      sent: "&a Ви заплатили [number] гравцеві [name]"
+      received: "&a Ви отримали [number] від гравця [name]"
+    admin:
+      eco:
+        description: "керувати грошима гравців у цьому світі"
+      give:
+        description: "видати гроші гравцеві"
+        parameters: "<player> <amount>"
+        success: "&a Гроші видано гравцеві [name]. Новий баланс: [number]"
+      take:
+        description: "забрати гроші у гравця"
+        parameters: "<player> <amount>"
+        success: "&a Гроші забрано у гравця [name]. Новий баланс: [number]"
+      set:
+        description: "встановити баланс гравця"
+        parameters: "<player> <amount>"
+        success: "&a Баланс гравця [name] встановлено на [number]"
+      balance:
+        description: "показати баланс гравця"
+        parameters: "<player>"
+        balance: "&a Баланс гравця [name]: &e[number]"
+  errors:
+    no-economy: "&c Економіка недоступна."
+    insufficient-funds: "&c Недостатньо коштів."
+    not-a-number: "&c '[number]' не є дійсним числом."
+    must-be-positive: "&c Сума повинна бути додатною."
+    cannot-pay-self: "&c Ви не можете заплатити самому собі."

@@ -1,0 +1,38 @@
+###########################################################################################
+# InvSwitcher locale file - Czech
+###########################################################################################
+invswitcher:
+  commands:
+    balance:
+      description: "zobrazí tvůj zůstatek pro tento svět"
+      balance: "&a Zůstatek: &e[number]"
+    pay:
+      description: "zaplatit jinému hráči"
+      parameters: "<player> <amount>"
+      sent: "&a Zaplatil jsi [number] hráči [name]"
+      received: "&a Obdržel jsi [number] od hráče [name]"
+    admin:
+      eco:
+        description: "spravovat peníze hráčů v tomto světě"
+      give:
+        description: "dát hráči peníze"
+        parameters: "<player> <amount>"
+        success: "&a Peníze předány hráči [name]. Nový zůstatek: [number]"
+      take:
+        description: "vzít hráči peníze"
+        parameters: "<player> <amount>"
+        success: "&a Peníze odebrány hráči [name]. Nový zůstatek: [number]"
+      set:
+        description: "nastavit zůstatek hráče"
+        parameters: "<player> <amount>"
+        success: "&a Zůstatek hráče [name] nastaven na [number]"
+      balance:
+        description: "zobrazit zůstatek hráče"
+        parameters: "<player>"
+        balance: "&a Zůstatek hráče [name]: &e[number]"
+  errors:
+    no-economy: "&c Ekonomika není dostupná."
+    insufficient-funds: "&c Nedostatek peněz."
+    not-a-number: "&c '[number]' není platné číslo."
+    must-be-positive: "&c Částka musí být kladná."
+    cannot-pay-self: "&c Nemůžeš zaplatit sám sobě."
