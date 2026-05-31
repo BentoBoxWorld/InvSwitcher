@@ -1,18 +1,17 @@
 package com.wasteofplastic.invswitcher.commands.admin;
 
-import java.util.List;
+import org.bukkit.OfflinePlayer;
 
 import com.wasteofplastic.invswitcher.economy.InvEconomy;
 
+import net.milkbowl.vault.economy.EconomyResponse;
 import world.bentobox.bentobox.api.commands.CompositeCommand;
-import world.bentobox.bentobox.api.localization.TextVariables;
-import world.bentobox.bentobox.api.user.User;
 
 /**
- * Sets a player's balance in the world they are currently in (or were last in).
+ * Sets a player's balance in this command's game mode world.
  * @author tastybento
  */
-public class AdminSetCommand extends AbstractAdminMoneyCommand {
+public class AdminSetCommand extends AbstractAdminAmountCommand {
 
     public AdminSetCommand(CompositeCommand parent) {
         super(parent, "set");
@@ -26,29 +25,12 @@ public class AdminSetCommand extends AbstractAdminMoneyCommand {
     }
 
     @Override
-    public boolean execute(User user, String label, List<String> args) {
-        if (args.size() != 2) {
-            this.showHelp(this, user);
-            return false;
-        }
-        InvEconomy eco = economy();
-        if (eco == null) {
-            user.sendMessage("invswitcher.errors.no-economy");
-            return false;
-        }
-        User target = resolveTarget(user, args.get(0));
-        if (target == null) {
-            return false;
-        }
-        Double amount = parseAmount(user, args.get(1));
-        if (amount == null) {
-            return false;
-        }
-        String world = getWorld().getName();
-        eco.setBalance(target.getOfflinePlayer(), world, amount);
-        user.sendMessage("invswitcher.commands.admin.set.success",
-                TextVariables.NAME, target.getName(),
-                TextVariables.NUMBER, eco.format(eco.getBalance(target.getOfflinePlayer(), world)));
-        return true;
+    protected EconomyResponse apply(InvEconomy eco, OfflinePlayer target, String world, double amount) {
+        return eco.setBalance(target, world, amount);
+    }
+
+    @Override
+    protected String successKey() {
+        return "invswitcher.commands.admin.set.success";
     }
 }

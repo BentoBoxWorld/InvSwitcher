@@ -37,6 +37,18 @@ public abstract class AbstractAdminMoneyCommand extends AbstractMoneyCommand {
     }
 
     /**
+     * Send a message reporting the target's balance for the given world, with [name] and [number].
+     * @param user - command sender
+     * @param messageKey - locale key of the message
+     * @param target - the target player
+     * @param world - the world to report the balance for
+     */
+    protected void sendBalanceMessage(User user, String messageKey, User target, String world) {
+        user.sendMessage(messageKey, TextVariables.NAME, target.getName(),
+                TextVariables.NUMBER, economy().format(economy().getBalance(target.getOfflinePlayer(), world)));
+    }
+
+    /**
      * Tab-complete the player parameter (the first argument of these commands) with the names of
      * online players. The command tree is {@code <admin> eco <sub> <player> [amount]}, so the
      * player slot is the third token in the dispatched args.

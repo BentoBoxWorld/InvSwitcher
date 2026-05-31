@@ -41,6 +41,19 @@ public abstract class AbstractMoneyCommand extends CompositeCommand {
     }
 
     /**
+     * Get the economy or send the "no economy" error to the user.
+     * @param user - command sender
+     * @return the economy, or null if unavailable (an error has been sent)
+     */
+    protected InvEconomy requireEconomy(User user) {
+        InvEconomy eco = economy();
+        if (eco == null) {
+            user.sendMessage("invswitcher.errors.no-economy");
+        }
+        return eco;
+    }
+
+    /**
      * Parse a strictly-positive money amount, sending an error message on failure.
      * @param user - command sender
      * @param arg - the argument to parse

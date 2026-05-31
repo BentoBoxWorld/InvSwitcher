@@ -37,9 +37,8 @@ public class PayCommand extends AbstractMoneyCommand {
             this.showHelp(this, user);
             return false;
         }
-        InvEconomy eco = economy();
+        InvEconomy eco = requireEconomy(user);
         if (eco == null) {
-            user.sendMessage("invswitcher.errors.no-economy");
             return false;
         }
         User target = getPlayers().getUser(args.get(0));

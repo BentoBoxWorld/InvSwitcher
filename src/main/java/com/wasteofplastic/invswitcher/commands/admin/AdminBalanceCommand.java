@@ -2,14 +2,11 @@ package com.wasteofplastic.invswitcher.commands.admin;
 
 import java.util.List;
 
-import com.wasteofplastic.invswitcher.economy.InvEconomy;
-
 import world.bentobox.bentobox.api.commands.CompositeCommand;
-import world.bentobox.bentobox.api.localization.TextVariables;
 import world.bentobox.bentobox.api.user.User;
 
 /**
- * Shows an admin another player's balance for the world that player is currently in (or was last in).
+ * Shows an admin another player's balance for this command's game mode world.
  * @author tastybento
  */
 public class AdminBalanceCommand extends AbstractAdminMoneyCommand {
@@ -31,18 +28,14 @@ public class AdminBalanceCommand extends AbstractAdminMoneyCommand {
             this.showHelp(this, user);
             return false;
         }
-        InvEconomy eco = economy();
-        if (eco == null) {
-            user.sendMessage("invswitcher.errors.no-economy");
+        if (requireEconomy(user) == null) {
             return false;
         }
         User target = resolveTarget(user, args.get(0));
         if (target == null) {
             return false;
         }
-        user.sendMessage("invswitcher.commands.admin.balance.balance",
-                TextVariables.NAME, target.getName(),
-                TextVariables.NUMBER, eco.format(eco.getBalance(target.getOfflinePlayer(), getWorld().getName())));
+        sendBalanceMessage(user, "invswitcher.commands.admin.balance.balance", target, getWorld().getName());
         return true;
     }
 }
