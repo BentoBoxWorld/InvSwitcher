@@ -1,0 +1,38 @@
+###########################################################################################
+# InvSwitcher locale file - Italian
+###########################################################################################
+invswitcher:
+  commands:
+    balance:
+      description: "mostra il tuo saldo per questo mondo"
+      balance: "&a Saldo: &e[number]"
+    pay:
+      description: "paga un altro giocatore"
+      parameters: "<player> <amount>"
+      sent: "&a Hai pagato [number] a [name]"
+      received: "&a Hai ricevuto [number] da [name]"
+    admin:
+      eco:
+        description: "gestisci il denaro dei giocatori in questo mondo"
+      give:
+        description: "dai denaro a un giocatore"
+        parameters: "<player> <amount>"
+        success: "&a Denaro dato a [name]. Nuovo saldo: [number]"
+      take:
+        description: "togli denaro a un giocatore"
+        parameters: "<player> <amount>"
+        success: "&a Denaro tolto a [name]. Nuovo saldo: [number]"
+      set:
+        description: "imposta il saldo di un giocatore"
+        parameters: "<player> <amount>"
+        success: "&a Saldo di [name] impostato a [number]"
+      balance:
+        description: "mostra il saldo di un giocatore"
+        parameters: "<player>"
+        balance: "&a Saldo di [name]: &e[number]"
+  errors:
+    no-economy: "&c L'economia non è disponibile."
+    insufficient-funds: "&c Fondi insufficienti."
+    not-a-number: "&c '[number]' non è un numero valido."
+    must-be-positive: "&c L'importo deve essere positivo."
+    cannot-pay-self: "&c Non puoi pagare te stesso."

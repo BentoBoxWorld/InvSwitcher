@@ -1,0 +1,38 @@
+###########################################################################################
+# InvSwitcher locale file - Russian
+###########################################################################################
+invswitcher:
+  commands:
+    balance:
+      description: "показать ваш баланс для этого мира"
+      balance: "&a Баланс: &e[number]"
+    pay:
+      description: "заплатить другому игроку"
+      parameters: "<player> <amount>"
+      sent: "&a Вы заплатили [number] игроку [name]"
+      received: "&a Вы получили [number] от игрока [name]"
+    admin:
+      eco:
+        description: "управлять деньгами игроков в этом мире"
+      give:
+        description: "выдать деньги игроку"
+        parameters: "<player> <amount>"
+        success: "&a Деньги выданы игроку [name]. Новый баланс: [number]"
+      take:
+        description: "забрать деньги у игрока"
+        parameters: "<player> <amount>"
+        success: "&a Деньги забраны у игрока [name]. Новый баланс: [number]"
+      set:
+        description: "установить баланс игрока"
+        parameters: "<player> <amount>"
+        success: "&a Баланс игрока [name] установлен на [number]"
+      balance:
+        description: "показать баланс игрока"
+        parameters: "<player>"
+        balance: "&a Баланс игрока [name]: &e[number]"
+  errors:
+    no-economy: "&c Экономика недоступна."
+    insufficient-funds: "&c Недостаточно средств."
+    not-a-number: "&c '[number]' не является допустимым числом."
+    must-be-positive: "&c Сумма должна быть положительной."
+    cannot-pay-self: "&c Вы не можете заплатить самому себе."

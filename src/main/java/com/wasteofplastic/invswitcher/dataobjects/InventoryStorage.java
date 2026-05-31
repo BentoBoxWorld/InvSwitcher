@@ -53,6 +53,26 @@ public class InventoryStorage implements DataObject {
     private Map<String, Integer> exp = new HashMap<>();
 
     /**
+     * Map of world/island key to the player's money balance for that world.
+     */
+    @Expose
+    private Map<String, Double> money = new HashMap<>();
+
+    /**
+     * The last storage key the player was tracked under. Persisted so that economy
+     * transactions for an offline player can be routed to the world they were last in.
+     */
+    @Expose
+    private String lastKey;
+
+    /**
+     * Whether this player's pre-existing balance has already been imported from the
+     * previous economy provider. Prevents the one-time import from running twice.
+     */
+    @Expose
+    private boolean imported;
+
+    /**
      * Map of world name to player location.
      */
     @Expose
@@ -232,6 +252,82 @@ public class InventoryStorage implements DataObject {
      */
     public void setExp(String overworldName, int totalExperience) {
         this.exp.put(overworldName, totalExperience);
+    }
+
+    /**
+     * Gets the money map.
+     * @return the money map keyed by world/island key
+     */
+    public Map<String, Double> getMoney() {
+        return money;
+    }
+
+    /**
+     * Sets the money map.
+     * @param money the money map to set
+     */
+    public void setMoney(Map<String, Double> money) {
+        this.money = money;
+    }
+
+    /**
+     * Gets the money balance for a specific key.
+     * @param key the world/island key
+     * @return the balance, or null if no balance has been stored for this key
+     */
+    public Double getMoney(String key) {
+        return money == null ? null : money.get(key);
+    }
+
+    /**
+     * Checks whether a balance has been stored for a specific key.
+     * @param key the world/island key
+     * @return true if a balance exists for this key
+     */
+    public boolean hasMoney(String key) {
+        return money != null && money.containsKey(key);
+    }
+
+    /**
+     * Sets the money balance for a specific key.
+     * @param key the world/island key
+     * @param balance the balance to set
+     */
+    public void setMoney(String key, double balance) {
+        if (this.money == null) {
+            this.money = new HashMap<>();
+        }
+        this.money.put(key, balance);
+    }
+
+    /**
+     * Gets the last storage key the player was tracked under.
+     * @return the last key, or null if never set
+     */
+    public String getLastKey() {
+        return lastKey;
+    }
+
+    /**
+     * Sets the last storage key the player was tracked under.
+     * @param lastKey the last key to set
+     */
+    public void setLastKey(String lastKey) {
+        this.lastKey = lastKey;
+    }
+
+    /**
+     * @return whether this player's balance has already been imported
+     */
+    public boolean isImported() {
+        return imported;
+    }
+
+    /**
+     * @param imported whether this player's balance has been imported
+     */
+    public void setImported(boolean imported) {
+        this.imported = imported;
     }
 
     /**
@@ -437,6 +533,9 @@ public class InventoryStorage implements DataObject {
         this.gameMode.remove(worldName);
         this.advancements.remove(worldName);
         this.enderChest.remove(worldName);
+        if (this.money != null) {
+            this.money.remove(worldName);
+        }
         clearStats(worldName);
     }
 

@@ -1,0 +1,38 @@
+###########################################################################################
+# InvSwitcher locale file - Latvian
+###########################################################################################
+invswitcher:
+  commands:
+    balance:
+      description: "parāda tavu naudas atlikumu šajā pasaulē"
+      balance: "&a Atlikums: &e[number]"
+    pay:
+      description: "samaksāt citam spēlētājam"
+      parameters: "<player> <amount>"
+      sent: "&a Tu samaksāji [number] spēlētājam [name]"
+      received: "&a Tu saņēmi [number] no spēlētāja [name]"
+    admin:
+      eco:
+        description: "pārvaldīt spēlētāju naudu šajā pasaulē"
+      give:
+        description: "iedot spēlētājam naudu"
+        parameters: "<player> <amount>"
+        success: "&a Nauda iedota spēlētājam [name]. Jaunais atlikums: [number]"
+      take:
+        description: "atņemt spēlētājam naudu"
+        parameters: "<player> <amount>"
+        success: "&a Nauda atņemta spēlētājam [name]. Jaunais atlikums: [number]"
+      set:
+        description: "iestatīt spēlētāja atlikumu"
+        parameters: "<player> <amount>"
+        success: "&a Spēlētāja [name] atlikums iestatīts uz [number]"
+      balance:
+        description: "parādīt spēlētāja atlikumu"
+        parameters: "<player>"
+        balance: "&a Spēlētāja [name] atlikums: &e[number]"
+  errors:
+    no-economy: "&c Ekonomika nav pieejama."
+    insufficient-funds: "&c Nepietiek naudas."
+    not-a-number: "&c '[number]' nav derīgs skaitlis."
+    must-be-positive: "&c Summai jābūt pozitīvai."
+    cannot-pay-self: "&c Tu nevari samaksāt pats sev."

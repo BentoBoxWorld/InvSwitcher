@@ -1,0 +1,38 @@
+###########################################################################################
+# InvSwitcher locale file - Croatian
+###########################################################################################
+invswitcher:
+  commands:
+    balance:
+      description: "prikaži svoj saldo za ovaj svijet"
+      balance: "&a Saldo: &e[number]"
+    pay:
+      description: "plati drugom igraču"
+      parameters: "<player> <amount>"
+      sent: "&a Platio si [number] igraču [name]"
+      received: "&a Primio si [number] od igrača [name]"
+    admin:
+      eco:
+        description: "upravljaj novcem igrača u ovom svijetu"
+      give:
+        description: "daj novac igraču"
+        parameters: "<player> <amount>"
+        success: "&a Novac dan igraču [name]. Novi saldo: [number]"
+      take:
+        description: "oduzmi novac igraču"
+        parameters: "<player> <amount>"
+        success: "&a Novac oduzet igraču [name]. Novi saldo: [number]"
+      set:
+        description: "postavi saldo igrača"
+        parameters: "<player> <amount>"
+        success: "&a Saldo igrača [name] postavljen na [number]"
+      balance:
+        description: "prikaži saldo igrača"
+        parameters: "<player>"
+        balance: "&a Saldo igrača [name]: &e[number]"
+  errors:
+    no-economy: "&c Ekonomija nije dostupna."
+    insufficient-funds: "&c Nedovoljno sredstava."
+    not-a-number: "&c '[number]' nije valjani broj."
+    must-be-positive: "&c Iznos mora biti pozitivan."
+    cannot-pay-self: "&c Ne možeš platiti samom sebi."

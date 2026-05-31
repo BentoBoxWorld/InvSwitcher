@@ -1,0 +1,38 @@
+###########################################################################################
+# InvSwitcher locale file - Traditional Chinese
+###########################################################################################
+invswitcher:
+  commands:
+    balance:
+      description: "顯示你在此世界的餘額"
+      balance: "&a 餘額：&e[number]"
+    pay:
+      description: "向其他玩家付款"
+      parameters: "<player> <amount>"
+      sent: "&a 你已向 [name] 支付 [number]"
+      received: "&a 你已從 [name] 收到 [number]"
+    admin:
+      eco:
+        description: "管理此世界中玩家的金錢"
+      give:
+        description: "給予玩家金錢"
+        parameters: "<player> <amount>"
+        success: "&a 已給予 [name] 金錢。新餘額：[number]"
+      take:
+        description: "扣除玩家金錢"
+        parameters: "<player> <amount>"
+        success: "&a 已扣除 [name] 金錢。新餘額：[number]"
+      set:
+        description: "設定玩家的餘額"
+        parameters: "<player> <amount>"
+        success: "&a 已將 [name] 的餘額設定為 [number]"
+      balance:
+        description: "顯示玩家的餘額"
+        parameters: "<player>"
+        balance: "&a [name] 的餘額：&e[number]"
+  errors:
+    no-economy: "&c 經濟功能無法使用。"
+    insufficient-funds: "&c 餘額不足。"
+    not-a-number: "&c '[number]' 不是有效的數字。"
+    must-be-positive: "&c 金額必須為正數。"
+    cannot-pay-self: "&c 你不能向自己付款。"

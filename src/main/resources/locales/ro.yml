@@ -1,0 +1,38 @@
+###########################################################################################
+# InvSwitcher locale file - Romanian
+###########################################################################################
+invswitcher:
+  commands:
+    balance:
+      description: "afișează soldul tău pentru această lume"
+      balance: "&a Sold: &e[number]"
+    pay:
+      description: "plătește alt jucător"
+      parameters: "<player> <amount>"
+      sent: "&a Ai plătit [number] lui [name]"
+      received: "&a Ai primit [number] de la [name]"
+    admin:
+      eco:
+        description: "gestionează banii jucătorilor în această lume"
+      give:
+        description: "dă bani unui jucător"
+        parameters: "<player> <amount>"
+        success: "&a Bani dați lui [name]. Sold nou: [number]"
+      take:
+        description: "ia bani de la un jucător"
+        parameters: "<player> <amount>"
+        success: "&a Bani luați de la [name]. Sold nou: [number]"
+      set:
+        description: "setează soldul unui jucător"
+        parameters: "<player> <amount>"
+        success: "&a Soldul lui [name] setat la [number]"
+      balance:
+        description: "afișează soldul unui jucător"
+        parameters: "<player>"
+        balance: "&a Soldul lui [name]: &e[number]"
+  errors:
+    no-economy: "&c Economia nu este disponibilă."
+    insufficient-funds: "&c Fonduri insuficiente."
+    not-a-number: "&c '[number]' nu este un număr valid."
+    must-be-positive: "&c Suma trebuie să fie pozitivă."
+    cannot-pay-self: "&c Nu te poți plăti pe tine însuți."

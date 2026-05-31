@@ -1,0 +1,38 @@
+###########################################################################################
+# InvSwitcher locale file - Vietnamese
+###########################################################################################
+invswitcher:
+  commands:
+    balance:
+      description: "hiển thị số dư của bạn cho thế giới này"
+      balance: "&a Số dư: &e[number]"
+    pay:
+      description: "trả tiền cho người chơi khác"
+      parameters: "<player> <amount>"
+      sent: "&a Bạn đã trả [number] cho [name]"
+      received: "&a Bạn đã nhận [number] từ [name]"
+    admin:
+      eco:
+        description: "quản lý tiền của người chơi trong thế giới này"
+      give:
+        description: "đưa tiền cho người chơi"
+        parameters: "<player> <amount>"
+        success: "&a Đã đưa tiền cho [name]. Số dư mới: [number]"
+      take:
+        description: "lấy tiền từ người chơi"
+        parameters: "<player> <amount>"
+        success: "&a Đã lấy tiền từ [name]. Số dư mới: [number]"
+      set:
+        description: "đặt số dư của người chơi"
+        parameters: "<player> <amount>"
+        success: "&a Đã đặt số dư của [name] thành [number]"
+      balance:
+        description: "hiển thị số dư của người chơi"
+        parameters: "<player>"
+        balance: "&a Số dư của [name]: &e[number]"
+  errors:
+    no-economy: "&c Nền kinh tế không khả dụng."
+    insufficient-funds: "&c Không đủ tiền."
+    not-a-number: "&c '[number]' không phải là số hợp lệ."
+    must-be-positive: "&c Số tiền phải là số dương."
+    cannot-pay-self: "&c Bạn không thể trả tiền cho chính mình."

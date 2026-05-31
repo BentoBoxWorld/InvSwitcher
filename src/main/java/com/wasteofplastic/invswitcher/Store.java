@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.Registry;
 import org.bukkit.Statistic;
 import org.bukkit.World;
@@ -65,7 +66,7 @@ import world.bentobox.bentobox.util.Util;
 public class Store {
     private static final CharSequence THE_END = "_the_end";
     private static final CharSequence NETHER = "_nether";
-    static final String DEFAULT_WORLD_KEY = "default";
+    public static final String DEFAULT_WORLD_KEY = "default";
     private final Database<InventoryStorage> database;
     private final Map<UUID, InventoryStorage> cache;
     private final Map<UUID, String> currentKey;
@@ -320,7 +321,15 @@ public class Store {
 
     private void setAdvancements(InventoryStorage store, Player player, String overworldName) {
         // Advancements
-        store.getAdvancements(overworldName).forEach((k, v) -> {
+        Map<String, List<String>> advancements = store.getAdvancements(overworldName);
+        if (advancements.isEmpty()) {
+            return;
+        }
+        // Save current experience before granting advancements, because some advancements
+        // reward XP when their criteria are awarded, which would incorrectly increase the
+        // player's experience points.
+        int savedExp = getTotalExperience(player);
+        advancements.forEach((k, v) -> {
             Iterator<Advancement> it = Bukkit.advancementIterator();
             while (it.hasNext()) {
                 Advancement a = it.next();
@@ -330,7 +339,8 @@ public class Store {
                 }
             }
         });
-
+        // Restore experience to prevent advancement rewards from modifying it
+        setTotalExperience(player, savedExp);
     }
 
     public void removeFromCache(Player player) {
@@ -401,6 +411,9 @@ public class Store {
         // otherwise compute from location
         String islandKey = currentKey.getOrDefault(player.getUniqueId(), getStorageKey(player, world));
         String worldKey = getOverworldName(world);
+        // Persist the key so economy transactions for this player can be routed to the
+        // world they were last in, even after they log out.
+        store.setLastKey(islandKey);
         // Each option saves to the island key or the world key based on its island sub-setting
         Settings settings = addon.getSettings();
         if (settings.isInventory()) {
@@ -667,4 +680,234 @@ public class Store {
     public void saveOnShutdown() {
         Bukkit.getOnlinePlayers().forEach(p -> this.storeAndSave(p, p.getWorld(), true));
     }
+
+    /**
+     * Compute the storage key for a player and island event world, without using
+     * the player's current location. Used when the player is not in the target world.
+     * @param player - player
+     * @param world  - the BentoBox event world
+     * @param island - the island involved in the event (may be null)
+     * @return storage key for this world/island combination
+     */
+    String getStorageKeyForEvent(Player player, World world, Island island) {
+        String overworldName = getOverworldName(world);
+        if (!addon.getSettings().isIslandsActive()) {
+            return overworldName;
+        }
+        World overworld = Util.getWorld(world);
+        if (overworld == null) {
+            return overworldName;
+        }
+        int count = addon.getIslands().getNumberOfConcurrentIslands(player.getUniqueId(), overworld);
+        if (count <= 1) {
+            return overworldName;
+        }
+        // Only use island-specific key if the player owns the island
+        if (island != null && island.getOwner() != null && island.getOwner().equals(player.getUniqueId())) {
+            return overworldName + "/" + island.getUniqueId();
+        }
+        return overworldName;
+    }
+
+    /**
+     * Clears the stored inventory for a BentoBox world when the player is not currently in
+     * that world. Called when BentoBox fires a {@code PlayerResetInventoryEvent} while the
+     * player is in a non-BentoBox world so the player's current inventory is not affected.
+     * @param player - online player
+     * @param world  - the BentoBox world whose stored inventory should be cleared
+     * @param island - the island involved in the reset (may be null)
+     */
+    public void clearStoredInventoryForWorld(Player player, World world, Island island) {
+        InventoryStorage store = getInv(player);
+        String key = getStorageKeyForEvent(player, world, island);
+        String worldKey = getOverworldName(world);
+        Settings settings = addon.getSettings();
+        if (settings.isInventory()) {
+            String k = settings.isIslandsInventory() ? key : worldKey;
+            store.setInventory(k, Collections.emptyList());
+        }
+        database.saveObjectAsync(store);
+    }
+
+    /**
+     * Clears the stored ender chest for a BentoBox world when the player is not currently in
+     * that world. Called when BentoBox fires a {@code PlayerResetEnderChestEvent} while the
+     * player is in a non-BentoBox world.
+     * @param player - online player
+     * @param world  - the BentoBox world whose stored ender chest should be cleared
+     * @param island - the island involved in the reset (may be null)
+     */
+    public void clearStoredEnderChestForWorld(Player player, World world, Island island) {
+        InventoryStorage store = getInv(player);
+        String key = getStorageKeyForEvent(player, world, island);
+        String worldKey = getOverworldName(world);
+        Settings settings = addon.getSettings();
+        if (settings.isEnderChest()) {
+            String k = settings.isIslandsEnderChest() ? key : worldKey;
+            store.setEnderChest(k, Collections.emptyList());
+        }
+        database.saveObjectAsync(store);
+    }
+
+    /**
+     * Zeroes the stored experience for a BentoBox world when the player is not currently in
+     * that world. Called when BentoBox fires a {@code PlayerResetExpEvent} while the
+     * player is in a non-BentoBox world.
+     * @param player - online player
+     * @param world  - the BentoBox world whose stored experience should be zeroed
+     * @param island - the island involved in the reset (may be null)
+     */
+    public void clearStoredExpForWorld(Player player, World world, Island island) {
+        InventoryStorage store = getInv(player);
+        String key = getStorageKeyForEvent(player, world, island);
+        String worldKey = getOverworldName(world);
+        Settings settings = addon.getSettings();
+        if (settings.isExperience()) {
+            String k = settings.isIslandsExperience() ? key : worldKey;
+            store.setExp(k, 0);
+        }
+        database.saveObjectAsync(store);
+    }
+
+    /**
+     * Removes the stored health for a BentoBox world when the player is not currently in
+     * that world. Called when BentoBox fires a {@code PlayerResetHealthEvent} while the
+     * player is in a non-BentoBox world. Removing the entry means the player will receive
+     * maximum health the next time they enter the world.
+     * @param player - online player
+     * @param world  - the BentoBox world whose stored health should be removed
+     * @param island - the island involved in the reset (may be null)
+     */
+    public void clearStoredHealthForWorld(Player player, World world, Island island) {
+        InventoryStorage store = getInv(player);
+        String key = getStorageKeyForEvent(player, world, island);
+        String worldKey = getOverworldName(world);
+        Settings settings = addon.getSettings();
+        if (settings.isHealth()) {
+            String k = settings.isIslandsHealth() ? key : worldKey;
+            store.getHealth().remove(k);
+        }
+        database.saveObjectAsync(store);
+    }
+
+    /**
+     * Resets the stored food level to full (20) for a BentoBox world when the player is not
+     * currently in that world. Called when BentoBox fires a {@code PlayerResetHungerEvent}
+     * while the player is in a non-BentoBox world.
+     * @param player - online player
+     * @param world  - the BentoBox world whose stored food level should be reset
+     * @param island - the island involved in the reset (may be null)
+     */
+    public void clearStoredFoodForWorld(Player player, World world, Island island) {
+        InventoryStorage store = getInv(player);
+        String key = getStorageKeyForEvent(player, world, island);
+        String worldKey = getOverworldName(world);
+        Settings settings = addon.getSettings();
+        if (settings.isFood()) {
+            String k = settings.isIslandsFood() ? key : worldKey;
+            store.setFood(k, 20);
+        }
+        database.saveObjectAsync(store);
+    }
+
+    /**
+     * Zeroes the stored money balance for a BentoBox world when the player is not currently in
+     * that world. Called when BentoBox fires a {@code PlayerResetMoneyEvent} (e.g. on island
+     * reset) while the player is in a non-BentoBox world, so the correct world's balance is
+     * cleared rather than BentoBox withdrawing from the wrong world.
+     * @param player - online player
+     * @param world  - the BentoBox world whose stored balance should be zeroed
+     * @param island - the island involved in the reset (may be null)
+     */
+    public void clearStoredMoneyForWorld(Player player, World world, Island island) {
+        InventoryStorage store = getInv(player);
+        String key = getStorageKeyForEvent(player, world, island);
+        String worldKey = getOverworldName(world);
+        Settings settings = addon.getSettings();
+        if (settings.isMoney()) {
+            String k = settings.isIslandsMoney() ? key : worldKey;
+            store.setMoney(k, 0D);
+        }
+        database.saveObjectAsync(store);
+    }
+
+    // ------ ECONOMY SUPPORT ------
+
+    /**
+     * Get the {@link InventoryStorage} for any player UUID, online or offline. For online
+     * players this returns the cached session object so economy changes stay consistent
+     * with the rest of their data. For offline players a transient copy is loaded from the
+     * database and is deliberately <b>not</b> cached, so a later login reloads fresh data.
+     * @param uuid - player UUID
+     * @return the player's inventory storage (never null)
+     */
+    public InventoryStorage getStorageObject(UUID uuid) {
+        if (cache.containsKey(uuid)) {
+            return cache.get(uuid);
+        }
+        if (database.objectExists(uuid.toString())) {
+            InventoryStorage store = database.loadObject(uuid.toString());
+            if (store != null) {
+                return store;
+            }
+        }
+        InventoryStorage store = new InventoryStorage();
+        store.setUniqueId(uuid.toString());
+        return store;
+    }
+
+    /**
+     * Persist a storage object asynchronously.
+     * @param store - storage to save
+     */
+    public void saveStorage(InventoryStorage store) {
+        database.saveObjectAsync(store);
+    }
+
+    /**
+     * Resolve the money storage key for a player in a specific world.
+     * @param player - player (online or offline)
+     * @param world  - world to resolve the key for
+     * @return the money key, or {@code null} if the world is not managed by InvSwitcher
+     */
+    public String getMoneyKey(OfflinePlayer player, World world) {
+        if (world == null || !addon.getWorlds().contains(world)) {
+            return null;
+        }
+        String overworldName = getOverworldName(world);
+        Settings settings = addon.getSettings();
+        if (!settings.isIslandsActive() || !settings.isIslandsMoney()) {
+            return overworldName;
+        }
+        // Best-effort per-island routing
+        Player online = player.getPlayer();
+        if (online != null && world.equals(online.getWorld())) {
+            return getStorageKey(online, world);
+        }
+        // Offline or in another world: fall back to the player's last island key for this overworld
+        String last = getStorageObject(player.getUniqueId()).getLastKey();
+        if (last != null && last.startsWith(overworldName + "/")) {
+            return last;
+        }
+        return overworldName;
+    }
+
+    /**
+     * Resolve the money storage key for a player's current (online) or last-known (offline)
+     * world, used when a caller does not specify a world.
+     * @param player - player (online or offline)
+     * @return the money key, or {@code null} if it cannot be resolved to a managed world
+     */
+    public String getCurrentMoneyKey(OfflinePlayer player) {
+        Player online = player.getPlayer();
+        if (online != null) {
+            return getMoneyKey(player, online.getWorld());
+        }
+        String last = getStorageObject(player.getUniqueId()).getLastKey();
+        if (last == null || DEFAULT_WORLD_KEY.equals(last)) {
+            return null;
+        }
+        return last;
+    }
+
 }

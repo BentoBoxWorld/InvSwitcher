@@ -1,0 +1,38 @@
+###########################################################################################
+# InvSwitcher locale file - Hungarian
+###########################################################################################
+invswitcher:
+  commands:
+    balance:
+      description: "megmutatja az egyenlegedet ezen a világon"
+      balance: "&a Egyenleg: &e[number]"
+    pay:
+      description: "fizetés egy másik játékosnak"
+      parameters: "<player> <amount>"
+      sent: "&a Fizettél [number] összeget neki: [name]"
+      received: "&a Kaptál [number] összeget tőle: [name]"
+    admin:
+      eco:
+        description: "a játékosok pénzének kezelése ezen a világon"
+      give:
+        description: "pénz adása egy játékosnak"
+        parameters: "<player> <amount>"
+        success: "&a Pénz adva neki: [name]. Új egyenleg: [number]"
+      take:
+        description: "pénz elvétele egy játékostól"
+        parameters: "<player> <amount>"
+        success: "&a Pénz elvéve tőle: [name]. Új egyenleg: [number]"
+      set:
+        description: "egy játékos egyenlegének beállítása"
+        parameters: "<player> <amount>"
+        success: "&a [name] egyenlege beállítva: [number]"
+      balance:
+        description: "egy játékos egyenlegének megjelenítése"
+        parameters: "<player>"
+        balance: "&a [name] egyenlege: &e[number]"
+  errors:
+    no-economy: "&c A gazdaság nem érhető el."
+    insufficient-funds: "&c Nincs elég pénzed."
+    not-a-number: "&c '[number]' nem érvényes szám."
+    must-be-positive: "&c Az összegnek pozitívnak kell lennie."
+    cannot-pay-self: "&c Nem fizethetsz saját magadnak."

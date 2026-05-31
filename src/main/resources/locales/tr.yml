@@ -1,0 +1,38 @@
+###########################################################################################
+# InvSwitcher locale file - Turkish
+###########################################################################################
+invswitcher:
+  commands:
+    balance:
+      description: "bu dünyadaki bakiyeni gösterir"
+      balance: "&a Bakiye: &e[number]"
+    pay:
+      description: "başka bir oyuncuya öde"
+      parameters: "<player> <amount>"
+      sent: "&a [name] oyuncusuna [number] ödedin"
+      received: "&a [name] oyuncusundan [number] aldın"
+    admin:
+      eco:
+        description: "bu dünyadaki oyuncuların parasını yönet"
+      give:
+        description: "bir oyuncuya para ver"
+        parameters: "<player> <amount>"
+        success: "&a [name] oyuncusuna para verildi. Yeni bakiye: [number]"
+      take:
+        description: "bir oyuncudan para al"
+        parameters: "<player> <amount>"
+        success: "&a [name] oyuncusundan para alındı. Yeni bakiye: [number]"
+      set:
+        description: "bir oyuncunun bakiyesini ayarla"
+        parameters: "<player> <amount>"
+        success: "&a [name] oyuncusunun bakiyesi [number] olarak ayarlandı"
+      balance:
+        description: "bir oyuncunun bakiyesini göster"
+        parameters: "<player>"
+        balance: "&a [name] oyuncusunun bakiyesi: &e[number]"
+  errors:
+    no-economy: "&c Ekonomi kullanılamıyor."
+    insufficient-funds: "&c Yetersiz bakiye."
+    not-a-number: "&c '[number]' geçerli bir sayı değil."
+    must-be-positive: "&c Miktar pozitif olmalıdır."
+    cannot-pay-self: "&c Kendine ödeme yapamazsın."

@@ -34,6 +34,14 @@ public class Settings implements ConfigObject {
     private boolean enderChest = true;
     @ConfigEntry(path = "options.statistics")
     private boolean statistics = true;
+    @ConfigComment("Per-world money. Requires the Vault plugin. A separate economy plugin (e.g. EssentialsX)")
+    @ConfigComment("is optional: InvSwitcher can be the only economy. When enabled, InvSwitcher registers")
+    @ConfigComment("itself as the Vault economy and keeps a separate balance for each switched world.")
+    @ConfigComment("Transactions route to the correct world even when the player is offline or in a different")
+    @ConfigComment("world. If another economy plugin is present, worlds InvSwitcher does not manage are passed")
+    @ConfigComment("through to it; if not, InvSwitcher handles every world itself.")
+    @ConfigEntry(path = "options.money")
+    private boolean money = true;
 
     @ConfigComment("Switch inventories based on island. Only applies if players own more than one island.")
     @ConfigComment("Each sub-option controls whether that aspect is switched per-island.")
@@ -56,6 +64,36 @@ public class Settings implements ConfigObject {
     private boolean islandsEnderChest = true;
     @ConfigEntry(path = "options.islands.statistics")
     private boolean islandsStatistics = false;
+    @ConfigComment("If true, each of a player's islands has its own wallet. If false (default) money is")
+    @ConfigComment("per-world only. Per-island money is best-effort for offline players.")
+    @ConfigEntry(path = "options.islands.money")
+    private boolean islandsMoney = false;
+
+    @ConfigComment("")
+    @ConfigComment("Economy settings. Only used when options.money is true.")
+    @ConfigComment("Balance given to a player the first time they enter a managed world (unless imported).")
+    @ConfigEntry(path = "economy.starting-balance")
+    private double startingBalance = 0.0;
+    @ConfigComment("Currency names used when formatting amounts.")
+    @ConfigEntry(path = "economy.currency-name-singular")
+    private String currencyNameSingular = "Dollar";
+    @ConfigEntry(path = "economy.currency-name-plural")
+    private String currencyNamePlural = "Dollars";
+    @ConfigComment("Number of digits after the decimal point.")
+    @ConfigEntry(path = "economy.fractional-digits")
+    private int fractionalDigits = 2;
+    @ConfigComment("Import each player's existing balance from the previous economy plugin once, the first")
+    @ConfigComment("time they enter a managed world, so nobody loses money on first run.")
+    @ConfigEntry(path = "economy.import-existing-balances")
+    private boolean importExistingBalances = true;
+    @ConfigComment("Pass transactions for worlds InvSwitcher does not manage through to the previous economy")
+    @ConfigComment("plugin (e.g. EssentialsX). Disable to make InvSwitcher the sole economy for every world.")
+    @ConfigEntry(path = "economy.delegate-unmanaged-worlds")
+    private boolean delegateUnmanagedWorlds = true;
+    @ConfigComment("Log every economy transaction (deposit/withdraw/balance) to the console for")
+    @ConfigComment("troubleshooting. Verbose - only enable while diagnosing a problem.")
+    @ConfigEntry(path = "economy.debug")
+    private boolean economyDebug = false;
 
     /**
      * @return the worlds
@@ -224,6 +262,66 @@ public class Settings implements ConfigObject {
     }
     public void setIslandsStatistics(boolean islandsStatistics) {
         this.islandsStatistics = islandsStatistics;
+    }
+    /**
+     * @return whether per-world money is enabled
+     */
+    public boolean isMoney() {
+        return money;
+    }
+    public void setMoney(boolean money) {
+        this.money = money;
+    }
+    /**
+     * @return whether money is switched per-island
+     */
+    public boolean isIslandsMoney() {
+        return islandsMoney;
+    }
+    public void setIslandsMoney(boolean islandsMoney) {
+        this.islandsMoney = islandsMoney;
+    }
+    public double getStartingBalance() {
+        return startingBalance;
+    }
+    public void setStartingBalance(double startingBalance) {
+        this.startingBalance = startingBalance;
+    }
+    public String getCurrencyNameSingular() {
+        return currencyNameSingular;
+    }
+    public void setCurrencyNameSingular(String currencyNameSingular) {
+        this.currencyNameSingular = currencyNameSingular;
+    }
+    public String getCurrencyNamePlural() {
+        return currencyNamePlural;
+    }
+    public void setCurrencyNamePlural(String currencyNamePlural) {
+        this.currencyNamePlural = currencyNamePlural;
+    }
+    public int getFractionalDigits() {
+        return fractionalDigits;
+    }
+    public void setFractionalDigits(int fractionalDigits) {
+        this.fractionalDigits = fractionalDigits;
+    }
+    public boolean isImportExistingBalances() {
+        return importExistingBalances;
+    }
+    public void setImportExistingBalances(boolean importExistingBalances) {
+        this.importExistingBalances = importExistingBalances;
+    }
+    public boolean isDelegateUnmanagedWorlds() {
+        return delegateUnmanagedWorlds;
+    }
+    public void setDelegateUnmanagedWorlds(boolean delegateUnmanagedWorlds) {
+        this.delegateUnmanagedWorlds = delegateUnmanagedWorlds;
+    }
+    public boolean isEconomyDebug() {
+        return economyDebug;
+    }
+    public void setEconomyDebug(boolean economyDebug) {
+        this.economyDebug = economyDebug;
     }
 
 }
