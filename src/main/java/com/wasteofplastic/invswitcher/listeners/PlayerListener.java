@@ -197,6 +197,8 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerResetInventory(PlayerResetInventoryEvent event) {
+        // If we are not switching inventories, let BentoBox perform its own reset.
+        if (!addon.getSettings().isInventory()) return;
         if (!shouldInterceptPlayerReset(event)) return;
         event.setCancelled(true);
         Player player = Bukkit.getPlayer(event.getPlayerUUID());
@@ -212,6 +214,8 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerResetEnderChest(PlayerResetEnderChestEvent event) {
+        // If we are not switching ender chests, let BentoBox perform its own reset.
+        if (!addon.getSettings().isEnderChest()) return;
         if (!shouldInterceptPlayerReset(event)) return;
         event.setCancelled(true);
         Player player = Bukkit.getPlayer(event.getPlayerUUID());
@@ -227,6 +231,8 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerResetExp(PlayerResetExpEvent event) {
+        // If we are not switching experience, let BentoBox perform its own reset.
+        if (!addon.getSettings().isExperience()) return;
         if (!shouldInterceptPlayerReset(event)) return;
         event.setCancelled(true);
         Player player = Bukkit.getPlayer(event.getPlayerUUID());
@@ -243,6 +249,8 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerResetHealth(PlayerResetHealthEvent event) {
+        // If we are not switching health, let BentoBox perform its own reset.
+        if (!addon.getSettings().isHealth()) return;
         if (!shouldInterceptPlayerReset(event)) return;
         event.setCancelled(true);
         Player player = Bukkit.getPlayer(event.getPlayerUUID());
@@ -258,6 +266,8 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerResetHunger(PlayerResetHungerEvent event) {
+        // If we are not switching food, let BentoBox perform its own reset.
+        if (!addon.getSettings().isFood()) return;
         if (!shouldInterceptPlayerReset(event)) return;
         event.setCancelled(true);
         Player player = Bukkit.getPlayer(event.getPlayerUUID());

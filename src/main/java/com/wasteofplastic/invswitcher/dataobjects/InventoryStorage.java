@@ -294,6 +294,9 @@ public class InventoryStorage implements DataObject {
      * @param balance the balance to set
      */
     public void setMoney(String key, double balance) {
+        if (this.money == null) {
+            this.money = new HashMap<>();
+        }
         this.money.put(key, balance);
     }
 
@@ -530,7 +533,9 @@ public class InventoryStorage implements DataObject {
         this.gameMode.remove(worldName);
         this.advancements.remove(worldName);
         this.enderChest.remove(worldName);
-        this.money.remove(worldName);
+        if (this.money != null) {
+            this.money.remove(worldName);
+        }
         clearStats(worldName);
     }
 

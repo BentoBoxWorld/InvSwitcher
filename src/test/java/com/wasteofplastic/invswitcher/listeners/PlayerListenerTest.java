@@ -420,6 +420,7 @@ public class PlayerListenerTest {
      */
     @Test
     public void testOnPlayerResetInventoryPlayerInDifferentWorld() {
+        when(settings.isInventory()).thenReturn(true);
         // player is in notWorld, event fires for world
         when(player.getWorld()).thenReturn(notWorld);
         PlayerResetInventoryEvent event = new PlayerResetInventoryEvent(world, island, playerUUID);
@@ -434,10 +435,25 @@ public class PlayerListenerTest {
     }
 
     /**
+     * When inventory switching is disabled, the reset must NOT be intercepted - it is left to
+     * BentoBox - otherwise the reset would be cancelled and never performed.
+     */
+    @Test
+    public void testOnPlayerResetInventoryNotInterceptedWhenSwitchingDisabled() {
+        when(settings.isInventory()).thenReturn(false);
+        when(player.getWorld()).thenReturn(notWorld);
+        PlayerResetInventoryEvent event = new PlayerResetInventoryEvent(world, island, playerUUID);
+        pl.onPlayerResetInventory(event);
+        assertFalse(event.isCancelled(), "Event should not be cancelled when inventory switching is disabled");
+        verify(store, never()).clearStoredInventoryForWorld(any(), any(), any());
+    }
+
+    /**
      * Ender chest reset should be intercepted when the player is in a different world.
      */
     @Test
     public void testOnPlayerResetEnderChestPlayerInDifferentWorld() {
+        when(settings.isEnderChest()).thenReturn(true);
         when(player.getWorld()).thenReturn(notWorld);
         PlayerResetEnderChestEvent event = new PlayerResetEnderChestEvent(world, island, playerUUID);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class);
@@ -472,6 +488,7 @@ public class PlayerListenerTest {
      */
     @Test
     public void testOnPlayerResetExpPlayerInDifferentWorld() {
+        when(settings.isExperience()).thenReturn(true);
         when(player.getWorld()).thenReturn(notWorld);
         PlayerResetExpEvent event = new PlayerResetExpEvent(world, island, playerUUID);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class);
@@ -489,6 +506,7 @@ public class PlayerListenerTest {
      */
     @Test
     public void testOnPlayerResetHealthPlayerInDifferentWorld() {
+        when(settings.isHealth()).thenReturn(true);
         when(player.getWorld()).thenReturn(notWorld);
         PlayerResetHealthEvent event = new PlayerResetHealthEvent(world, island, playerUUID);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class);
@@ -506,6 +524,7 @@ public class PlayerListenerTest {
      */
     @Test
     public void testOnPlayerResetHungerPlayerInDifferentWorld() {
+        when(settings.isFood()).thenReturn(true);
         when(player.getWorld()).thenReturn(notWorld);
         PlayerResetHungerEvent event = new PlayerResetHungerEvent(world, island, playerUUID);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class);

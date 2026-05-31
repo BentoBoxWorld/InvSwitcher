@@ -381,4 +381,25 @@ public class InventoryStorageTest {
 
     }
 
+    /**
+     * The money map can be null after Gson deserialization of pre-1.18.0 records (field
+     * initializers are bypassed). setMoney must lazily create the map rather than throw.
+     */
+    @Test
+    public void testSetMoneyWhenMapNull() {
+        is.setMoney((Map<String, Double>) null);
+        is.setMoney("world", 100.0);
+        assertEquals(100.0, is.getMoney("world"), 0.0001);
+    }
+
+    /**
+     * clearWorldData must not throw when the money map is null.
+     */
+    @Test
+    public void testClearWorldDataWhenMoneyNull() {
+        is.setMoney((Map<String, Double>) null);
+        is.clearWorldData("world");
+        assertNull(is.getMoney("world"));
+    }
+
 }

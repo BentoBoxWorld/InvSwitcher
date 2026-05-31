@@ -32,6 +32,7 @@ public class InvEconomy implements Economy {
 
     private static final String NEGATIVE_DEPOSIT = "Cannot deposit a negative amount";
     private static final String NEGATIVE_WITHDRAW = "Cannot withdraw a negative amount";
+    private static final String NEGATIVE_SET = "Cannot set a negative balance";
     private static final String INSUFFICIENT_FUNDS = "Insufficient funds";
 
     private final InvSwitcher addon;
@@ -219,7 +220,7 @@ public class InvEconomy implements Economy {
 
     private EconomyResponse setSelf(OfflinePlayer player, String key, double amount) {
         if (amount < 0) {
-            return new EconomyResponse(0, readSelf(player, key), ResponseType.FAILURE, NEGATIVE_DEPOSIT);
+            return new EconomyResponse(0, readSelf(player, key), ResponseType.FAILURE, NEGATIVE_SET);
         }
         InventoryStorage s = store().getStorageObject(player.getUniqueId());
         // Mark imported so a later seed does not re-import on top of an explicitly set balance
