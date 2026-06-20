@@ -54,6 +54,8 @@ import org.mockito.quality.Strictness;
 
 import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.database.DatabaseSetup.DatabaseType;
+import com.wasteofplastic.invswitcher.dataobjects.InventoryStorage;
+
 import world.bentobox.bentobox.database.objects.Island;
 import world.bentobox.bentobox.managers.IslandWorldManager;
 import world.bentobox.bentobox.managers.IslandsManager;
@@ -723,6 +725,32 @@ public class StoreTest {
             s.clearStoredMoneyForWorld(player, world, island);
         }
         assertEquals(0D, s.getStorageObject(playerUUID).getMoney("world"), 0.0001);
+    }
+
+    /**
+     * An offline player's economy write must be visible to an immediately following read, even
+     * before the asynchronous save flushes. Regression test for give/set reporting a stale balance
+     * because the follow-up read reloaded the player from the database before the save landed.
+     * Verifies {@link Store#saveStorage} tracks the write and {@link Store#getStorageObject} reuses
+     * the pending object.
+     */
+    @Test
+    public void testOfflineWriteVisibleToImmediateRead() {
+        sets.setMoney(true);
+        // Offline player: never cached, so saveStorage takes the pending-save path and getStorageObject
+        // must return a value consistent with the write that just happened. Keep the post-save eviction
+        // scheduled (a no-op on the mocked scheduler) rather than run inline, so the pending object is
+        // still held when we read it back.
+        BentoBox enabledPlugin = mock(BentoBox.class);
+        when(enabledPlugin.isEnabled()).thenReturn(true);
+        when(addon.getPlugin()).thenReturn(enabledPlugin);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            InventoryStorage obj = s.getStorageObject(playerUUID);
+            obj.setMoney("world", 2000D);
+            s.saveStorage(obj);
+            // The follow-up read must reflect the write, not a stale/empty reload.
+            assertEquals(2000D, s.getStorageObject(playerUUID).getMoney("world"), 0.0001);
+        }
     }
 
     /**

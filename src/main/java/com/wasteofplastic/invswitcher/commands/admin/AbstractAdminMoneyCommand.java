@@ -38,14 +38,31 @@ public abstract class AbstractAdminMoneyCommand extends AbstractMoneyCommand {
 
     /**
      * Send a message reporting the target's balance for the given world, with [name] and [number].
+     * Reads the balance from the economy, so only use this when no write is in flight (a write's
+     * asynchronous save may not have flushed yet, making a fresh read of an offline player stale).
+     * After a transaction, prefer {@link #sendBalanceMessage(User, String, User, double)} with the
+     * balance from the {@code EconomyResponse}.
      * @param user - command sender
      * @param messageKey - locale key of the message
      * @param target - the target player
      * @param world - the world to report the balance for
      */
     protected void sendBalanceMessage(User user, String messageKey, User target, String world) {
+        sendBalanceMessage(user, messageKey, target, economy().getBalance(target.getOfflinePlayer(), world));
+    }
+
+    /**
+     * Send a message reporting a known balance, with [name] and [number]. Use this after a
+     * transaction with the balance returned in the {@link net.milkbowl.vault.economy.EconomyResponse},
+     * which is authoritative and avoids re-reading an offline player before the async save has flushed.
+     * @param user - command sender
+     * @param messageKey - locale key of the message
+     * @param target - the target player
+     * @param balance - the balance to report
+     */
+    protected void sendBalanceMessage(User user, String messageKey, User target, double balance) {
         user.sendMessage(messageKey, TextVariables.NAME, target.getName(),
-                TextVariables.NUMBER, economy().format(economy().getBalance(target.getOfflinePlayer(), world)));
+                TextVariables.NUMBER, economy().format(balance));
     }
 
     /**

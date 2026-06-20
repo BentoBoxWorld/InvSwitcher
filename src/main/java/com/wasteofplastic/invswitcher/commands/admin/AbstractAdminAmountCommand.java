@@ -62,7 +62,10 @@ public abstract class AbstractAdminAmountCommand extends AbstractAdminMoneyComma
             user.sendMessage("invswitcher.errors.insufficient-funds");
             return false;
         }
-        sendBalanceMessage(user, successKey(), target, world);
+        // Report the balance returned by the transaction itself. Re-reading here would reload an
+        // offline target fresh from the database before the asynchronous save has flushed, showing
+        // the stale pre-transaction balance.
+        sendBalanceMessage(user, successKey(), target, response.balance);
         return true;
     }
 }

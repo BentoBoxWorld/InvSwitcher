@@ -34,6 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
@@ -71,6 +72,19 @@ public class Store {
     private final Map<UUID, InventoryStorage> cache;
     private final Map<UUID, String> currentKey;
     private final InvSwitcher addon;
+    /**
+     * Offline storage objects whose asynchronous save has not yet flushed to the database, kept so
+     * that a follow-up read or write reuses the same in-memory copy instead of reloading a stale one.
+     * Without this, two rapid sequential economy transactions on an offline player would each load
+     * an independent copy from the database before the first save landed, losing the first update.
+     * Entries are dropped once all their in-flight saves complete (see {@link #pendingSaveCount}), so
+     * a later login still reloads fresh data. Economy operations run on the main thread, so this map
+     * stays small and self-clearing.
+     */
+    private final Map<UUID, InventoryStorage> pendingSaves = new ConcurrentHashMap<>();
+    /** Number of in-flight saves per offline player, so a pending object is only evicted once the
+     *  last of its saves has flushed. Mutated only on the main thread (see {@link #saveStorage}). */
+    private final Map<UUID, Integer> pendingSaveCount = new ConcurrentHashMap<>();
 
     public Store(InvSwitcher addon) {
         this.addon = addon;
@@ -845,6 +859,13 @@ public class Store {
         if (cache.containsKey(uuid)) {
             return cache.get(uuid);
         }
+        // An offline write may still be in flight (not yet flushed to the database). Reuse that same
+        // object so this read - and any follow-up write built on it - sees the pending change rather
+        // than a stale reload. This is what keeps rapid sequential offline transactions consistent.
+        InventoryStorage pending = pendingSaves.get(uuid);
+        if (pending != null) {
+            return pending;
+        }
         if (database.objectExists(uuid.toString())) {
             InventoryStorage store = database.loadObject(uuid.toString());
             if (store != null) {
@@ -858,10 +879,43 @@ public class Store {
 
     /**
      * Persist a storage object asynchronously.
+     * <p>
+     * For an online (cached) player the cache is the source of truth, so a plain async save cannot
+     * be read back stale. For an offline player the object is transient and not cached, so the save
+     * is tracked in {@link #pendingSaves} until it flushes - otherwise a follow-up read would reload
+     * a stale copy from the database before the async write landed, losing the update.
      * @param store - storage to save
      */
     public void saveStorage(InventoryStorage store) {
-        database.saveObjectAsync(store);
+        UUID uuid = UUID.fromString(store.getUniqueId());
+        if (cache.containsKey(uuid)) {
+            database.saveObjectAsync(store);
+            return;
+        }
+        pendingSaves.put(uuid, store);
+        pendingSaveCount.merge(uuid, 1, Integer::sum);
+        database.saveObjectAsync(store).whenComplete((r, ex) -> onOfflineSaveComplete(uuid));
+    }
+
+    /**
+     * Drop a pending offline save once it has flushed, but only when it was the last save in flight
+     * for that player, so a still-pending later write keeps its object available. Runs the eviction
+     * on the main thread to stay consistent with {@link #saveStorage}; during shutdown the scheduler
+     * is unavailable, so it evicts inline.
+     * @param uuid - the player whose save completed
+     */
+    private void onOfflineSaveComplete(UUID uuid) {
+        Runnable evict = () -> {
+            if (pendingSaveCount.merge(uuid, -1, Integer::sum) <= 0) {
+                pendingSaveCount.remove(uuid);
+                pendingSaves.remove(uuid);
+            }
+        };
+        if (addon.getPlugin().isEnabled()) {
+            Bukkit.getScheduler().runTask(addon.getPlugin(), evict);
+        } else {
+            evict.run();
+        }
     }
 
     /**
