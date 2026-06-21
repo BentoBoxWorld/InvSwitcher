@@ -1,5 +1,6 @@
 package com.wasteofplastic.invswitcher;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -61,7 +62,6 @@ import world.bentobox.bentobox.managers.IslandWorldManager;
 import world.bentobox.bentobox.managers.IslandsManager;
 import world.bentobox.bentobox.util.Util;
 import org.mockbukkit.mockbukkit.MockBukkit;
-import org.mockbukkit.mockbukkit.ServerMock;
 
 /**
  * @author tastybento
@@ -69,7 +69,7 @@ import org.mockbukkit.mockbukkit.ServerMock;
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class StoreTest {
+class StoreTest {
 
     @Mock
     private InvSwitcher addon;
@@ -96,8 +96,8 @@ public class StoreTest {
     private MockedStatic<BentoBox> mockedBentoBox;
 
     @BeforeEach
-    public void setUp() throws Exception {
-        ServerMock server = MockBukkit.mock();
+    void setUp() {
+        MockBukkit.mock();
 
         // BentoBox
         BentoBox plugin = mock(BentoBox.class);
@@ -154,7 +154,7 @@ public class StoreTest {
     }
 
     @AfterEach
-    public void tearDown() throws IOException {
+    void tearDown() throws IOException {
         if (mockedBentoBox != null) {
             mockedBentoBox.close();
         }
@@ -174,7 +174,7 @@ public class StoreTest {
      * Test method for {@link com.wasteofplastic.invswitcher.Store#Store(com.wasteofplastic.invswitcher.InvSwitcher)}.
      */
     @Test
-    public void testStore() {
+    void testStore() {
         assertNotNull(s);
     }
 
@@ -182,7 +182,7 @@ public class StoreTest {
      * Test method for {@link com.wasteofplastic.invswitcher.Store#isWorldStored(org.bukkit.entity.Player, org.bukkit.World)}.
      */
     @Test
-    public void testIsWorldStored() {
+    void testIsWorldStored() {
         assertFalse(s.isWorldStored(player, world));
         // Disable statistics to avoid registry issues when Bukkit static mock overrides MockBukkit
         sets.setStatistics(false);
@@ -198,7 +198,7 @@ public class StoreTest {
      * Test method for {@link com.wasteofplastic.invswitcher.Store#getInventory(org.bukkit.entity.Player, org.bukkit.World)}.
      */
     @Test
-    public void testGetInventory() {
+    void testGetInventory() {
         s.getInventory(player, world);
         verify(player).setFoodLevel(20);
         verify(player).setHealth(18);
@@ -212,7 +212,7 @@ public class StoreTest {
      * must save and restore XP around the advancement grant step.
      */
     @Test
-    public void testGetInventoryAdvancementsPreservesExperience() {
+    void testGetInventoryAdvancementsPreservesExperience() {
         sets.setAdvancements(true);
         sets.setExperience(true);
         sets.setStatistics(false);
@@ -250,7 +250,7 @@ public class StoreTest {
      * Test method for {@link com.wasteofplastic.invswitcher.Store#removeFromCache(org.bukkit.entity.Player)}.
      */
     @Test
-    public void testRemoveFromCache() {
+    void testRemoveFromCache() {
         s.getInventory(player, world);
         assertNotNull(s.getCurrentKey(player));
         s.removeFromCache(player);
@@ -261,7 +261,7 @@ public class StoreTest {
      * Test method for {@link com.wasteofplastic.invswitcher.Store#storeInventory(org.bukkit.entity.Player, org.bukkit.World)}.
      */
     @Test
-    public void testStoreInventoryNothing() {
+    void testStoreInventoryNothing() {
         // Do not actually save anything
         sets.setAdvancements(false);
         sets.setEnderChest(false);
@@ -302,7 +302,7 @@ public class StoreTest {
      * Test method for {@link com.wasteofplastic.invswitcher.Store#storeInventory(org.bukkit.entity.Player, org.bukkit.World)}.
      */
     @Test
-    public void testStoreInventoryAll() {
+    void testStoreInventoryAll() {
         sets.setAdvancements(true);
         sets.setEnderChest(true);
         sets.setExperience(true);
@@ -340,7 +340,7 @@ public class StoreTest {
      * Test method for {@link com.wasteofplastic.invswitcher.Store#saveOnShutdown()}.
      */
     @Test
-    public void testSaveOnlinePlayers() {
+    void testSaveOnlinePlayers() {
         // Mock the static method
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class)) {
             // Run the code under test
@@ -354,14 +354,14 @@ public class StoreTest {
     // --- Per-island storage key tests ---
 
     @Test
-    public void testGetStorageKeyIslandsDisabled() {
+    void testGetStorageKeyIslandsDisabled() {
         sets.setIslandsActive(false);
         String key = s.getStorageKey(player, world);
         assertEquals("world", key); // nether suffix stripped
     }
 
     @Test
-    public void testGetStorageKeySingleIsland() {
+    void testGetStorageKeySingleIsland() {
         sets.setIslandsActive(true);
         try (MockedStatic<Util> utilities = Mockito.mockStatic(Util.class)) {
             utilities.when(() -> Util.getWorld(world)).thenReturn(world);
@@ -372,7 +372,7 @@ public class StoreTest {
     }
 
     @Test
-    public void testGetStorageKeyMultipleIslandsOnOwnIsland() {
+    void testGetStorageKeyMultipleIslandsOnOwnIsland() {
         sets.setIslandsActive(true);
         Island island = mock(Island.class);
         when(island.getOwner()).thenReturn(playerUUID);
@@ -391,7 +391,7 @@ public class StoreTest {
     }
 
     @Test
-    public void testGetStorageKeyMultipleIslandsOnOtherPlayerIsland() {
+    void testGetStorageKeyMultipleIslandsOnOtherPlayerIsland() {
         sets.setIslandsActive(true);
         Island island = mock(Island.class);
         UUID otherPlayer = UUID.randomUUID();
@@ -411,7 +411,7 @@ public class StoreTest {
     }
 
     @Test
-    public void testGetStorageKeyWithSpecificIsland() {
+    void testGetStorageKeyWithSpecificIsland() {
         sets.setIslandsActive(true);
         Island island = mock(Island.class);
         when(island.getOwner()).thenReturn(playerUUID);
@@ -427,7 +427,7 @@ public class StoreTest {
     }
 
     @Test
-    public void testGetStorageKeyGenericNether() {
+    void testGetStorageKeyGenericNether() {
         sets.setIslandsActive(true);
         // Set up a nether world
         World netherWorld = mock(World.class);
@@ -457,19 +457,19 @@ public class StoreTest {
     }
 
     @Test
-    public void testGetCurrentKeyNullByDefault() {
+    void testGetCurrentKeyNullByDefault() {
         assertNull(s.getCurrentKey(player));
     }
 
     @Test
-    public void testGetCurrentKeySetAfterGetInventory() {
+    void testGetCurrentKeySetAfterGetInventory() {
         sets.setIslandsActive(false);
         s.getInventory(player, world);
         assertEquals("world", s.getCurrentKey(player));
     }
 
     @Test
-    public void testRemoveFromCacheClearsCurrentKey() {
+    void testRemoveFromCacheClearsCurrentKey() {
         sets.setIslandsActive(false);
         s.getInventory(player, world);
         assertNotNull(s.getCurrentKey(player));
@@ -481,7 +481,7 @@ public class StoreTest {
      * Test upgradeWorldKeyToIsland clears world data and updates currentKey.
      */
     @Test
-    public void testUpgradeWorldKeyToIsland() {
+    void testUpgradeWorldKeyToIsland() {
         sets.setIslandsActive(true);
         sets.setStatistics(false);
 
@@ -515,7 +515,7 @@ public class StoreTest {
      * Simulates what onIslandEnter does: upgradeWorldKey, storeInventory, getInventory.
      */
     @Test
-    public void testFullScenarioSingleToMultipleIslands() {
+    void testFullScenarioSingleToMultipleIslands() {
         sets.setIslandsActive(true);
         sets.setStatistics(false);
         sets.setHealth(false);
@@ -571,7 +571,7 @@ public class StoreTest {
     // --- Non-BentoBox world tests ---
 
     @Test
-    public void testGetStorageKeyNonBentoBoxWorld() {
+    void testGetStorageKeyNonBentoBoxWorld() {
         World otherWorld = mock(World.class);
         when(otherWorld.getName()).thenReturn("em_adventurers_guild");
         // otherWorld is NOT in bentoboxWorlds
@@ -580,7 +580,7 @@ public class StoreTest {
     }
 
     @Test
-    public void testAllNonBentoBoxWorldsShareKey() {
+    void testAllNonBentoBoxWorldsShareKey() {
         World world1 = mock(World.class);
         when(world1.getName()).thenReturn("world");
         World world2 = mock(World.class);
@@ -594,7 +594,7 @@ public class StoreTest {
     }
 
     @Test
-    public void testBentoBoxToNonBentoBoxRestoresInventory() {
+    void testBentoBoxToNonBentoBoxRestoresInventory() {
         sets.setStatistics(false);
         sets.setAdvancements(false);
 
@@ -619,7 +619,7 @@ public class StoreTest {
     }
 
     @Test
-    public void testMigrationFromOldWorldKey() {
+    void testMigrationFromOldWorldKey() {
         sets.setStatistics(false);
         sets.setAdvancements(false);
 
@@ -655,7 +655,7 @@ public class StoreTest {
      * After clearing, loading inventory for that world should give empty contents.
      */
     @Test
-    public void testClearStoredInventoryForWorld() {
+    void testClearStoredInventoryForWorld() {
         sets.setStatistics(false);
         sets.setAdvancements(false);
         Island island = mock(Island.class);
@@ -681,14 +681,13 @@ public class StoreTest {
      * When ender chest is enabled, clearStoredEnderChestForWorld should work without error.
      */
     @Test
-    public void testClearStoredEnderChestForWorld() {
+    void testClearStoredEnderChestForWorld() {
         sets.setStatistics(false);
         sets.setAdvancements(false);
         Island island = mock(Island.class);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
             s.storeInventory(player, world);
-            // Should not throw
-            s.clearStoredEnderChestForWorld(player, world, island);
+            assertDoesNotThrow(() -> s.clearStoredEnderChestForWorld(player, world, island));
         }
     }
 
@@ -696,15 +695,14 @@ public class StoreTest {
      * When experience is enabled, clearStoredExpForWorld should zero out the stored exp.
      */
     @Test
-    public void testClearStoredExpForWorld() {
+    void testClearStoredExpForWorld() {
         sets.setStatistics(false);
         sets.setAdvancements(false);
         Island island = mock(Island.class);
         when(player.getTotalExperience()).thenReturn(500);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
             s.storeInventory(player, world);
-            // Should not throw
-            s.clearStoredExpForWorld(player, world, island);
+            assertDoesNotThrow(() -> s.clearStoredExpForWorld(player, world, island));
         }
     }
 
@@ -712,7 +710,7 @@ public class StoreTest {
      * When money is enabled, clearStoredMoneyForWorld should zero the stored balance for the world.
      */
     @Test
-    public void testClearStoredMoneyForWorld() {
+    void testClearStoredMoneyForWorld() {
         sets.setStatistics(false);
         sets.setAdvancements(false);
         sets.setMoney(true);
@@ -735,7 +733,7 @@ public class StoreTest {
      * the pending object.
      */
     @Test
-    public void testOfflineWriteVisibleToImmediateRead() {
+    void testOfflineWriteVisibleToImmediateRead() {
         sets.setMoney(true);
         // Offline player: never cached, so saveStorage takes the pending-save path and getStorageObject
         // must return a value consistent with the write that just happened. Keep the post-save eviction
@@ -757,7 +755,7 @@ public class StoreTest {
      * clearStoredMoneyForWorld should be a no-op when money is disabled in settings.
      */
     @Test
-    public void testClearStoredMoneyForWorldMoneyDisabled() {
+    void testClearStoredMoneyForWorldMoneyDisabled() {
         sets.setStatistics(false);
         sets.setAdvancements(false);
         sets.setMoney(false);
@@ -775,15 +773,14 @@ public class StoreTest {
      * When health is enabled, clearStoredHealthForWorld should work without error.
      */
     @Test
-    public void testClearStoredHealthForWorld() {
+    void testClearStoredHealthForWorld() {
         sets.setStatistics(false);
         sets.setAdvancements(false);
         Island island = mock(Island.class);
         when(player.getHealth()).thenReturn(10.0);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
             s.storeInventory(player, world);
-            // Should not throw
-            s.clearStoredHealthForWorld(player, world, island);
+            assertDoesNotThrow(() -> s.clearStoredHealthForWorld(player, world, island));
         }
     }
 
@@ -791,15 +788,14 @@ public class StoreTest {
      * When food is enabled, clearStoredFoodForWorld should work without error.
      */
     @Test
-    public void testClearStoredFoodForWorld() {
+    void testClearStoredFoodForWorld() {
         sets.setStatistics(false);
         sets.setAdvancements(false);
         Island island = mock(Island.class);
         when(player.getFoodLevel()).thenReturn(8);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
             s.storeInventory(player, world);
-            // Should not throw
-            s.clearStoredFoodForWorld(player, world, island);
+            assertDoesNotThrow(() -> s.clearStoredFoodForWorld(player, world, island));
         }
     }
 
@@ -808,7 +804,7 @@ public class StoreTest {
      * No exceptions should be thrown.
      */
     @Test
-    public void testClearStoredInventoryForWorldInventoryDisabled() {
+    void testClearStoredInventoryForWorldInventoryDisabled() {
         sets.setInventory(false);
         sets.setStatistics(false);
         sets.setAdvancements(false);
@@ -828,7 +824,7 @@ public class StoreTest {
      * getStorageKeyForEvent should return the world name when islands mode is inactive.
      */
     @Test
-    public void testGetStorageKeyForEventIslandsDisabled() {
+    void testGetStorageKeyForEventIslandsDisabled() {
         sets.setIslandsActive(false);
         Island island = mock(Island.class);
         String key = s.getStorageKeyForEvent(player, world, island);
@@ -839,7 +835,7 @@ public class StoreTest {
      * getStorageKeyForEvent should return world name when player has only 1 island.
      */
     @Test
-    public void testGetStorageKeyForEventSingleIsland() {
+    void testGetStorageKeyForEventSingleIsland() {
         sets.setIslandsActive(true);
         Island island = mock(Island.class);
         try (MockedStatic<Util> mockedUtil = mockStatic(Util.class)) {
@@ -855,7 +851,7 @@ public class StoreTest {
      * and has multiple islands.
      */
     @Test
-    public void testGetStorageKeyForEventMultipleIslandsOwner() {
+    void testGetStorageKeyForEventMultipleIslandsOwner() {
         sets.setIslandsActive(true);
         Island island = mock(Island.class);
         when(island.getOwner()).thenReturn(playerUUID);
@@ -873,7 +869,7 @@ public class StoreTest {
      * (e.g., kicked from a team). Uses the world-level key since the player is a member, not owner.
      */
     @Test
-    public void testGetStorageKeyForEventMultipleIslandsNotOwner() {
+    void testGetStorageKeyForEventMultipleIslandsNotOwner() {
         sets.setIslandsActive(true);
         Island island = mock(Island.class);
         UUID otherOwner = UUID.randomUUID();

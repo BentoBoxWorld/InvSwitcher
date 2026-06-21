@@ -28,7 +28,7 @@ import org.mockbukkit.mockbukkit.MockBukkit;
  *
  */
 @ExtendWith(MockitoExtension.class)
-public class InventoryStorageTest {
+class InventoryStorageTest {
 
 
     private InventoryStorage is;
@@ -36,13 +36,13 @@ public class InventoryStorageTest {
     /**
      */
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockBukkit.mock();
         is = new InventoryStorage();
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         MockBukkit.unmock();
     }
 
@@ -50,7 +50,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getUniqueId()}.
      */
     @Test
-    public void testGetUniqueId() {
+    void testGetUniqueId() {
         assertNull(is.getUniqueId());
     }
 
@@ -58,7 +58,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setUniqueId(java.lang.String)}.
      */
     @Test
-    public void testSetUniqueId() {
+    void testSetUniqueId() {
         String uuid = UUID.randomUUID().toString();
         is.setUniqueId(uuid);
         assertEquals(uuid, is.getUniqueId());
@@ -68,7 +68,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getInventory()}.
      */
     @Test
-    public void testGetInventory() {
+    void testGetInventory() {
         assertTrue(is.getInventory().isEmpty());
     }
 
@@ -76,7 +76,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getHealth()}.
      */
     @Test
-    public void testGetHealth() {
+    void testGetHealth() {
         assertTrue(is.getHealth().isEmpty());
     }
 
@@ -84,7 +84,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getFood()}.
      */
     @Test
-    public void testGetFood() {
+    void testGetFood() {
         assertTrue(is.getFood().isEmpty());
     }
 
@@ -92,7 +92,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getExp()}.
      */
     @Test
-    public void testGetExp() {
+    void testGetExp() {
         assertTrue(is.getExp().isEmpty());
     }
 
@@ -100,7 +100,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getLocation()}.
      */
     @Test
-    public void testGetLocation() {
+    void testGetLocation() {
         assertTrue(is.getLocation().isEmpty());
     }
 
@@ -108,7 +108,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setInventory(java.util.Map)}.
      */
     @Test
-    public void testSetInventoryMapOfStringListOfItemStack() {
+    void testSetInventoryMapOfStringListOfItemStack() {
         ItemStack item = new ItemStack(Material.ACACIA_BOAT);
         is.setInventory(Map.of("test", List.of(item)));
         Map<String, List<ItemStack>> map = is.getInventory();
@@ -119,7 +119,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setInventory(java.lang.String, java.util.List)}.
      */
     @Test
-    public void testSetInventoryStringListOfItemStack() {
+    void testSetInventoryStringListOfItemStack() {
         ItemStack item = new ItemStack(Material.ACACIA_BOAT);
         is.setInventory("worldName", List.of(item));
         Map<String, List<ItemStack>> map = is.getInventory();
@@ -130,7 +130,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setHealth(java.util.Map)}.
      */
     @Test
-    public void testSetHealthMapOfStringDouble() {
+    void testSetHealthMapOfStringDouble() {
         Map<String, Double> map = Map.of("test", 234D);
         is.setHealth(map);
         assertEquals(234D, is.getHealth().get("test"), 0D);
@@ -140,7 +140,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setFood(java.util.Map)}.
      */
     @Test
-    public void testSetFoodMapOfStringInteger() {
+    void testSetFoodMapOfStringInteger() {
         Map<String, Integer> map = Map.of("test", 234);
         is.setFood(map);
         assertEquals(234, is.getFood().get("test").intValue());
@@ -150,7 +150,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setExp(java.util.Map)}.
      */
     @Test
-    public void testSetExpMapOfStringInteger() {
+    void testSetExpMapOfStringInteger() {
         Map<String, Integer> map = Map.of("test", 234);
         is.setExp(map);
         assertEquals(234, is.getExp().get("test").intValue());
@@ -160,7 +160,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setLocation(java.util.Map)}.
      */
     @Test
-    public void testSetLocationMapOfStringLocation() {
+    void testSetLocationMapOfStringLocation() {
         Location loc = mock(Location.class);
         Map<String, Location> map = Map.of("test", loc);
         is.setLocation(map);
@@ -171,7 +171,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setHealth(java.lang.String, double)}.
      */
     @Test
-    public void testSetHealthStringDouble() {
+    void testSetHealthStringDouble() {
         is.setHealth("test", 10D);
         assertEquals(10D, is.getHealth().get("test"), 0D);
     }
@@ -180,7 +180,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setFood(java.lang.String, int)}.
      */
     @Test
-    public void testSetFoodStringInt() {
+    void testSetFoodStringInt() {
         is.setFood("test", 234);
         assertEquals(234, is.getFood().get("test").intValue());
     }
@@ -189,7 +189,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setExp(java.lang.String, int)}.
      */
     @Test
-    public void testSetExpStringInt() {
+    void testSetExpStringInt() {
         is.setExp("test", 234);
         assertEquals(234, is.getExp().get("test").intValue());
     }
@@ -198,7 +198,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setLocation(java.lang.String, org.bukkit.Location)}.
      */
     @Test
-    public void testSetLocationStringLocation() {
+    void testSetLocationStringLocation() {
         Location loc = mock(Location.class);
         is.setLocation("test", loc);
         assertEquals(loc, is.getLocation().get("test"));
@@ -208,7 +208,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getInventory(java.lang.String)}.
      */
     @Test
-    public void testGetInventoryString() {
+    void testGetInventoryString() {
         assertTrue(is.getInventory("test").isEmpty());
     }
 
@@ -216,7 +216,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#isInventory(java.lang.String)}.
      */
     @Test
-    public void testIsInventory() {
+    void testIsInventory() {
         assertFalse(is.isInventory("test"));
     }
 
@@ -224,7 +224,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setGameMode(java.lang.String, org.bukkit.GameMode)}.
      */
     @Test
-    public void testSetGameMode() {
+    void testSetGameMode() {
         is.setGameMode("test", GameMode.ADVENTURE);
         assertEquals(GameMode.ADVENTURE, is.getGameMode("test"));
     }
@@ -233,7 +233,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getGameMode(java.lang.String)}.
      */
     @Test
-    public void testGetGameMode() {
+    void testGetGameMode() {
         is.setGameMode("test2", GameMode.ADVENTURE);
         assertEquals(GameMode.SURVIVAL, is.getGameMode("test"));
         assertEquals(GameMode.ADVENTURE, is.getGameMode("test2"));
@@ -243,7 +243,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setAdvancement(java.lang.String, java.lang.String, java.util.List)}.
      */
     @Test
-    public void testSetAdvancement() {
+    void testSetAdvancement() {
         is.setAdvancement("word", "key", List.of("criteria", "cirt"));
         assertTrue(is.getAdvancements("test").isEmpty());
         Map<String, List<String>> r = is.getAdvancements("word");
@@ -254,7 +254,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#clearAdvancement(java.lang.String)}.
      */
     @Test
-    public void testClearAdvancement() {
+    void testClearAdvancement() {
         is.setAdvancement("word", "key", List.of("criteria", "cirt"));
         assertFalse(is.getAdvancements("word").isEmpty());
         is.clearAdvancement("wowoow");
@@ -267,7 +267,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getAdvancements(java.lang.String)}.
      */
     @Test
-    public void testGetAdvancements() {
+    void testGetAdvancements() {
         assertTrue(is.getAdvancements("test").isEmpty());
     }
 
@@ -275,7 +275,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getEnderChest(java.lang.String)}.
      */
     @Test
-    public void testGetEnderChestString() {
+    void testGetEnderChestString() {
         assertTrue(is.getEnderChest("test").isEmpty());
     }
 
@@ -283,7 +283,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setEnderChest(java.lang.String, java.util.List)}.
      */
     @Test
-    public void testSetEnderChestStringListOfItemStack() {
+    void testSetEnderChestStringListOfItemStack() {
         ItemStack item = new ItemStack(Material.ACACIA_BOAT);
         is.setEnderChest("worldName", List.of(item));
         Map<String, List<ItemStack>> map = is.getEnderChest();
@@ -294,7 +294,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getEnderChest()}.
      */
     @Test
-    public void testGetEnderChest() {
+    void testGetEnderChest() {
         assertTrue(is.getEnderChest().isEmpty());
     }
 
@@ -302,7 +302,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setEnderChest(java.util.Map)}.
      */
     @Test
-    public void testSetEnderChestMapOfStringListOfItemStack() {
+    void testSetEnderChestMapOfStringListOfItemStack() {
         ItemStack item = new ItemStack(Material.ACACIA_BOAT);
         Map<String, List<ItemStack>> map = Map.of("worldName", List.of(item));
         is.setEnderChest(map);
@@ -314,7 +314,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#clearStats(java.lang.String)}.
      */
     @Test
-    public void testClearStats() {
+    void testClearStats() {
         is.setBlockStats("test", Map.of(Statistic.MINE_BLOCK, Map.of(Material.STONE, 3000)));
         is.setEntityStats("test", Map.of(Statistic.ENTITY_KILLED_BY, Map.of(EntityType.BEE, 4000)));
         is.setItemStats("test", Map.of(Statistic.USE_ITEM, Map.of(Material.DIAMOND_AXE, 5000)));
@@ -335,7 +335,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getUntypedStats(java.lang.String)}.
      */
     @Test
-    public void testGetUntypedStats() {
+    void testGetUntypedStats() {
         assertTrue(is.getUntypedStats("test").isEmpty());
     }
 
@@ -343,7 +343,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#setUntypedStats(java.lang.String, java.util.Map)}.
      */
     @Test
-    public void testSetUntypedStats() {
+    void testSetUntypedStats() {
         assertTrue(is.getUntypedStats("test").isEmpty());
         is.setUntypedStats("test", Map.of(Statistic.ARMOR_CLEANED, 30));
         assertEquals(30, is.getUntypedStats("test").get(Statistic.ARMOR_CLEANED).intValue());
@@ -353,7 +353,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getBlockStats(java.lang.String)}.
      */
     @Test
-    public void testGetBlockStats() {
+    void testGetBlockStats() {
         assertTrue(is.getBlockStats("test").isEmpty());
         is.setBlockStats("test", Map.of(Statistic.MINE_BLOCK, Map.of(Material.STONE, 3000)));
         assertEquals(3000, is.getBlockStats("test").get(Statistic.MINE_BLOCK).get(Material.STONE).intValue());
@@ -364,7 +364,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getItemStats(java.lang.String)}.
      */
     @Test
-    public void testGetItemStats() {
+    void testGetItemStats() {
         assertTrue(is.getItemStats("test").isEmpty());
         is.setItemStats("test", Map.of(Statistic.MINE_BLOCK, Map.of(Material.STONE, 3000)));
         assertEquals(3000, is.getItemStats("test").get(Statistic.MINE_BLOCK).get(Material.STONE).intValue());
@@ -374,7 +374,7 @@ public class InventoryStorageTest {
      * Test method for {@link com.wasteofplastic.invswitcher.dataobjects.InventoryStorage#getEntityStats(java.lang.String)}.
      */
     @Test
-    public void testGetEntityStats() {
+    void testGetEntityStats() {
         assertTrue(is.getEntityStats("test").isEmpty());
         is.setEntityStats("test", Map.of(Statistic.MINE_BLOCK, Map.of(EntityType.BLAZE, 3000)));
         assertEquals(3000, is.getEntityStats("test").get(Statistic.MINE_BLOCK).get(EntityType.BLAZE).intValue());
@@ -386,7 +386,7 @@ public class InventoryStorageTest {
      * initializers are bypassed). setMoney must lazily create the map rather than throw.
      */
     @Test
-    public void testSetMoneyWhenMapNull() {
+    void testSetMoneyWhenMapNull() {
         is.setMoney((Map<String, Double>) null);
         is.setMoney("world", 100.0);
         assertEquals(100.0, is.getMoney("world"), 0.0001);
@@ -396,7 +396,7 @@ public class InventoryStorageTest {
      * clearWorldData must not throw when the money map is null.
      */
     @Test
-    public void testClearWorldDataWhenMoneyNull() {
+    void testClearWorldDataWhenMoneyNull() {
         is.setMoney((Map<String, Double>) null);
         is.clearWorldData("world");
         assertNull(is.getMoney("world"));

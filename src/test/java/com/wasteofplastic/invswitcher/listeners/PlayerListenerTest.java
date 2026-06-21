@@ -55,7 +55,7 @@ import world.bentobox.bentobox.util.Util;
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class PlayerListenerTest {
+class PlayerListenerTest {
 
     @Mock
     private InvSwitcher addon;
@@ -81,7 +81,7 @@ public class PlayerListenerTest {
     /**
      */
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         // BentoBox static mock (needed for logDebug calls in PlayerListener)
         BentoBox bbPlugin = mock(BentoBox.class);
         mockedBentoBox = Mockito.mockStatic(BentoBox.class);
@@ -105,7 +105,7 @@ public class PlayerListenerTest {
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         if (mockedBentoBox != null) {
             mockedBentoBox.close();
         }
@@ -115,7 +115,7 @@ public class PlayerListenerTest {
      * Test method for {@link com.wasteofplastic.invswitcher.listeners.PlayerListener#PlayerListener(com.wasteofplastic.invswitcher.InvSwitcher)}.
      */
     @Test
-    public void testPlayerListener() {
+    void testPlayerListener() {
         assertNotNull(pl);
     }
 
@@ -123,7 +123,7 @@ public class PlayerListenerTest {
      * Test method for {@link com.wasteofplastic.invswitcher.listeners.PlayerListener#onWorldEnter(org.bukkit.event.player.PlayerChangedWorldEvent)}.
      */
     @Test
-    public void testOnWorldEnterSameWorld() {
+    void testOnWorldEnterSameWorld() {
         PlayerChangedWorldEvent event = new PlayerChangedWorldEvent(player, world);
         pl.onWorldEnter(event);
         verify(store, never()).storeInventory(any(), any());
@@ -134,7 +134,7 @@ public class PlayerListenerTest {
      * Test method for {@link com.wasteofplastic.invswitcher.listeners.PlayerListener#onWorldEnter(org.bukkit.event.player.PlayerChangedWorldEvent)}.
      */
     @Test
-    public void testOnWorldEnterDifferentWorld() {
+    void testOnWorldEnterDifferentWorld() {
         PlayerChangedWorldEvent event = new PlayerChangedWorldEvent(player, notWorld);
         // Mock the static method
         try (MockedStatic<Util> mockedBukkit = mockStatic(Util.class, Mockito.RETURNS_MOCKS)) {
@@ -149,7 +149,7 @@ public class PlayerListenerTest {
      * Test method for {@link com.wasteofplastic.invswitcher.listeners.PlayerListener#onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent)}.
      */
     @Test
-    public void testOnPlayerJoin() {
+    void testOnPlayerJoin() {
         PlayerJoinEvent event = new PlayerJoinEvent(player, "");
         pl.onPlayerJoin(event);
         // No storage yet
@@ -160,7 +160,7 @@ public class PlayerListenerTest {
      * Test method for {@link com.wasteofplastic.invswitcher.listeners.PlayerListener#onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent)}.
      */
     @Test
-    public void testOnPlayerJoinNonHandledWorld() {
+    void testOnPlayerJoinNonHandledWorld() {
         when(player.getWorld()).thenReturn(notWorld);
         PlayerJoinEvent event = new PlayerJoinEvent(player, "");
         pl.onPlayerJoin(event);
@@ -172,7 +172,7 @@ public class PlayerListenerTest {
      * Test method for {@link com.wasteofplastic.invswitcher.listeners.PlayerListener#onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent)}.
      */
     @Test
-    public void testOnPlayerJoinWithStorage() {
+    void testOnPlayerJoinWithStorage() {
         testOnWorldEnterDifferentWorld();
         when(player.getWorld()).thenReturn(notWorld);
         PlayerJoinEvent event = new PlayerJoinEvent(player, "");
@@ -185,7 +185,7 @@ public class PlayerListenerTest {
      * Test method for {@link com.wasteofplastic.invswitcher.listeners.PlayerListener#onPlayerQuit(org.bukkit.event.player.PlayerQuitEvent)}.
      */
     @Test
-    public void testOnPlayerQuit() {
+    void testOnPlayerQuit() {
         PlayerQuitEvent event = new PlayerQuitEvent(player, "");
         pl.onPlayerQuit(event);
         verify(store).storeAndSave(player, world, false);
@@ -196,7 +196,7 @@ public class PlayerListenerTest {
      * Test method for {@link com.wasteofplastic.invswitcher.listeners.PlayerListener#onPlayerQuit(org.bukkit.event.player.PlayerQuitEvent)}.
      */
     @Test
-    public void testOnPlayerQuitNotCoveredWorld() {
+    void testOnPlayerQuitNotCoveredWorld() {
         when(player.getWorld()).thenReturn(notWorld);
         PlayerQuitEvent event = new PlayerQuitEvent(player, "");
         pl.onPlayerQuit(event);
@@ -207,9 +207,8 @@ public class PlayerListenerTest {
     // --- Island Enter Event Tests ---
 
     @Test
-    public void testOnIslandEnterDisabled() {
+    void testOnIslandEnterDisabled() {
         when(settings.isIslandsActive()).thenReturn(false);
-        Island island = mock(Island.class);
         IslandEnterEvent event = new IslandEnterEvent(island, playerUUID, false, null, island, null);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class)) {
             mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(player);
@@ -219,9 +218,8 @@ public class PlayerListenerTest {
     }
 
     @Test
-    public void testOnIslandEnterNotOwner() {
+    void testOnIslandEnterNotOwner() {
         when(settings.isIslandsActive()).thenReturn(true);
-        Island island = mock(Island.class);
         UUID otherOwner = UUID.randomUUID();
         when(island.getOwner()).thenReturn(otherOwner);
         IslandEnterEvent event = new IslandEnterEvent(island, playerUUID, false, null, island, null);
@@ -233,9 +231,8 @@ public class PlayerListenerTest {
     }
 
     @Test
-    public void testOnIslandEnterSingleIsland() {
+    void testOnIslandEnterSingleIsland() {
         when(settings.isIslandsActive()).thenReturn(true);
-        Island island = mock(Island.class);
         when(island.getOwner()).thenReturn(playerUUID);
 
         IslandEnterEvent event = new IslandEnterEvent(island, playerUUID, false, null, island, null);
@@ -250,9 +247,8 @@ public class PlayerListenerTest {
     }
 
     @Test
-    public void testOnIslandEnterMultipleIslandsSameKey() {
+    void testOnIslandEnterMultipleIslandsSameKey() {
         when(settings.isIslandsActive()).thenReturn(true);
-        Island island = mock(Island.class);
         when(island.getOwner()).thenReturn(playerUUID);
         when(island.getUniqueId()).thenReturn("island-1");
 
@@ -273,9 +269,8 @@ public class PlayerListenerTest {
     }
 
     @Test
-    public void testOnIslandEnterMultipleIslandsDifferentKey() {
+    void testOnIslandEnterMultipleIslandsDifferentKey() {
         when(settings.isIslandsActive()).thenReturn(true);
-        Island island = mock(Island.class);
         when(island.getOwner()).thenReturn(playerUUID);
         when(island.getUniqueId()).thenReturn("island-2");
 
@@ -298,7 +293,7 @@ public class PlayerListenerTest {
     // --- Respawn Event Tests ---
 
     @Test
-    public void testOnPlayerRespawnDisabled() {
+    void testOnPlayerRespawnDisabled() {
         when(settings.isIslandsActive()).thenReturn(false);
         Location respawnLoc = mock(Location.class);
         when(respawnLoc.getWorld()).thenReturn(world);
@@ -310,12 +305,11 @@ public class PlayerListenerTest {
     }
 
     @Test
-    public void testOnPlayerRespawnSameIsland() {
+    void testOnPlayerRespawnSameIsland() {
         when(settings.isIslandsActive()).thenReturn(true);
         Location respawnLoc = mock(Location.class);
         when(respawnLoc.getWorld()).thenReturn(world);
 
-        Island island = mock(Island.class);
         when(islandsManager.getIslandAt(respawnLoc)).thenReturn(Optional.of(island));
         when(store.getStorageKey(player, world, island)).thenReturn("world/island-1");
         when(store.getCurrentKey(player)).thenReturn("world/island-1");
@@ -329,12 +323,11 @@ public class PlayerListenerTest {
     }
 
     @Test
-    public void testOnPlayerRespawnDifferentIsland() {
+    void testOnPlayerRespawnDifferentIsland() {
         when(settings.isIslandsActive()).thenReturn(true);
         Location respawnLoc = mock(Location.class);
         when(respawnLoc.getWorld()).thenReturn(world);
 
-        Island island = mock(Island.class);
         when(islandsManager.getIslandAt(respawnLoc)).thenReturn(Optional.of(island));
         when(store.getStorageKey(player, world, island)).thenReturn("world/island-2");
         when(store.getCurrentKey(player)).thenReturn("world/island-1");
@@ -349,7 +342,7 @@ public class PlayerListenerTest {
     }
 
     @Test
-    public void testOnPlayerRespawnNoIsland() {
+    void testOnPlayerRespawnNoIsland() {
         when(settings.isIslandsActive()).thenReturn(true);
         Location respawnLoc = mock(Location.class);
         when(respawnLoc.getWorld()).thenReturn(world);
@@ -370,7 +363,7 @@ public class PlayerListenerTest {
      * and the store clear methods should not be called.
      */
     @Test
-    public void testOnPlayerResetInventoryWorldNotManaged() {
+    void testOnPlayerResetInventoryWorldNotManaged() {
         // notWorld is not in the addon's worlds set
         when(addon.getWorlds()).thenReturn(Set.of(world)); // only 'world' is managed
         PlayerResetInventoryEvent event = new PlayerResetInventoryEvent(notWorld, island, playerUUID);
@@ -386,7 +379,7 @@ public class PlayerListenerTest {
      * When the player is offline, the event should not be intercepted.
      */
     @Test
-    public void testOnPlayerResetInventoryPlayerOffline() {
+    void testOnPlayerResetInventoryPlayerOffline() {
         PlayerResetInventoryEvent event = new PlayerResetInventoryEvent(world, island, playerUUID);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class)) {
             mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(null); // offline
@@ -400,7 +393,7 @@ public class PlayerListenerTest {
      * When the player is currently in the event world, BentoBox should handle the reset directly.
      */
     @Test
-    public void testOnPlayerResetInventoryPlayerInEventWorld() {
+    void testOnPlayerResetInventoryPlayerInEventWorld() {
         // player.getWorld() returns 'world', event world is also 'world'
         when(player.getWorld()).thenReturn(world);
         PlayerResetInventoryEvent event = new PlayerResetInventoryEvent(world, island, playerUUID);
@@ -419,7 +412,7 @@ public class PlayerListenerTest {
      * and the stored inventory for the BentoBox world should be cleared.
      */
     @Test
-    public void testOnPlayerResetInventoryPlayerInDifferentWorld() {
+    void testOnPlayerResetInventoryPlayerInDifferentWorld() {
         when(settings.isInventory()).thenReturn(true);
         // player is in notWorld, event fires for world
         when(player.getWorld()).thenReturn(notWorld);
@@ -439,7 +432,7 @@ public class PlayerListenerTest {
      * BentoBox - otherwise the reset would be cancelled and never performed.
      */
     @Test
-    public void testOnPlayerResetInventoryNotInterceptedWhenSwitchingDisabled() {
+    void testOnPlayerResetInventoryNotInterceptedWhenSwitchingDisabled() {
         when(settings.isInventory()).thenReturn(false);
         when(player.getWorld()).thenReturn(notWorld);
         PlayerResetInventoryEvent event = new PlayerResetInventoryEvent(world, island, playerUUID);
@@ -452,7 +445,7 @@ public class PlayerListenerTest {
      * Ender chest reset should be intercepted when the player is in a different world.
      */
     @Test
-    public void testOnPlayerResetEnderChestPlayerInDifferentWorld() {
+    void testOnPlayerResetEnderChestPlayerInDifferentWorld() {
         when(settings.isEnderChest()).thenReturn(true);
         when(player.getWorld()).thenReturn(notWorld);
         PlayerResetEnderChestEvent event = new PlayerResetEnderChestEvent(world, island, playerUUID);
@@ -470,7 +463,7 @@ public class PlayerListenerTest {
      * Ender chest reset should not be intercepted when the player is in the event world.
      */
     @Test
-    public void testOnPlayerResetEnderChestPlayerInEventWorld() {
+    void testOnPlayerResetEnderChestPlayerInEventWorld() {
         when(player.getWorld()).thenReturn(world);
         PlayerResetEnderChestEvent event = new PlayerResetEnderChestEvent(world, island, playerUUID);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class);
@@ -487,7 +480,7 @@ public class PlayerListenerTest {
      * Experience reset should be intercepted when the player is in a different world.
      */
     @Test
-    public void testOnPlayerResetExpPlayerInDifferentWorld() {
+    void testOnPlayerResetExpPlayerInDifferentWorld() {
         when(settings.isExperience()).thenReturn(true);
         when(player.getWorld()).thenReturn(notWorld);
         PlayerResetExpEvent event = new PlayerResetExpEvent(world, island, playerUUID);
@@ -505,7 +498,7 @@ public class PlayerListenerTest {
      * Health reset should be intercepted when the player is in a different world.
      */
     @Test
-    public void testOnPlayerResetHealthPlayerInDifferentWorld() {
+    void testOnPlayerResetHealthPlayerInDifferentWorld() {
         when(settings.isHealth()).thenReturn(true);
         when(player.getWorld()).thenReturn(notWorld);
         PlayerResetHealthEvent event = new PlayerResetHealthEvent(world, island, playerUUID);
@@ -523,7 +516,7 @@ public class PlayerListenerTest {
      * Hunger reset should be intercepted when the player is in a different world.
      */
     @Test
-    public void testOnPlayerResetHungerPlayerInDifferentWorld() {
+    void testOnPlayerResetHungerPlayerInDifferentWorld() {
         when(settings.isFood()).thenReturn(true);
         when(player.getWorld()).thenReturn(notWorld);
         PlayerResetHungerEvent event = new PlayerResetHungerEvent(world, island, playerUUID);
@@ -541,7 +534,7 @@ public class PlayerListenerTest {
      * Money reset should be intercepted when the player is in a different world.
      */
     @Test
-    public void testOnPlayerResetMoneyPlayerInDifferentWorld() {
+    void testOnPlayerResetMoneyPlayerInDifferentWorld() {
         when(settings.isMoney()).thenReturn(true);
         when(player.getWorld()).thenReturn(notWorld);
         PlayerResetMoneyEvent event = new PlayerResetMoneyEvent(world, island, playerUUID);
@@ -560,7 +553,7 @@ public class PlayerListenerTest {
      * because BentoBox's reset routes correctly through InvSwitcher's economy.
      */
     @Test
-    public void testOnPlayerResetMoneyPlayerInEventWorld() {
+    void testOnPlayerResetMoneyPlayerInEventWorld() {
         when(settings.isMoney()).thenReturn(true);
         when(player.getWorld()).thenReturn(world);
         PlayerResetMoneyEvent event = new PlayerResetMoneyEvent(world, island, playerUUID);
@@ -578,7 +571,7 @@ public class PlayerListenerTest {
      * Money reset should be ignored entirely when InvSwitcher money is disabled.
      */
     @Test
-    public void testOnPlayerResetMoneyMoneyDisabled() {
+    void testOnPlayerResetMoneyMoneyDisabled() {
         when(settings.isMoney()).thenReturn(false);
         when(player.getWorld()).thenReturn(notWorld);
         PlayerResetMoneyEvent event = new PlayerResetMoneyEvent(world, island, playerUUID);

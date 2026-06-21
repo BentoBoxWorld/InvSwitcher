@@ -41,7 +41,6 @@ import org.mockbukkit.mockbukkit.MockBukkit;
 import com.wasteofplastic.invswitcher.InvSwitcher;
 import com.wasteofplastic.invswitcher.Settings;
 import com.wasteofplastic.invswitcher.Store;
-import com.wasteofplastic.invswitcher.dataobjects.InventoryStorage;
 
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
@@ -56,7 +55,7 @@ import world.bentobox.bentobox.managers.IslandsManager;
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class InvEconomyTest {
+class InvEconomyTest {
 
     @Mock
     private InvSwitcher addon;
@@ -81,7 +80,7 @@ public class InvEconomyTest {
     private MockedStatic<BentoBox> mockedBentoBox;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockBukkit.mock();
 
         BentoBox plugin = mock(BentoBox.class);
@@ -117,7 +116,7 @@ public class InvEconomyTest {
     }
 
     @AfterEach
-    public void tearDown() throws IOException {
+    void tearDown() throws IOException {
         if (mockedBentoBox != null) {
             mockedBentoBox.close();
         }
@@ -129,19 +128,19 @@ public class InvEconomyTest {
     }
 
     @Test
-    public void testEnabledAndName() {
+    void testEnabledAndName() {
         assertTrue(economy.isEnabled());
         assertEquals("InvSwitcher", economy.getName());
     }
 
     @Test
-    public void testFormatSingularAndPlural() {
+    void testFormatSingularAndPlural() {
         assertEquals("1.00 Dollar", economy.format(1.0));
         assertEquals("2.50 Dollars", economy.format(2.5));
     }
 
     @Test
-    public void testDepositManagedWorld() {
+    void testDepositManagedWorld() {
         EconomyResponse r = economy.depositPlayer(player, 100.0);
         assertTrue(r.transactionSuccess());
         assertEquals(100.0, economy.getBalance(player), 0.0001);
@@ -152,7 +151,7 @@ public class InvEconomyTest {
     }
 
     @Test
-    public void testWithdrawSuccessAndInsufficient() {
+    void testWithdrawSuccessAndInsufficient() {
         economy.depositPlayer(player, 100.0);
         EconomyResponse ok = economy.withdrawPlayer(player, 30.0);
         assertTrue(ok.transactionSuccess());
@@ -164,13 +163,13 @@ public class InvEconomyTest {
     }
 
     @Test
-    public void testStartingBalance() {
+    void testStartingBalance() {
         sets.setStartingBalance(50.0);
         assertEquals(50.0, economy.getBalance(player), 0.0001);
     }
 
     @Test
-    public void testImportOnce() {
+    void testImportOnce() {
         sets.setImportExistingBalances(true);
         when(delegate.getBalance(player)).thenReturn(500.0);
 
@@ -184,7 +183,7 @@ public class InvEconomyTest {
     }
 
     @Test
-    public void testDelegateUnmanagedWorld() {
+    void testDelegateUnmanagedWorld() {
         World lobby = mock(World.class);
         when(lobby.getName()).thenReturn("lobby");
         when(player.getWorld()).thenReturn(lobby); // not a managed world
@@ -199,7 +198,7 @@ public class InvEconomyTest {
     }
 
     @Test
-    public void testSetBalance() {
+    void testSetBalance() {
         economy.depositPlayer(player, 100.0);
         EconomyResponse r = economy.setBalance(player, 42.0);
         assertTrue(r.transactionSuccess());
@@ -207,7 +206,7 @@ public class InvEconomyTest {
     }
 
     @Test
-    public void testSetBalanceWorld() {
+    void testSetBalanceWorld() {
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, RETURNS_MOCKS)) {
             mockedBukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
             EconomyResponse r = economy.setBalance(player, "world", 42.0);
@@ -217,7 +216,7 @@ public class InvEconomyTest {
     }
 
     @Test
-    public void testWorldAwareManagedRouting() {
+    void testWorldAwareManagedRouting() {
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, RETURNS_MOCKS)) {
             mockedBukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
             EconomyResponse r = economy.depositPlayer(player, "world", 250.0);
@@ -228,7 +227,7 @@ public class InvEconomyTest {
     }
 
     @Test
-    public void testWorldAwareUnmanagedDelegates() {
+    void testWorldAwareUnmanagedDelegates() {
         when(delegate.depositPlayer(player, "lobby", 10.0))
                 .thenReturn(new EconomyResponse(10, 10, ResponseType.SUCCESS, null));
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, RETURNS_MOCKS)) {
@@ -240,7 +239,7 @@ public class InvEconomyTest {
     }
 
     @Test
-    public void testOfflineRoutingUsesLastKey() {
+    void testOfflineRoutingUsesLastKey() {
         // Simulate the player having been online: this caches the storage object and persists lastKey
         sets.setStatistics(false);
         sets.setAdvancements(false);
@@ -265,7 +264,7 @@ public class InvEconomyTest {
     }
 
     @Test
-    public void testStoreNotReadyDelegates() {
+    void testStoreNotReadyDelegates() {
         // Provider registered before the store exists (the onEnable window): calls must route to
         // the delegate rather than NPE.
         when(addon.getStore()).thenReturn(null);
@@ -279,7 +278,7 @@ public class InvEconomyTest {
     }
 
     @Test
-    public void testOfflineUnknownWorldDelegates() {
+    void testOfflineUnknownWorldDelegates() {
         // Brand new player, offline, no lastKey -> cannot resolve -> delegate
         when(player.getPlayer()).thenReturn(null);
         when(delegate.depositPlayer(player, 5.0))

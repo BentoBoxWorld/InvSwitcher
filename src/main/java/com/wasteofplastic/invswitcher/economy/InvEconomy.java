@@ -28,12 +28,21 @@ import net.milkbowl.vault.economy.EconomyResponse.ResponseType;
  *
  * @author tastybento
  */
+// The name-based account methods below implement Vault's deprecated Economy interface methods and
+// must call Bukkit.getOfflinePlayer(String); both are out of our control, so suppress the warnings.
+@SuppressWarnings({ "deprecation", "removal" })
 public class InvEconomy implements Economy {
 
     private static final String NEGATIVE_DEPOSIT = "Cannot deposit a negative amount";
     private static final String NEGATIVE_WITHDRAW = "Cannot withdraw a negative amount";
     private static final String NEGATIVE_SET = "Cannot set a negative balance";
     private static final String INSUFFICIENT_FUNDS = "Insufficient funds";
+    // Debug message fragments, factored out to avoid duplicated string literals.
+    private static final String DBG_KEY = " key=";
+    private static final String DBG_AMOUNT = " amount=";
+    private static final String ROUTE_SELF = " -> self";
+    private static final String ROUTE_DELEGATE = " -> DELEGATE";
+    private static final String ROUTE_DEFAULT = " -> default";
 
     private final InvSwitcher addon;
     /** The economy to fall back to for unmanaged worlds (e.g. EssentialsX). Resolved lazily on
@@ -118,6 +127,21 @@ public class InvEconomy implements Economy {
         if (settings().isEconomyDebug()) {
             addon.log("[economy] " + msg);
         }
+    }
+
+    /**
+     * Debug-only suffix describing where a balance call routed: to the player's own managed balance
+     * ({@code managedSuffix}), or - when the world is unmanaged - to the delegate economy or the
+     * default key.
+     * @param key - the resolved money key, or null if the world is unmanaged
+     * @param managedSuffix - suffix to use when the key is non-null (managed)
+     * @return the routing suffix for the debug message
+     */
+    private String routeSuffix(String key, String managedSuffix) {
+        if (key != null) {
+            return managedSuffix;
+        }
+        return delegating() ? ROUTE_DELEGATE : ROUTE_DEFAULT;
     }
 
     private static String who(OfflinePlayer player) {
@@ -260,7 +284,7 @@ public class InvEconomy implements Economy {
     @Override
     public double getBalance(OfflinePlayer player) {
         String key = currentKey(player);
-        debug("getBalance " + who(player) + " key=" + key + (key == null ? (delegating() ? " -> DELEGATE" : " -> default") : ""));
+        debug("getBalance " + who(player) + DBG_KEY + key + routeSuffix(key, ""));
         if (key == null) {
             return delegating() ? delegate().getBalance(player) : readSelf(player, Store.DEFAULT_WORLD_KEY);
         }
@@ -289,8 +313,7 @@ public class InvEconomy implements Economy {
     @Override
     public EconomyResponse withdrawPlayer(OfflinePlayer player, double amount) {
         String key = currentKey(player);
-        debug("withdrawPlayer " + who(player) + " amount=" + amount + " key=" + key
-                + (key == null ? (delegating() ? " -> DELEGATE" : " -> default") : " -> self"));
+        debug("withdrawPlayer " + who(player) + DBG_AMOUNT + amount + DBG_KEY + key + routeSuffix(key, ROUTE_SELF));
         if (key == null) {
             return delegating() ? delegate().withdrawPlayer(player, amount)
                     : withdrawSelf(player, Store.DEFAULT_WORLD_KEY, amount);
@@ -301,8 +324,8 @@ public class InvEconomy implements Economy {
     @Override
     public EconomyResponse withdrawPlayer(OfflinePlayer player, String worldName, double amount) {
         String key = worldKey(player, worldName);
-        debug("withdrawPlayer(world) " + who(player) + " world=" + worldName + " amount=" + amount + " key=" + key
-                + (key == null ? (delegating() ? " -> DELEGATE" : " -> default") : " -> self"));
+        debug("withdrawPlayer(world) " + who(player) + " world=" + worldName + DBG_AMOUNT + amount + DBG_KEY + key
+                + routeSuffix(key, ROUTE_SELF));
         if (key == null) {
             return delegating() ? delegate().withdrawPlayer(player, worldName, amount)
                     : withdrawSelf(player, Store.DEFAULT_WORLD_KEY, amount);
@@ -313,8 +336,7 @@ public class InvEconomy implements Economy {
     @Override
     public EconomyResponse depositPlayer(OfflinePlayer player, double amount) {
         String key = currentKey(player);
-        debug("depositPlayer " + who(player) + " amount=" + amount + " key=" + key
-                + (key == null ? (delegating() ? " -> DELEGATE" : " -> default") : " -> self"));
+        debug("depositPlayer " + who(player) + DBG_AMOUNT + amount + DBG_KEY + key + routeSuffix(key, ROUTE_SELF));
         if (key == null) {
             return delegating() ? delegate().depositPlayer(player, amount)
                     : depositSelf(player, Store.DEFAULT_WORLD_KEY, amount);
@@ -325,8 +347,8 @@ public class InvEconomy implements Economy {
     @Override
     public EconomyResponse depositPlayer(OfflinePlayer player, String worldName, double amount) {
         String key = worldKey(player, worldName);
-        debug("depositPlayer(world) " + who(player) + " world=" + worldName + " amount=" + amount + " key=" + key
-                + (key == null ? (delegating() ? " -> DELEGATE" : " -> default") : " -> self"));
+        debug("depositPlayer(world) " + who(player) + " world=" + worldName + DBG_AMOUNT + amount + DBG_KEY + key
+                + routeSuffix(key, ROUTE_SELF));
         if (key == null) {
             return delegating() ? delegate().depositPlayer(player, worldName, amount)
                     : depositSelf(player, Store.DEFAULT_WORLD_KEY, amount);
@@ -389,73 +411,61 @@ public class InvEconomy implements Economy {
     // ------ DEPRECATED NAME-BASED METHODS (delegate up to OfflinePlayer variants) ------
 
     @Override
-    @Deprecated
     public boolean hasAccount(String playerName) {
         return hasAccount(Bukkit.getOfflinePlayer(playerName));
     }
 
     @Override
-    @Deprecated
     public boolean hasAccount(String playerName, String worldName) {
         return hasAccount(Bukkit.getOfflinePlayer(playerName), worldName);
     }
 
     @Override
-    @Deprecated
     public double getBalance(String playerName) {
         return getBalance(Bukkit.getOfflinePlayer(playerName));
     }
 
     @Override
-    @Deprecated
     public double getBalance(String playerName, String world) {
         return getBalance(Bukkit.getOfflinePlayer(playerName), world);
     }
 
     @Override
-    @Deprecated
     public boolean has(String playerName, double amount) {
         return has(Bukkit.getOfflinePlayer(playerName), amount);
     }
 
     @Override
-    @Deprecated
     public boolean has(String playerName, String worldName, double amount) {
         return has(Bukkit.getOfflinePlayer(playerName), worldName, amount);
     }
 
     @Override
-    @Deprecated
     public EconomyResponse withdrawPlayer(String playerName, double amount) {
         return withdrawPlayer(Bukkit.getOfflinePlayer(playerName), amount);
     }
 
     @Override
-    @Deprecated
     public EconomyResponse withdrawPlayer(String playerName, String worldName, double amount) {
         return withdrawPlayer(Bukkit.getOfflinePlayer(playerName), worldName, amount);
     }
 
     @Override
-    @Deprecated
     public EconomyResponse depositPlayer(String playerName, double amount) {
         return depositPlayer(Bukkit.getOfflinePlayer(playerName), amount);
     }
 
     @Override
-    @Deprecated
     public EconomyResponse depositPlayer(String playerName, String worldName, double amount) {
         return depositPlayer(Bukkit.getOfflinePlayer(playerName), worldName, amount);
     }
 
     @Override
-    @Deprecated
     public boolean createPlayerAccount(String playerName) {
         return createPlayerAccount(Bukkit.getOfflinePlayer(playerName));
     }
 
     @Override
-    @Deprecated
     public boolean createPlayerAccount(String playerName, String worldName) {
         return createPlayerAccount(Bukkit.getOfflinePlayer(playerName), worldName);
     }
@@ -472,7 +482,6 @@ public class InvEconomy implements Economy {
     }
 
     @Override
-    @Deprecated
     public EconomyResponse createBank(String name, String player) {
         return delegate() != null ? delegate().createBank(name, player) : bankUnsupported();
     }
@@ -508,7 +517,6 @@ public class InvEconomy implements Economy {
     }
 
     @Override
-    @Deprecated
     public EconomyResponse isBankOwner(String name, String playerName) {
         return delegate() != null ? delegate().isBankOwner(name, playerName) : bankUnsupported();
     }
@@ -519,7 +527,6 @@ public class InvEconomy implements Economy {
     }
 
     @Override
-    @Deprecated
     public EconomyResponse isBankMember(String name, String playerName) {
         return delegate() != null ? delegate().isBankMember(name, playerName) : bankUnsupported();
     }

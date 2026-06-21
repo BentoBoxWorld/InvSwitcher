@@ -261,12 +261,10 @@ public class Store {
         // Backward compat: if island-specific key has no data, migrate from world-only key.
         // This only happens once — the world-only data is cleared after migration so that
         // other islands don't also inherit a duplicate copy.
-        if (islandKey.contains("/") && !store.isInventory(islandKey)) {
-            if (store.isInventory(worldKey)) {
-                islandLoadKey = worldKey;
-                // Clear the world-only data so it can't be claimed by another island
-                store.clearWorldData(worldKey);
-            }
+        if (islandKey.contains("/") && !store.isInventory(islandKey) && store.isInventory(worldKey)) {
+            islandLoadKey = worldKey;
+            // Clear the world-only data so it can't be claimed by another island
+            store.clearWorldData(worldKey);
         }
 
         // Each option uses the island key or the world key based on its island sub-setting
@@ -549,11 +547,8 @@ public class Store {
         case BLOCK -> store.getBlockStats(worldName).getOrDefault(s, Collections.emptyMap()).forEach((k,v) -> player.setStatistic(s, k, v));
         case ITEM -> store.getItemStats(worldName).getOrDefault(s, Collections.emptyMap()).forEach((k,v) -> player.setStatistic(s, k, v));
         case ENTITY -> store.getEntityStats(worldName).getOrDefault(s, Collections.emptyMap()).forEach((k,v) -> player.setStatistic(s, k, v));
-        case UNTYPED -> {
-            if (store.getUntypedStats(worldName).containsKey(s)) {
-                player.setStatistic(s, store.getUntypedStats(worldName).get(s));
-            }
-        }
+        case UNTYPED -> Optional.ofNullable(store.getUntypedStats(worldName).get(s))
+                .ifPresent(v -> player.setStatistic(s, v));
         }
     }
 
