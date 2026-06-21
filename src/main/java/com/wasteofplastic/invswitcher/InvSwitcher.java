@@ -3,6 +3,7 @@ package com.wasteofplastic.invswitcher;
 
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -179,9 +180,20 @@ public class InvSwitcher extends Addon {
      * Re-runs BentoBox's VaultHook so it re-reads the highest-priority economy currently
      * registered with the services manager. BentoBox addons such as Bank hold this same hook
      * instance, so they pick up the change without needing to re-hook themselves.
+     * <p>
+     * If BentoBox has no stored VaultHook, its early Vault hook failed because no economy was
+     * registered when BentoBox's early hooks ran (the standalone case: we are the only economy).
+     * A failed hook is discarded by {@code HooksManager}, so {@link world.bentobox.bentobox.BentoBox#getVault()}
+     * stays empty and there is nothing to refresh. Now that our provider is live, register a fresh
+     * VaultHook so {@code getVault()} is populated for Bank and the rest of BentoBox.
      */
     private void refreshBentoBoxVaultHook() {
-        getPlugin().getVault().ifPresent(VaultHook::hook);
+        Optional<VaultHook> vault = getPlugin().getVault();
+        if (vault.isPresent()) {
+            vault.get().hook();
+        } else {
+            getPlugin().getHooks().registerHook(new VaultHook());
+        }
     }
 
     /**

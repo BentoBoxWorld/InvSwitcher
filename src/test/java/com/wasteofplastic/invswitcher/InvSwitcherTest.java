@@ -50,7 +50,6 @@ import world.bentobox.bentobox.api.addons.AddonDescription;
 import world.bentobox.bentobox.database.DatabaseSetup.DatabaseType;
 import world.bentobox.bentobox.managers.AddonsManager;
 import org.mockbukkit.mockbukkit.MockBukkit;
-import org.mockbukkit.mockbukkit.ServerMock;
 
 /**
  * @author tastybento
@@ -58,7 +57,7 @@ import org.mockbukkit.mockbukkit.ServerMock;
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class InvSwitcherTest {
+class InvSwitcherTest {
 
     private static File jFile;
     @Mock
@@ -79,7 +78,7 @@ public class InvSwitcherTest {
     private MockedStatic<BentoBox> mockedBentoBox;
 
     @BeforeAll
-    public static void beforeClass() throws IOException {
+    static void beforeClass() throws IOException {
         // Make the addon jar
         jFile = new File("addon.jar");
         // Copy over config file from src folder
@@ -100,12 +99,9 @@ public class InvSwitcherTest {
         }
     }
 
-    /**
-     * @throws Exception
-     */
     @BeforeEach
-    public void setUp() throws Exception {
-        ServerMock server = MockBukkit.mock();
+    void setUp() {
+        MockBukkit.mock();
 
         // Set up plugin
         mockedBentoBox = Mockito.mockStatic(BentoBox.class);
@@ -135,7 +131,7 @@ public class InvSwitcherTest {
      * @throws java.lang.Exception
      */
     @AfterEach
-    public void tearDown() throws Exception {
+    void tearDown() throws Exception {
         if (mockedBentoBox != null) {
             mockedBentoBox.close();
         }
@@ -144,7 +140,7 @@ public class InvSwitcherTest {
     }
 
     @AfterAll
-    public static void cleanUp() throws Exception {
+    static void cleanUp() throws Exception {
         deleteAll(new File("database"));
         new File("addon.jar").delete();
         new File("config.yml").delete();
@@ -164,7 +160,7 @@ public class InvSwitcherTest {
      * Test method for {@link com.wasteofplastic.invswitcher.InvSwitcher#onEnable()}.
      */
     @Test
-    public void testOnEnable() {
+    void testOnEnable() {
         addon.onEnable();
         verify(plugin).logError("[InvSwitcher] This addon is incompatible with YAML database. Please use another type, like JSON.");
         assertEquals(State.DISABLED, addon.getState());
@@ -174,7 +170,7 @@ public class InvSwitcherTest {
      * Test method for {@link com.wasteofplastic.invswitcher.InvSwitcher#onDisable()}.
      */
     @Test
-    public void testOnDisable() {
+    void testOnDisable() {
         // Mock the static method
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
             when(Bukkit.getWorld(anyString())).thenReturn(world);
@@ -192,7 +188,7 @@ public class InvSwitcherTest {
      * Test method for {@link com.wasteofplastic.invswitcher.InvSwitcher#onLoad()}.
      */
     @Test
-    public void testOnLoad() {
+    void testOnLoad() {
         addon.onLoad();
         File file = new File("config.yml");
         assertTrue(file.exists());
@@ -202,7 +198,7 @@ public class InvSwitcherTest {
      * Test method for {@link com.wasteofplastic.invswitcher.InvSwitcher#allLoaded()}.
      */
     @Test
-    public void testAllLoaded() {
+    void testAllLoaded() {
         // Mock the static method
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
             when(Bukkit.getWorld(anyString())).thenReturn(world);
@@ -221,7 +217,7 @@ public class InvSwitcherTest {
      * Test method for {@link com.wasteofplastic.invswitcher.InvSwitcher#allLoaded()}.
      */
     @Test
-    public void testAllLoadedNoWorlds() {
+    void testAllLoadedNoWorlds() {
         addon.onLoad();
         addon.getSettings().setWorlds(Collections.emptySet());
         addon.allLoaded();
@@ -234,7 +230,7 @@ public class InvSwitcherTest {
      * Test method for {@link com.wasteofplastic.invswitcher.InvSwitcher#getStore()}.
      */
     @Test
-    public void testGetStore() {
+    void testGetStore() {
         assertNull(addon.getStore());
     }
 
@@ -242,7 +238,7 @@ public class InvSwitcherTest {
      * Test method for {@link com.wasteofplastic.invswitcher.InvSwitcher#getSettings()}.
      */
     @Test
-    public void testGetSettings() {
+    void testGetSettings() {
         assertNull(addon.getSettings());
     }
 
@@ -250,7 +246,7 @@ public class InvSwitcherTest {
      * Test method for {@link com.wasteofplastic.invswitcher.InvSwitcher#getWorlds()}.
      */
     @Test
-    public void testGetWorlds() {
+    void testGetWorlds() {
         assertTrue(addon.getWorlds().isEmpty());
     }
 
