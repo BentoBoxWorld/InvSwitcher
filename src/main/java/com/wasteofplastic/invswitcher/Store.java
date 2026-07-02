@@ -304,16 +304,22 @@ public class Store {
     }
 
     private void setHeath(InventoryStorage store, Player player, String overworldName) {
-        // Health
-        double health = store.getHealth().getOrDefault(overworldName,
-                player.getAttribute(Attribute.MAX_HEALTH).getValue());
-
         AttributeInstance attr = player.getAttribute(Attribute.MAX_HEALTH);
-        if (attr != null && health > attr.getValue()) {
-            health = attr.getValue();
+        double maxHealth = (attr != null) ? attr.getValue() : 20D;
+
+        // Health
+        double health = store.getHealth().getOrDefault(overworldName, maxHealth);
+
+        if (health > maxHealth) {
+            health = maxHealth;
         }
-        if (health < 0D) {
-            health = 0D;
+        // Never load a fatal health value. A stored value of 0 (or less) only arises when the
+        // player's state was captured mid-death (e.g. when they died on another island). Applying
+        // it to a live player would kill them again the moment they load the world, causing an
+        // endless respawn/death loop (issue #56). Restore full health instead, matching vanilla
+        // respawn behaviour.
+        if (health <= 0D) {
+            health = maxHealth;
         }
         player.setHealth(health);
 

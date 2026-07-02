@@ -207,6 +207,29 @@ class StoreTest {
     }
 
     /**
+     * Issue #56: a stored health of 0 is only ever captured when the player's state is saved
+     * mid-death (e.g. per-island health enabled and the player died on another island). Loading
+     * that value into a live player would kill them the instant they enter the world, causing an
+     * endless respawn/death loop. Loading must restore full health instead of applying 0.
+     */
+    @Test
+    void testGetInventoryNeverLoadsFatalHealth() {
+        sets.setStatistics(false);
+        sets.setAdvancements(false);
+
+        // Simulate the player's state being captured mid-death with 0 health
+        when(player.getHealth()).thenReturn(0D);
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            s.storeInventory(player, world);
+        }
+
+        // Re-entering the world must restore full health (max = 18), never the fatal stored 0
+        s.getInventory(player, world);
+        verify(player).setHealth(18D);
+        verify(player, never()).setHealth(0D);
+    }
+
+    /**
      * Test that advancement grants during {@link Store#getInventory} do not modify the player's
      * experience points. Some advancements reward XP when their criteria are awarded; the store
      * must save and restore XP around the advancement grant step.
