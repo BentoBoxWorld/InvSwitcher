@@ -9,6 +9,10 @@ worlds:
 - caveblock-world
 - poseidon_world
 - stranger_world
+- skygrid-world
+- raft_world
+- brix_world
+- parkour_world
 options:
   # 
   # Per-world settings. Gamemode means Survivial, Creative, etc.
