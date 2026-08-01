@@ -18,6 +18,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,6 +55,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import world.bentobox.bentobox.BentoBox;
+import world.bentobox.bentobox.database.Database;
 import world.bentobox.bentobox.database.DatabaseSetup.DatabaseType;
 import com.wasteofplastic.invswitcher.dataobjects.InventoryStorage;
 
@@ -903,6 +905,76 @@ class StoreTest {
             String key = s.getStorageKeyForEvent(player, world, island);
             assertEquals("world", key); // Falls back to world name
         }
+    }
+
+    // --- Shutdown save tests ---
+
+    /**
+     * Replaces the Store's database with a mock so the save path can be observed.
+     */
+    @SuppressWarnings("unchecked")
+    private Database<InventoryStorage> injectMockDatabase() throws Exception {
+        Database<InventoryStorage> db = mock(Database.class);
+        Field field = Store.class.getDeclaredField("database");
+        field.setAccessible(true);
+        field.set(s, db);
+        return db;
+    }
+
+    /**
+     * A shutdown save must be synchronous. BentoBox closes its database immediately after addons
+     * are disabled, and players are only kicked afterwards, so an asynchronous write issued from
+     * saveOnShutdown() loses the race and is silently dropped. Everything the player did since
+     * their last world change was then lost, and because onPlayerJoin re-applies the stored
+     * inventory on login, the stale snapshot overwrote their real inventory on the next restart.
+     */
+    @Test
+    void testShutdownSaveIsSynchronous() throws Exception {
+        sets.setStatistics(false);
+        sets.setAdvancements(false);
+        Database<InventoryStorage> db = injectMockDatabase();
+
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            s.storeAndSave(player, world, true);
+        }
+
+        verify(db).saveObject(any(InventoryStorage.class));
+        verify(db, never()).saveObjectAsync(any(InventoryStorage.class));
+    }
+
+    /**
+     * The statistics branch returns early, so it needs its own check that a shutdown save is
+     * written synchronously.
+     */
+    @Test
+    void testShutdownSaveIsSynchronousWithStatistics() throws Exception {
+        sets.setStatistics(true);
+        sets.setAdvancements(false);
+        Database<InventoryStorage> db = injectMockDatabase();
+
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            s.storeAndSave(player, world, true);
+        }
+
+        verify(db).saveObject(any(InventoryStorage.class));
+        verify(db, never()).saveObjectAsync(any(InventoryStorage.class));
+    }
+
+    /**
+     * Normal (non-shutdown) saves must stay asynchronous so they do not block the main thread.
+     */
+    @Test
+    void testNormalSaveStaysAsynchronous() throws Exception {
+        sets.setStatistics(false);
+        sets.setAdvancements(false);
+        Database<InventoryStorage> db = injectMockDatabase();
+
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            s.storeAndSave(player, world, false);
+        }
+
+        verify(db).saveObjectAsync(any(InventoryStorage.class));
+        verify(db, never()).saveObject(any(InventoryStorage.class));
     }
 
 }
