@@ -474,10 +474,36 @@ public class Store {
         }
         if (settings.isStatistics()) {
             String k = settings.isIslandsStatistics() ? islandKey : worldKey;
-            saveStats(store, player, k, shutdown).thenAccept(database::saveObjectAsync);
+            // On shutdown saveStats() gathers synchronously and returns an already-completed
+            // future, so thenAccept runs on this thread and persist() writes before we return.
+            saveStats(store, player, k, shutdown).thenAccept(s -> persist(s, shutdown));
             return;
         }
-        database.saveObjectAsync(store);
+        persist(store, shutdown);
+    }
+
+    /**
+     * Writes the store to the database, synchronously when the server is shutting down.
+     * <p>
+     * Saves are normally asynchronous, but a shutdown save must not be. BentoBox closes its
+     * database immediately after addons are disabled, and players are only kicked afterwards, so an
+     * asynchronous write issued from {@link #saveOnShutdown()} loses the race and is silently
+     * dropped — and the {@code PlayerQuitEvent} that would otherwise save them fires after the
+     * database is already closed.
+     * <p>
+     * The effect was that everything a player did since their last world change went unsaved when
+     * the server stopped. Because {@code PlayerListener.onPlayerJoin} re-applies the stored
+     * inventory on login, the stale snapshot then overwrote the player's real inventory and they
+     * were rolled back to their last world change.
+     * @param store - the store to write
+     * @param shutdown - true if this is a shutdown save, which must be synchronous
+     */
+    private void persist(InventoryStorage store, boolean shutdown) {
+        if (shutdown) {
+            database.saveObject(store);
+        } else {
+            database.saveObjectAsync(store);
+        }
     }
 
     private CompletableFuture<InventoryStorage> saveStats(InventoryStorage store, Player player, String worldName,

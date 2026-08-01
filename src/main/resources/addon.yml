@@ -6,3 +6,29 @@ api-version: 3.17.0
 authors: tastybento
 
 softdepend: AcidIsland, BSkyBlock, SkyGrid, CaveBock, AOneBlock
+
+# Economy command permissions. These are only usable if options.money is enabled and Vault is
+# installed - InvSwitcher does not register the commands otherwise. The [gamemode] placeholder is
+# expanded by BentoBox into every game mode's permission prefix, e.g. bskyblock.invswitcher.balance
+permissions:
+  '[gamemode].invswitcher.balance':
+    description: Player can use the balance command
+    default: true
+  '[gamemode].invswitcher.pay':
+    description: Player can use the pay command
+    default: true
+  '[gamemode].invswitcher.admin.eco':
+    description: Player can use the admin eco command
+    default: op
+  '[gamemode].invswitcher.admin.eco.balance':
+    description: Player can use the admin eco balance command
+    default: op
+  '[gamemode].invswitcher.admin.eco.give':
+    description: Player can use the admin eco give command
+    default: op
+  '[gamemode].invswitcher.admin.eco.take':
+    description: Player can use the admin eco take command
+    default: op
+  '[gamemode].invswitcher.admin.eco.set':
+    description: Player can use the admin eco set command
+    default: op
