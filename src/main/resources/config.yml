@@ -13,6 +13,7 @@ worlds:
 - raft_world
 - brix_world
 - parkour_world
+- tradewinds_world
 options:
   # 
   # Per-world settings. Gamemode means Survivial, Creative, etc.
