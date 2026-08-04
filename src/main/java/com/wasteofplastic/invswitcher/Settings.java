@@ -34,14 +34,14 @@ public class Settings implements ConfigObject {
     private boolean enderChest = true;
     @ConfigEntry(path = "options.statistics")
     private boolean statistics = true;
-    @ConfigComment("Per-world money. Requires the Vault plugin. A separate economy plugin (e.g. EssentialsX)")
-    @ConfigComment("is optional: InvSwitcher can be the only economy. When enabled, InvSwitcher registers")
-    @ConfigComment("itself as the Vault economy and keeps a separate balance for each switched world.")
-    @ConfigComment("Transactions route to the correct world even when the player is offline or in a different")
-    @ConfigComment("world. If another economy plugin is present, worlds InvSwitcher does not manage are passed")
-    @ConfigComment("through to it; if not, InvSwitcher handles every world itself.")
+    @ConfigComment("Per-world money. Off by default. Requires the Vault plugin. A separate economy plugin")
+    @ConfigComment("(e.g. EssentialsX) is optional: InvSwitcher can be the only economy. When enabled,")
+    @ConfigComment("InvSwitcher registers itself as the Vault economy and keeps a separate balance for each")
+    @ConfigComment("switched world. Transactions route to the correct world even when the player is offline")
+    @ConfigComment("or in a different world. If another economy plugin is present, worlds InvSwitcher does")
+    @ConfigComment("not manage are passed through to it; if not, InvSwitcher handles every world itself.")
     @ConfigEntry(path = "options.money")
-    private boolean money = true;
+    private boolean money = false;
 
     @ConfigComment("Switch inventories based on island. Only applies if players own more than one island.")
     @ConfigComment("Each sub-option controls whether that aspect is switched per-island.")
