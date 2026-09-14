@@ -13,6 +13,9 @@ public class Settings implements ConfigObject {
 
     @ConfigComment("InvSwitcher Config")
     @ConfigComment("Worlds to operate. Nether and End worlds are automatically included.")
+    @ConfigComment("Any loaded world can be listed here, not just BentoBox game mode worlds. For example, add")
+    @ConfigComment("a lobby or spawn world so players keep a separate inventory there. Use the exact world")
+    @ConfigComment("folder name (case sensitive). The world must be loaded before BentoBox finishes starting.")
     @ConfigEntry(path = "worlds")
     private Set<String> worlds = new HashSet<>();
 
