@@ -1,5 +1,8 @@
 # InvSwitcher Config
 # Worlds to operate. Nether and End worlds are automatically included.
+# Any loaded world can be listed here, not just BentoBox game mode worlds. For example, add
+# a lobby or spawn world so players keep a separate inventory there. Use the exact world
+# folder name (case sensitive). The world must be loaded before BentoBox finishes starting.
 worlds:
 - acidisland_world
 - oneblock_world
