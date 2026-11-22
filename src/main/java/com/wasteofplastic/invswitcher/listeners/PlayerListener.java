@@ -8,6 +8,8 @@ import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -63,6 +65,7 @@ public class PlayerListener implements Listener {
         if (Util.sameWorld(to, from) || (!addon.getWorlds().contains(from) && !addon.getWorlds().contains(to))) {
             return;
         }
+        closeOpenContainer(event.getPlayer());
         addon.getStore().storeInventory(event.getPlayer(), from);
         addon.getStore().getInventory(event.getPlayer(), to);
     }
@@ -126,7 +129,8 @@ public class PlayerListener implements Listener {
             }
         }
 
-        // Switch: store old, load new
+        // Switch: close any open container first to prevent cursor/container desync, then store old and load new
+        closeOpenContainer(player);
         addon.getStore().storeInventory(player, world);
         addon.getStore().getInventory(player, world, island);
     }
@@ -184,10 +188,48 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled=true)
     public void onPlayerQuit(final PlayerQuitEvent event) {
+        closeOpenContainer(event.getPlayer());
         if (addon.getWorlds().contains(event.getPlayer().getWorld())) {
             addon.getStore().storeAndSave(event.getPlayer(), event.getPlayer().getWorld(), false);
         }
         addon.getStore().removeFromCache(event.getPlayer());
+    }
+
+    /**
+     * Persists Ender Chest changes immediately upon closing an Ender Chest view so stored
+     * snapshots stay synchronized with live Ender Chest state.
+     * @param event - inventory close event
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onEnderChestClose(final InventoryCloseEvent event) {
+        if (!addon.getSettings().isEnderChest()) {
+            return;
+        }
+        if (event.getInventory().getType() != InventoryType.ENDER_CHEST) {
+            return;
+        }
+        if (!(event.getPlayer() instanceof Player player)) {
+            return;
+        }
+        if (addon.getWorlds().contains(player.getWorld())) {
+            addon.getStore().syncEnderChest(player, player.getWorld());
+        }
+    }
+
+    /**
+     * Closes any non-personal container view currently open for the player so cursor items and
+     * open container state are settled before inventories are saved or swapped.
+     * @param player - player
+     */
+    private void closeOpenContainer(Player player) {
+        if (player == null || player.getOpenInventory() == null
+                || player.getOpenInventory().getTopInventory() == null) {
+            return;
+        }
+        InventoryType topType = player.getOpenInventory().getTopInventory().getType();
+        if (topType != InventoryType.CRAFTING && topType != InventoryType.CREATIVE) {
+            player.closeInventory();
+        }
     }
 
     /**
