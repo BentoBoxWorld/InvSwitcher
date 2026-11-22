@@ -1,7 +1,10 @@
 package com.wasteofplastic.invswitcher.listeners;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -38,6 +41,13 @@ import world.bentobox.bentobox.util.Util;
 public class PlayerListener implements Listener {
 
     private final InvSwitcher addon;
+    /**
+     * Players whose open container is being closed by InvSwitcher as part of a store/load
+     * switch. Ender Chest close-syncs are suppressed for them, because during a world change
+     * {@code player.getWorld()} already returns the destination world, so a sync would write the
+     * old world's Ender Chest into the new world's slot. The caller saves the Ender Chest itself.
+     */
+    private final Set<UUID> switching = new HashSet<>();
 
     /**
      * @param addon - Add-on
@@ -211,6 +221,9 @@ public class PlayerListener implements Listener {
         if (!(event.getPlayer() instanceof Player player)) {
             return;
         }
+        if (switching.contains(player.getUniqueId())) {
+            return; // closed by closeOpenContainer; the caller stores the Ender Chest
+        }
         if (addon.getWorlds().contains(player.getWorld())) {
             addon.getStore().syncEnderChest(player, player.getWorld());
         }
@@ -228,7 +241,13 @@ public class PlayerListener implements Listener {
         }
         InventoryType topType = player.getOpenInventory().getTopInventory().getType();
         if (topType != InventoryType.CRAFTING && topType != InventoryType.CREATIVE) {
-            player.closeInventory();
+            UUID uuid = player.getUniqueId();
+            switching.add(uuid);
+            try {
+                player.closeInventory();
+            } finally {
+                switching.remove(uuid);
+            }
         }
     }
 
