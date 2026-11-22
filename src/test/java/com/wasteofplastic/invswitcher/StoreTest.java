@@ -977,4 +977,41 @@ class StoreTest {
         verify(db, never()).saveObject(any(InventoryStorage.class));
     }
 
+    // --- Ender Chest sync tests ---
+
+    @Test
+    void testSyncEnderChestPersistsClonedSnapshot() throws Exception {
+        sets.setEnderChest(true);
+        Database<InventoryStorage> db = injectMockDatabase();
+
+        ItemStack diamond = new ItemStack(Material.DIAMOND, 4);
+        ItemStack[] contents = { diamond, null };
+        org.bukkit.inventory.Inventory enderChest = mock(org.bukkit.inventory.Inventory.class);
+        when(enderChest.getContents()).thenReturn(contents);
+        when(player.getEnderChest()).thenReturn(enderChest);
+
+        s.syncEnderChest(player, world);
+
+        // Mutating the live ItemStack after sync must not mutate the stored snapshot
+        diamond.setAmount(1);
+
+        verify(db).saveObjectAsync(any(InventoryStorage.class));
+        List<ItemStack> stored = s.getStorageObject(playerUUID).getEnderChest("world");
+        assertEquals(2, stored.size());
+        assertEquals(Material.DIAMOND, stored.get(0).getType());
+        assertEquals(4, stored.get(0).getAmount());
+        assertNull(stored.get(1));
+    }
+
+    @Test
+    void testSyncEnderChestIgnoredWhenDisabled() throws Exception {
+        sets.setEnderChest(false);
+        Database<InventoryStorage> db = injectMockDatabase();
+
+        s.syncEnderChest(player, world);
+
+        verify(db, never()).saveObjectAsync(any(InventoryStorage.class));
+        verify(db, never()).saveObject(any(InventoryStorage.class));
+    }
+
 }

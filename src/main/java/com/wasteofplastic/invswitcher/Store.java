@@ -469,8 +469,7 @@ public class Store {
         }
         if (settings.isEnderChest()) {
             String k = settings.isIslandsEnderChest() ? islandKey : worldKey;
-            List<ItemStack> contents = Arrays.asList(player.getEnderChest().getContents());
-            store.setEnderChest(k, contents);
+            store.setEnderChest(k, snapshotEnderChest(player));
         }
         if (settings.isStatistics()) {
             String k = settings.isIslandsStatistics() ? islandKey : worldKey;
@@ -480,6 +479,38 @@ public class Store {
             return;
         }
         persist(store, shutdown);
+    }
+
+    /**
+     * Immediately snapshots and persists the player's current Ender Chest contents for the given
+     * world. Keeps stored snapshots synchronized with live state when Ender Chests are closed
+     * (including virtual Ender Chest views opened by other plugins).
+     * @param player - player whose Ender Chest was closed
+     * @param world - current world
+     */
+    public void syncEnderChest(Player player, World world) {
+        Settings settings = addon.getSettings();
+        if (!settings.isEnderChest() || player == null || world == null) {
+            return;
+        }
+        InventoryStorage store = getInv(player);
+        String islandKey = currentKey.getOrDefault(player.getUniqueId(), getStorageKey(player, world));
+        String worldKey = getOverworldName(world);
+        String k = settings.isIslandsEnderChest() ? islandKey : worldKey;
+        store.setEnderChest(k, snapshotEnderChest(player));
+        persist(store, false);
+    }
+
+    private List<ItemStack> snapshotEnderChest(Player player) {
+        ItemStack[] raw = player.getEnderChest().getContents();
+        if (raw == null) {
+            return Collections.emptyList();
+        }
+        List<ItemStack> copy = new ArrayList<>(raw.length);
+        for (ItemStack item : raw) {
+            copy.add(item == null ? null : item.clone());
+        }
+        return copy;
     }
 
     /**

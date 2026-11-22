@@ -2,6 +2,7 @@ package com.wasteofplastic.invswitcher.economy;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -181,7 +182,7 @@ public class InvEconomy implements Economy {
     @Override
     public String format(double amount) {
         String name = Math.abs(amount - 1.0D) < 1.0E-9D ? currencyNameSingular() : currencyNamePlural();
-        return String.format("%,." + Math.max(0, fractionalDigits()) + "f %s", amount, name);
+        return String.format(Locale.US, "%,." + Math.max(0, fractionalDigits()) + "f %s", amount, name);
     }
 
     @Override

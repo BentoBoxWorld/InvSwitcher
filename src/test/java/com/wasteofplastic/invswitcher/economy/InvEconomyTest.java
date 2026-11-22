@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -137,6 +138,22 @@ class InvEconomyTest {
     void testFormatSingularAndPlural() {
         assertEquals("1.00 Dollar", economy.format(1.0));
         assertEquals("2.50 Dollars", economy.format(2.5));
+    }
+
+    @Test
+    void testFormatUsesLocaleUSRegardlessOfDefaultLocale() {
+        Locale previous = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.FRANCE);
+            assertEquals("1.00 Dollar", economy.format(1.0));
+            assertEquals("1,234.50 Dollars", economy.format(1234.5));
+
+            Locale.setDefault(Locale.forLanguageTag("es-CL"));
+            assertEquals("1.00 Dollar", economy.format(1.0));
+            assertEquals("1,234.50 Dollars", economy.format(1234.5));
+        } finally {
+            Locale.setDefault(previous);
+        }
     }
 
     @Test
