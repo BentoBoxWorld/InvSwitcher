@@ -1,5 +1,8 @@
 # InvSwitcher
 
+<!-- BentoBox stats badges: https://download.bentobox.world/admin (Badges tab) -->
+[![Servers](https://download.bentobox.world/badge/InvSwitcher/servers.svg)](https://download.bentobox.world/) [![Downloads](https://download.bentobox.world/badge/InvSwitcher/downloads.svg)](https://download.bentobox.world/) [![Minecraft](https://download.bentobox.world/badge/InvSwitcher/mc.svg)](https://download.bentobox.world/)
+
 World inventory switcher add-on for BentoBox. This add-on will work for any game modes.
 
 The following are switched per-world:
