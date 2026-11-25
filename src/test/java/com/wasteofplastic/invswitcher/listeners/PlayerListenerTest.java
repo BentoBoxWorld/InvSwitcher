@@ -1,5 +1,6 @@
 package com.wasteofplastic.invswitcher.listeners;
 
+import com.google.common.collect.ImmutableSet;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -108,6 +109,7 @@ class PlayerListenerTest {
         when(addon.getStore()).thenReturn(store);
         when(addon.getWorlds()).thenReturn(Set.of(world));
         when(addon.getSettings()).thenReturn(settings);
+        when(addon.getSettings(org.mockito.ArgumentMatchers.nullable(org.bukkit.World.class))).thenReturn(settings);
         when(addon.getIslands()).thenReturn(islandsManager);
         pl = new PlayerListener(addon);
     }
@@ -231,6 +233,7 @@ class PlayerListenerTest {
         when(settings.isIslandsActive()).thenReturn(true);
         UUID otherOwner = UUID.randomUUID();
         when(island.getOwner()).thenReturn(otherOwner);
+        when(island.getMemberSet()).thenReturn(ImmutableSet.of(otherOwner));
         IslandEnterEvent event = new IslandEnterEvent(island, playerUUID, false, null, island, null);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class)) {
             mockedBukkit.when(() -> Bukkit.getPlayer(playerUUID)).thenReturn(player);
@@ -243,6 +246,7 @@ class PlayerListenerTest {
     void testOnIslandEnterSingleIsland() {
         when(settings.isIslandsActive()).thenReturn(true);
         when(island.getOwner()).thenReturn(playerUUID);
+        when(island.getMemberSet()).thenReturn(ImmutableSet.of(playerUUID));
 
         IslandEnterEvent event = new IslandEnterEvent(island, playerUUID, false, null, island, null);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class);
@@ -259,6 +263,7 @@ class PlayerListenerTest {
     void testOnIslandEnterMultipleIslandsSameKey() {
         when(settings.isIslandsActive()).thenReturn(true);
         when(island.getOwner()).thenReturn(playerUUID);
+        when(island.getMemberSet()).thenReturn(ImmutableSet.of(playerUUID));
         when(island.getUniqueId()).thenReturn("island-1");
 
         // Current key already matches
@@ -281,6 +286,7 @@ class PlayerListenerTest {
     void testOnIslandEnterMultipleIslandsDifferentKey() {
         when(settings.isIslandsActive()).thenReturn(true);
         when(island.getOwner()).thenReturn(playerUUID);
+        when(island.getMemberSet()).thenReturn(ImmutableSet.of(playerUUID));
         when(island.getUniqueId()).thenReturn("island-2");
 
         when(store.getStorageKey(player, world, island)).thenReturn("world/island-2");
@@ -697,6 +703,7 @@ class PlayerListenerTest {
     void testCloseOpenContainerOnIslandEnter() {
         when(settings.isIslandsActive()).thenReturn(true);
         when(island.getOwner()).thenReturn(playerUUID);
+        when(island.getMemberSet()).thenReturn(ImmutableSet.of(playerUUID));
         when(island.getUniqueId()).thenReturn("island-2");
         when(store.getStorageKey(player, world, island)).thenReturn("world/island-2");
         when(store.getCurrentKey(player)).thenReturn("world/island-1");

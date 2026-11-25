@@ -20,6 +20,7 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.entity.Player;
 
 import com.wasteofplastic.invswitcher.InvSwitcher;
+import com.wasteofplastic.invswitcher.Store;
 
 import world.bentobox.bentobox.api.events.island.IslandEnterEvent;
 import world.bentobox.bentobox.api.events.player.PlayerBaseEvent;
@@ -81,13 +82,13 @@ public class PlayerListener implements Listener {
     }
 
     /**
-     * Handles inventory switching when a player enters an island they own.
-     * Only triggers when per-island switching is enabled and the player owns multiple islands.
+     * Handles inventory switching when a player enters an island they own or are a team member of.
+     * Only triggers when per-island switching is enabled and the player belongs to multiple islands.
      * @param event - event
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onIslandEnter(IslandEnterEvent event) {
-        if (!addon.getSettings().isIslandsActive()) {
+        if (!addon.getSettings(event.getIsland().getWorld()).isIslandsActive()) {
             return;
         }
 
@@ -103,12 +104,12 @@ public class PlayerListener implements Listener {
 
         Island island = event.getIsland();
 
-        // Only switch if the player owns the island they're entering
-        if (island.getOwner() == null || !island.getOwner().equals(player.getUniqueId())) {
+        // Only switch if the player is on the team of the island they're entering
+        if (!Store.isOnTeam(island, player.getUniqueId())) {
             return;
         }
 
-        // Only switch if player owns multiple islands (otherwise key is the same)
+        // Only switch if player belongs to multiple islands (otherwise key is the same)
         World overworld = Util.getWorld(world);
         int count = addon.getIslands().getNumberOfConcurrentIslands(
                 player.getUniqueId(), Objects.requireNonNull(overworld));
@@ -163,7 +164,7 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerRespawn(PlayerRespawnEvent event) {
-        if (!addon.getSettings().isIslandsActive()) {
+        if (!addon.getSettings(event.getRespawnLocation().getWorld()).isIslandsActive()) {
             return;
         }
 
@@ -212,7 +213,7 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onEnderChestClose(final InventoryCloseEvent event) {
-        if (!addon.getSettings().isEnderChest()) {
+        if (!addon.getSettings(event.getPlayer().getWorld()).isEnderChest()) {
             return;
         }
         if (event.getInventory().getType() != InventoryType.ENDER_CHEST) {
@@ -259,7 +260,7 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerResetInventory(PlayerResetInventoryEvent event) {
         // If we are not switching inventories, let BentoBox perform its own reset.
-        if (!addon.getSettings().isInventory()) return;
+        if (!addon.getSettings(event.getWorld()).isInventory()) return;
         if (!shouldInterceptPlayerReset(event)) return;
         event.setCancelled(true);
         Player player = Bukkit.getPlayer(event.getPlayerUUID());
@@ -276,7 +277,7 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerResetEnderChest(PlayerResetEnderChestEvent event) {
         // If we are not switching ender chests, let BentoBox perform its own reset.
-        if (!addon.getSettings().isEnderChest()) return;
+        if (!addon.getSettings(event.getWorld()).isEnderChest()) return;
         if (!shouldInterceptPlayerReset(event)) return;
         event.setCancelled(true);
         Player player = Bukkit.getPlayer(event.getPlayerUUID());
@@ -293,7 +294,7 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerResetExp(PlayerResetExpEvent event) {
         // If we are not switching experience, let BentoBox perform its own reset.
-        if (!addon.getSettings().isExperience()) return;
+        if (!addon.getSettings(event.getWorld()).isExperience()) return;
         if (!shouldInterceptPlayerReset(event)) return;
         event.setCancelled(true);
         Player player = Bukkit.getPlayer(event.getPlayerUUID());
@@ -311,7 +312,7 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerResetHealth(PlayerResetHealthEvent event) {
         // If we are not switching health, let BentoBox perform its own reset.
-        if (!addon.getSettings().isHealth()) return;
+        if (!addon.getSettings(event.getWorld()).isHealth()) return;
         if (!shouldInterceptPlayerReset(event)) return;
         event.setCancelled(true);
         Player player = Bukkit.getPlayer(event.getPlayerUUID());
@@ -328,7 +329,7 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerResetHunger(PlayerResetHungerEvent event) {
         // If we are not switching food, let BentoBox perform its own reset.
-        if (!addon.getSettings().isFood()) return;
+        if (!addon.getSettings(event.getWorld()).isFood()) return;
         if (!shouldInterceptPlayerReset(event)) return;
         event.setCancelled(true);
         Player player = Bukkit.getPlayer(event.getPlayerUUID());

@@ -35,7 +35,7 @@ options:
   # or in a different world. If another economy plugin is present, worlds InvSwitcher does
   # not manage are passed through to it; if not, InvSwitcher handles every world itself.
   money: false
-  # Switch inventories based on island. Only applies if players own more than one island.
+  # Switch inventories based on island. Only applies if players own or are team members of more than one island.
   # Each sub-option controls whether that aspect is switched per-island.
   # The world-level option must also be true for the island option to have any effect.
   islands:
@@ -69,3 +69,14 @@ economy:
   # Log every economy transaction (deposit/withdraw/balance) to the console for troubleshooting.
   # Verbose - only enable while diagnosing a problem.
   debug: false
+# 
+# Game modes can ask for the options they need in their own worlds, so that you do not
+# have to set them up by hand. A game mode that asks is hooked into automatically and the
+# options it asks for apply in its worlds only. Nothing in this file is changed and other
+# worlds keep the options above. What was asked for is listed in the console at startup.
+# Set to false to ignore all requests.
+game-mode-requests:
+  allow: true
+  # Game modes whose requests are ignored, e.g. Boxed. Their worlds then use the options
+  # above, and only if they are in the worlds list.
+  ignore: []

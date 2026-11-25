@@ -1,5 +1,6 @@
 package com.wasteofplastic.invswitcher;
 
+import com.google.common.collect.ImmutableSet;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -131,6 +132,7 @@ class StoreTest {
         // Settings
         sets = new Settings();
         when(addon.getSettings()).thenReturn(sets);
+        when(addon.getSettings(org.mockito.ArgumentMatchers.nullable(org.bukkit.World.class))).thenReturn(sets);
 
         // Addon
         when(addon.getLogger()).thenReturn(logger);
@@ -401,6 +403,7 @@ class StoreTest {
         sets.setIslandsActive(true);
         Island island = mock(Island.class);
         when(island.getOwner()).thenReturn(playerUUID);
+        when(island.getMemberSet()).thenReturn(ImmutableSet.of(playerUUID));
         when(island.getUniqueId()).thenReturn("island-123");
         Location loc = mock(Location.class);
         when(player.getLocation()).thenReturn(loc);
@@ -416,11 +419,34 @@ class StoreTest {
     }
 
     @Test
+    void testGetStorageKeyMultipleIslandsOnTeamIsland() {
+        // The player is a team member, not the owner. They still get the island's key.
+        sets.setIslandsActive(true);
+        Island island = mock(Island.class);
+        UUID owner = UUID.randomUUID();
+        when(island.getOwner()).thenReturn(owner);
+        when(island.getMemberSet()).thenReturn(ImmutableSet.of(owner, playerUUID));
+        when(island.getUniqueId()).thenReturn("team-island");
+        Location loc = mock(Location.class);
+        when(player.getLocation()).thenReturn(loc);
+
+        try (MockedStatic<Util> utilities = Mockito.mockStatic(Util.class)) {
+            utilities.when(() -> Util.getWorld(world)).thenReturn(world);
+            when(islandsManager.getNumberOfConcurrentIslands(playerUUID, world)).thenReturn(2);
+            when(islandsManager.getIslandAt(loc)).thenReturn(Optional.of(island));
+
+            assertEquals("world/team-island", s.getStorageKey(player, world));
+            assertEquals("world/team-island", s.getStorageKeyForEvent(player, world, island));
+        }
+    }
+
+    @Test
     void testGetStorageKeyMultipleIslandsOnOtherPlayerIsland() {
         sets.setIslandsActive(true);
         Island island = mock(Island.class);
         UUID otherPlayer = UUID.randomUUID();
         when(island.getOwner()).thenReturn(otherPlayer);
+        when(island.getMemberSet()).thenReturn(ImmutableSet.of(otherPlayer));
         Location loc = mock(Location.class);
         when(player.getLocation()).thenReturn(loc);
 
@@ -440,6 +466,7 @@ class StoreTest {
         sets.setIslandsActive(true);
         Island island = mock(Island.class);
         when(island.getOwner()).thenReturn(playerUUID);
+        when(island.getMemberSet()).thenReturn(ImmutableSet.of(playerUUID));
         when(island.getUniqueId()).thenReturn("island-456");
 
         try (MockedStatic<Util> utilities = Mockito.mockStatic(Util.class)) {
@@ -512,6 +539,7 @@ class StoreTest {
 
         Island oldIsland = mock(Island.class);
         when(oldIsland.getOwner()).thenReturn(playerUUID);
+        when(oldIsland.getMemberSet()).thenReturn(ImmutableSet.of(playerUUID));
         when(oldIsland.getUniqueId()).thenReturn("island-primary");
 
         try (MockedStatic<Util> utilities = Mockito.mockStatic(Util.class);
@@ -552,10 +580,12 @@ class StoreTest {
 
         Island primaryIsland = mock(Island.class);
         when(primaryIsland.getOwner()).thenReturn(playerUUID);
+        when(primaryIsland.getMemberSet()).thenReturn(ImmutableSet.of(playerUUID));
         when(primaryIsland.getUniqueId()).thenReturn("island-primary");
 
         Island newIsland = mock(Island.class);
         when(newIsland.getOwner()).thenReturn(playerUUID);
+        when(newIsland.getMemberSet()).thenReturn(ImmutableSet.of(playerUUID));
         when(newIsland.getUniqueId()).thenReturn("island-new");
 
         Location loc = mock(Location.class);
@@ -880,6 +910,7 @@ class StoreTest {
         sets.setIslandsActive(true);
         Island island = mock(Island.class);
         when(island.getOwner()).thenReturn(playerUUID);
+        when(island.getMemberSet()).thenReturn(ImmutableSet.of(playerUUID));
         when(island.getUniqueId()).thenReturn("island-abc");
         try (MockedStatic<Util> mockedUtil = mockStatic(Util.class)) {
             mockedUtil.when(() -> Util.getWorld(world)).thenReturn(world);
@@ -899,6 +930,7 @@ class StoreTest {
         Island island = mock(Island.class);
         UUID otherOwner = UUID.randomUUID();
         when(island.getOwner()).thenReturn(otherOwner); // player is NOT the owner
+        when(island.getMemberSet()).thenReturn(ImmutableSet.of(otherOwner));
         try (MockedStatic<Util> mockedUtil = mockStatic(Util.class)) {
             mockedUtil.when(() -> Util.getWorld(world)).thenReturn(world);
             when(islandsManager.getNumberOfConcurrentIslands(playerUUID, world)).thenReturn(2);

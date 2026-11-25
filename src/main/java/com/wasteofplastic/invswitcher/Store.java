@@ -96,7 +96,7 @@ public class Store {
     /**
      * Compute the storage key for a player based on their current location.
      * Returns "worldName/islandId" if per-island mode is active and the player
-     * owns multiple concurrent islands, otherwise returns just "worldName".
+     * belongs to multiple concurrent islands, otherwise returns just "worldName".
      * @param player - player
      * @param world - world
      * @return storage key
@@ -130,11 +130,11 @@ public class Store {
         }
         String overworldName = getOverworldName(world);
 
-        if (!addon.getSettings().isIslandsActive()) {
+        if (!addon.getSettings(world).isIslandsActive()) {
             return overworldName;
         }
 
-        // Check if player owns multiple concurrent islands in this world
+        // Check if player belongs to multiple concurrent islands in this world
         World overworld = Util.getWorld(world);
         int count = addon.getIslands().getNumberOfConcurrentIslands(player.getUniqueId(),
                 Objects.requireNonNull(overworld));
@@ -143,8 +143,7 @@ public class Store {
         }
 
         // If a specific island was provided, use it
-        if (island != null && island.getOwner() != null
-                && island.getOwner().equals(player.getUniqueId())) {
+        if (island != null && isOnTeam(island, player.getUniqueId())) {
             return overworldName + "/" + island.getUniqueId();
         }
 
@@ -163,7 +162,7 @@ public class Store {
         Optional<Island> islandOpt = addon.getIslands().getIslandAt(location);
         if (islandOpt.isPresent()) {
             Island loc = islandOpt.get();
-            if (loc.getOwner() != null && loc.getOwner().equals(player.getUniqueId())) {
+            if (isOnTeam(loc, player.getUniqueId())) {
                 return overworldName + "/" + loc.getUniqueId();
             }
         }
@@ -174,12 +173,24 @@ public class Store {
     }
 
     /**
+     * Checks if a player is the owner or a team member of an island. Per-island switching
+     * applies to every island a player belongs to, not only the ones they own, so that team
+     * members get the island's inventory, advancements, etc. too.
+     * @param island - island
+     * @param uuid - player's UUID
+     * @return true if the player is a member or higher on the island
+     */
+    public static boolean isOnTeam(Island island, UUID uuid) {
+        return island.getMemberSet().contains(uuid);
+    }
+
+    /**
      * Get the overworld name from any world by stripping nether/end suffixes.
      * @param world - world
      * @return overworld name
      */
     private String getOverworldName(World world) {
-        if (!addon.getWorlds().contains(world)) {
+        if (world == null || !addon.getWorlds().contains(world)) {
             return DEFAULT_WORLD_KEY;
         }
         return (world.getName().replace(THE_END, "")).replace(NETHER, "");
@@ -268,7 +279,7 @@ public class Store {
         }
 
         // Each option uses the island key or the world key based on its island sub-setting
-        Settings settings = addon.getSettings();
+        Settings settings = addon.getSettings(world);
         if (settings.isInventory()) {
             String k = settings.isIslandsInventory() ? islandLoadKey : worldKey;
             player.getInventory().setContents(store.getInventory(k).toArray(new ItemStack[0]));
@@ -412,7 +423,7 @@ public class Store {
      */
     public void storeInventory(Player player, World world) {
         storeAndSave(player, world, false);
-        clearPlayer(player);
+        clearPlayer(player, world);
         // Done!
     }
 
@@ -433,7 +444,7 @@ public class Store {
         // world they were last in, even after they log out.
         store.setLastKey(islandKey);
         // Each option saves to the island key or the world key based on its island sub-setting
-        Settings settings = addon.getSettings();
+        Settings settings = addon.getSettings(world);
         if (settings.isInventory()) {
             String k = settings.isIslandsInventory() ? islandKey : worldKey;
             List<ItemStack> contents = Arrays.asList(player.getInventory().getContents());
@@ -489,7 +500,7 @@ public class Store {
      * @param world - current world
      */
     public void syncEnderChest(Player player, World world) {
-        Settings settings = addon.getSettings();
+        Settings settings = addon.getSettings(world);
         if (!settings.isEnderChest() || player == null || world == null) {
             return;
         }
@@ -615,32 +626,32 @@ public class Store {
         }
     }
 
-    private void clearPlayer(Player player) {
-        if (this.addon.getSettings().isInventory())
+    private void clearPlayer(Player player, World world) {
+        if (addon.getSettings(world).isInventory())
         {
             // Clear the player's inventory
             player.getInventory().clear();
         }
 
-        if (this.addon.getSettings().isExperience())
+        if (addon.getSettings(world).isExperience())
         {
             // Reset experience
             setTotalExperience(player, 0);
         }
 
-        if (this.addon.getSettings().isAdvancements())
+        if (addon.getSettings(world).isAdvancements())
         {
             // Reset advancements
             resetAdv(player);
         }
 
-        if (this.addon.getSettings().isEnderChest())
+        if (addon.getSettings(world).isEnderChest())
         {
             // Reset enderchest
             player.getEnderChest().clear();
         }
 
-        if (this.addon.getSettings().isStatistics())
+        if (addon.getSettings(world).isStatistics())
         {
             // Reset Statistics
             Arrays.stream(Statistic.values()).forEach(s ->
@@ -763,7 +774,7 @@ public class Store {
      */
     String getStorageKeyForEvent(Player player, World world, Island island) {
         String overworldName = getOverworldName(world);
-        if (!addon.getSettings().isIslandsActive()) {
+        if (!addon.getSettings(world).isIslandsActive()) {
             return overworldName;
         }
         World overworld = Util.getWorld(world);
@@ -774,8 +785,8 @@ public class Store {
         if (count <= 1) {
             return overworldName;
         }
-        // Only use island-specific key if the player owns the island
-        if (island != null && island.getOwner() != null && island.getOwner().equals(player.getUniqueId())) {
+        // Only use island-specific key if the player is on the island's team
+        if (island != null && isOnTeam(island, player.getUniqueId())) {
             return overworldName + "/" + island.getUniqueId();
         }
         return overworldName;
@@ -793,7 +804,7 @@ public class Store {
         InventoryStorage store = getInv(player);
         String key = getStorageKeyForEvent(player, world, island);
         String worldKey = getOverworldName(world);
-        Settings settings = addon.getSettings();
+        Settings settings = addon.getSettings(world);
         if (settings.isInventory()) {
             String k = settings.isIslandsInventory() ? key : worldKey;
             store.setInventory(k, Collections.emptyList());
@@ -813,7 +824,7 @@ public class Store {
         InventoryStorage store = getInv(player);
         String key = getStorageKeyForEvent(player, world, island);
         String worldKey = getOverworldName(world);
-        Settings settings = addon.getSettings();
+        Settings settings = addon.getSettings(world);
         if (settings.isEnderChest()) {
             String k = settings.isIslandsEnderChest() ? key : worldKey;
             store.setEnderChest(k, Collections.emptyList());
@@ -833,7 +844,7 @@ public class Store {
         InventoryStorage store = getInv(player);
         String key = getStorageKeyForEvent(player, world, island);
         String worldKey = getOverworldName(world);
-        Settings settings = addon.getSettings();
+        Settings settings = addon.getSettings(world);
         if (settings.isExperience()) {
             String k = settings.isIslandsExperience() ? key : worldKey;
             store.setExp(k, 0);
@@ -854,7 +865,7 @@ public class Store {
         InventoryStorage store = getInv(player);
         String key = getStorageKeyForEvent(player, world, island);
         String worldKey = getOverworldName(world);
-        Settings settings = addon.getSettings();
+        Settings settings = addon.getSettings(world);
         if (settings.isHealth()) {
             String k = settings.isIslandsHealth() ? key : worldKey;
             store.getHealth().remove(k);
@@ -874,7 +885,7 @@ public class Store {
         InventoryStorage store = getInv(player);
         String key = getStorageKeyForEvent(player, world, island);
         String worldKey = getOverworldName(world);
-        Settings settings = addon.getSettings();
+        Settings settings = addon.getSettings(world);
         if (settings.isFood()) {
             String k = settings.isIslandsFood() ? key : worldKey;
             store.setFood(k, 20);
@@ -895,7 +906,7 @@ public class Store {
         InventoryStorage store = getInv(player);
         String key = getStorageKeyForEvent(player, world, island);
         String worldKey = getOverworldName(world);
-        Settings settings = addon.getSettings();
+        Settings settings = addon.getSettings(world);
         if (settings.isMoney()) {
             String k = settings.isIslandsMoney() ? key : worldKey;
             store.setMoney(k, 0D);
@@ -987,7 +998,7 @@ public class Store {
             return null;
         }
         String overworldName = getOverworldName(world);
-        Settings settings = addon.getSettings();
+        Settings settings = addon.getSettings(world);
         if (!settings.isIslandsActive() || !settings.isIslandsMoney()) {
             return overworldName;
         }

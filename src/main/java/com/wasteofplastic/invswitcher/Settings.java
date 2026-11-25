@@ -46,7 +46,7 @@ public class Settings implements ConfigObject {
     @ConfigEntry(path = "options.money")
     private boolean money = false;
 
-    @ConfigComment("Switch inventories based on island. Only applies if players own more than one island.")
+    @ConfigComment("Switch inventories based on island. Only applies if players own or are team members of more than one island.")
     @ConfigComment("Each sub-option controls whether that aspect is switched per-island.")
     @ConfigComment("The world-level option must also be true for the island option to have any effect.")
     @ConfigEntry(path = "options.islands.active")
@@ -97,6 +97,44 @@ public class Settings implements ConfigObject {
     @ConfigComment("troubleshooting. Verbose - only enable while diagnosing a problem.")
     @ConfigEntry(path = "economy.debug")
     private boolean economyDebug = false;
+
+    @ConfigComment("")
+    @ConfigComment("Game modes can ask for the options they need in their own worlds, so that you do not")
+    @ConfigComment("have to set them up by hand. A game mode that asks is hooked into automatically and the")
+    @ConfigComment("options it asks for apply in its worlds only. Nothing in this file is changed and other")
+    @ConfigComment("worlds keep the options above. What was asked for is listed in the console at startup.")
+    @ConfigComment("Set to false to ignore all requests.")
+    @ConfigEntry(path = "game-mode-requests.allow")
+    private boolean allowRequests = true;
+    @ConfigComment("Game modes whose requests are ignored, e.g. Boxed. Their worlds then use the options")
+    @ConfigComment("above, and only if they are in the worlds list.")
+    @ConfigEntry(path = "game-mode-requests.ignore")
+    private Set<String> ignoreRequests = new HashSet<>();
+
+    /**
+     * @return true if game modes may ask for options in their own worlds
+     */
+    public boolean isAllowRequests() {
+        return allowRequests;
+    }
+    /**
+     * @param allowRequests true if game modes may ask for options in their own worlds
+     */
+    public void setAllowRequests(boolean allowRequests) {
+        this.allowRequests = allowRequests;
+    }
+    /**
+     * @return names of the game modes whose requests are ignored
+     */
+    public Set<String> getIgnoreRequests() {
+        return ignoreRequests;
+    }
+    /**
+     * @param ignoreRequests names of the game modes whose requests are ignored
+     */
+    public void setIgnoreRequests(Set<String> ignoreRequests) {
+        this.ignoreRequests = ignoreRequests;
+    }
 
     /**
      * @return the worlds
