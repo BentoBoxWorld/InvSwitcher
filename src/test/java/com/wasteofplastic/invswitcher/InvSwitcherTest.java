@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -227,8 +228,7 @@ class InvSwitcherTest {
     }
 
     private world.bentobox.bentobox.api.addons.GameModeAddon requestingGameMode(World gmWorld) {
-        world.bentobox.bentobox.api.addons.GameModeAddon gm = Mockito
-                .mock(world.bentobox.bentobox.api.addons.GameModeAddon.class);
+        world.bentobox.bentobox.api.addons.GameModeAddon gm = mock(world.bentobox.bentobox.api.addons.GameModeAddon.class);
         when(gm.getDescription()).thenReturn(new AddonDescription.Builder("bentobox", "Boxed", "1").build());
         when(gm.getOverWorld()).thenReturn(gmWorld);
         addon.requester = (g, n) -> g == gm && n.equals("InvSwitcher")
@@ -245,7 +245,7 @@ class InvSwitcherTest {
     void testGameModeRequest() {
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
             when(Bukkit.getWorld(anyString())).thenReturn(null);
-            World gmWorld = Mockito.mock(World.class);
+            World gmWorld = mock(World.class);
             when(gmWorld.getName()).thenReturn("boxed_world");
             requestingGameMode(gmWorld);
             addon.onLoad();
@@ -269,7 +269,7 @@ class InvSwitcherTest {
      */
     @Test
     void testGameModeRequestIgnored() {
-        World gmWorld = Mockito.mock(World.class);
+        World gmWorld = mock(World.class);
         requestingGameMode(gmWorld);
         addon.onLoad();
         addon.getSettings().setWorlds(Collections.emptySet());

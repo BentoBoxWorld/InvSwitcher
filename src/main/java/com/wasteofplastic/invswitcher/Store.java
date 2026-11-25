@@ -190,7 +190,7 @@ public class Store {
      * @return overworld name
      */
     private String getOverworldName(World world) {
-        if (!addon.getWorlds().contains(world)) {
+        if (world == null || !addon.getWorlds().contains(world)) {
             return DEFAULT_WORLD_KEY;
         }
         return (world.getName().replace(THE_END, "")).replace(NETHER, "");
