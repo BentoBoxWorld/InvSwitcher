@@ -97,9 +97,26 @@ class StoreTest {
 
     private MockedStatic<BentoBox> mockedBentoBox;
 
+    private org.bukkit.inventory.ItemFactory itemFactory;
+    @SuppressWarnings("deprecation")
+    private org.bukkit.UnsafeValues unsafe;
+
+    /**
+     * Item stacks ask Bukkit for their meta when they are saved, so the real item factory has
+     * to stay in place while Bukkit is mocked.
+     */
+    @SuppressWarnings("deprecation")
+    private void useRealItems(MockedStatic<Bukkit> mockedBukkit) {
+        mockedBukkit.when(Bukkit::getItemFactory).thenReturn(itemFactory);
+        mockedBukkit.when(Bukkit::getUnsafe).thenReturn(unsafe);
+    }
+
     @BeforeEach
     void setUp() {
         MockBukkit.mock();
+        // Kept so that item stacks can still be saved while Bukkit is mocked statically
+        itemFactory = Bukkit.getItemFactory();
+        unsafe = Bukkit.getUnsafe();
 
         // BentoBox
         BentoBox plugin = mock(BentoBox.class);
@@ -190,6 +207,7 @@ class StoreTest {
         sets.setStatistics(false);
         // Mock the static method
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             // Run the code under test
             s.storeInventory(player, world);
         }
@@ -222,6 +240,7 @@ class StoreTest {
         // Simulate the player's state being captured mid-death with 0 health
         when(player.getHealth()).thenReturn(0D);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             s.storeInventory(player, world);
         }
 
@@ -254,6 +273,7 @@ class StoreTest {
         when(player.getAdvancementProgress(advancement)).thenReturn(progress);
 
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             // Return a fresh iterator each time so both storeInventory and getInventory can iterate
             mockedBukkit.when(Bukkit::advancementIterator).thenAnswer(inv -> List.of(advancement).iterator());
 
@@ -298,6 +318,7 @@ class StoreTest {
         sets.setStatistics(false);
         // Mock the static method
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class)) {
+            useRealItems(mockedBukkit);
             // Run the code under test
             s.storeInventory(player, world);
 
@@ -340,6 +361,7 @@ class StoreTest {
         sets.setStatistics(false);
         // Mock the static method
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             // Run the code under test
             s.storeInventory(player, world);
 
@@ -368,6 +390,7 @@ class StoreTest {
     void testSaveOnlinePlayers() {
         // Mock the static method
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class)) {
+            useRealItems(mockedBukkit);
             // Run the code under test
             s.saveOnShutdown();
 
@@ -516,6 +539,7 @@ class StoreTest {
 
         try (MockedStatic<Util> utilities = Mockito.mockStatic(Util.class);
              MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             utilities.when(() -> Util.getWorld(world)).thenReturn(world);
             when(islandsManager.getNumberOfConcurrentIslands(playerUUID, world)).thenReturn(1);
 
@@ -563,6 +587,7 @@ class StoreTest {
 
         try (MockedStatic<Util> utilities = Mockito.mockStatic(Util.class);
              MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             utilities.when(() -> Util.getWorld(world)).thenReturn(world);
             when(islandsManager.getNumberOfConcurrentIslands(playerUUID, world)).thenReturn(1);
 
@@ -627,6 +652,7 @@ class StoreTest {
         when(nonBBWorld.getName()).thenReturn("em_adventurers_guild");
 
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             // Step 1: Enter BentoBox world from non-BB world — saves "outside" inventory
             s.storeInventory(player, nonBBWorld);
             s.getInventory(player, world);
@@ -655,6 +681,7 @@ class StoreTest {
         bentoboxWorlds.add(overworld);
 
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             s.storeInventory(player, overworld);
             assertTrue(s.isWorldStored(player, overworld));
         }
@@ -686,6 +713,7 @@ class StoreTest {
         Island island = mock(Island.class);
         // First save something in the store
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             s.storeInventory(player, world);
             assertTrue(s.isWorldStored(player, world), "Inventory should be stored before clearing");
 
@@ -711,6 +739,7 @@ class StoreTest {
         sets.setAdvancements(false);
         Island island = mock(Island.class);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             s.storeInventory(player, world);
             assertDoesNotThrow(() -> s.clearStoredEnderChestForWorld(player, world, island));
         }
@@ -726,6 +755,7 @@ class StoreTest {
         Island island = mock(Island.class);
         when(player.getTotalExperience()).thenReturn(500);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             s.storeInventory(player, world);
             assertDoesNotThrow(() -> s.clearStoredExpForWorld(player, world, island));
         }
@@ -741,6 +771,7 @@ class StoreTest {
         sets.setMoney(true);
         Island island = mock(Island.class);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             s.storeInventory(player, world);
             // Seed a balance for the world
             s.getStorageObject(playerUUID).setMoney("world", 500D);
@@ -768,6 +799,7 @@ class StoreTest {
         when(enabledPlugin.isEnabled()).thenReturn(true);
         when(addon.getPlugin()).thenReturn(enabledPlugin);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             InventoryStorage obj = s.getStorageObject(playerUUID);
             obj.setMoney("world", 2000D);
             s.saveStorage(obj);
@@ -786,6 +818,7 @@ class StoreTest {
         sets.setMoney(false);
         Island island = mock(Island.class);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             s.storeInventory(player, world);
             s.getStorageObject(playerUUID).setMoney("world", 500D);
             s.clearStoredMoneyForWorld(player, world, island);
@@ -804,6 +837,7 @@ class StoreTest {
         Island island = mock(Island.class);
         when(player.getHealth()).thenReturn(10.0);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             s.storeInventory(player, world);
             assertDoesNotThrow(() -> s.clearStoredHealthForWorld(player, world, island));
         }
@@ -819,6 +853,7 @@ class StoreTest {
         Island island = mock(Island.class);
         when(player.getFoodLevel()).thenReturn(8);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             s.storeInventory(player, world);
             assertDoesNotThrow(() -> s.clearStoredFoodForWorld(player, world, island));
         }
@@ -835,6 +870,7 @@ class StoreTest {
         sets.setAdvancements(false);
         Island island = mock(Island.class);
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             s.storeInventory(player, world);
             // With inventory disabled, nothing is stored in the inventory map
             assertFalse(s.isWorldStored(player, world));
@@ -935,6 +971,7 @@ class StoreTest {
         Database<InventoryStorage> db = injectMockDatabase();
 
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             s.storeAndSave(player, world, true);
         }
 
@@ -953,6 +990,7 @@ class StoreTest {
         Database<InventoryStorage> db = injectMockDatabase();
 
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             s.storeAndSave(player, world, true);
         }
 
@@ -970,6 +1008,7 @@ class StoreTest {
         Database<InventoryStorage> db = injectMockDatabase();
 
         try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            useRealItems(mockedBukkit);
             s.storeAndSave(player, world, false);
         }
 

@@ -51,21 +51,21 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>21</java.version>
+        <java.version>25</java.version>
         <!-- Non-minecraft related dependencies -->
-        <mockito.version>5.17.0</mockito.version>
+        <mockito.version>5.20.0</mockito.version>
         <junit.version>5.12.1</junit.version>
         <byte-buddy.version>1.17.5</byte-buddy.version>
         <!-- More visible way how to change dependency versions -->
-        <paper.version>1.21.11-R0.1-SNAPSHOT</paper.version>
-        <bentobox.version>3.17.0-SNAPSHOT</bentobox.version>
+        <paper.version>26.3.build.231-stable</paper.version>
+        <bentobox.version>3.23.7</bentobox.version>
         <vault.version>1.7</vault.version>
         <!-- Revision variable removes warning about dynamic version -->
         <revision>${build.version}-SNAPSHOT</revision>
         <!-- Do not change unless you want different name for local builds. -->
         <build.number>-LOCAL</build.number>
         <!-- This allows to change between versions. -->
-        <build.version>1.19.4</build.version>
+        <build.version>1.20.0</build.version>
         <!-- Sonar Cloud -->
         <sonar.projectKey>BentoBoxWorld_addon-invSwitcher</sonar.projectKey>
         <sonar.organization>bentobox-world</sonar.organization>
@@ -145,8 +145,8 @@
         <!-- MockBukkit -->
         <dependency>
             <groupId>org.mockbukkit.mockbukkit</groupId>
-            <artifactId>mockbukkit-v1.21</artifactId>
-            <version>4.110.0</version>
+            <artifactId>mockbukkit-v26.3</artifactId>
+            <version>4.119.0</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -241,16 +241,18 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
+                <version>3.14.1</version>
                 <configuration>
                     <release>${java.version}</release>
                     <forceJavacCompilerUse>true</forceJavacCompilerUse>
+                    <!-- Fork to avoid an in-process javac failure on JDK 25 -->
+                    <fork>true</fork>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.5.4</version>
                 <configuration>
                     <argLine>
                         ${argLine}
@@ -305,7 +307,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>3.6.2</version>
                 <configuration>
                     <minimizeJar>false</minimizeJar>
                 </configuration>
