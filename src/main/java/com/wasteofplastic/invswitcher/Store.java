@@ -96,7 +96,7 @@ public class Store {
     /**
      * Compute the storage key for a player based on their current location.
      * Returns "worldName/islandId" if per-island mode is active and the player
-     * owns multiple concurrent islands, otherwise returns just "worldName".
+     * belongs to multiple concurrent islands, otherwise returns just "worldName".
      * @param player - player
      * @param world - world
      * @return storage key
@@ -134,7 +134,7 @@ public class Store {
             return overworldName;
         }
 
-        // Check if player owns multiple concurrent islands in this world
+        // Check if player belongs to multiple concurrent islands in this world
         World overworld = Util.getWorld(world);
         int count = addon.getIslands().getNumberOfConcurrentIslands(player.getUniqueId(),
                 Objects.requireNonNull(overworld));
@@ -143,8 +143,7 @@ public class Store {
         }
 
         // If a specific island was provided, use it
-        if (island != null && island.getOwner() != null
-                && island.getOwner().equals(player.getUniqueId())) {
+        if (island != null && isOnTeam(island, player.getUniqueId())) {
             return overworldName + "/" + island.getUniqueId();
         }
 
@@ -163,7 +162,7 @@ public class Store {
         Optional<Island> islandOpt = addon.getIslands().getIslandAt(location);
         if (islandOpt.isPresent()) {
             Island loc = islandOpt.get();
-            if (loc.getOwner() != null && loc.getOwner().equals(player.getUniqueId())) {
+            if (isOnTeam(loc, player.getUniqueId())) {
                 return overworldName + "/" + loc.getUniqueId();
             }
         }
@@ -171,6 +170,18 @@ public class Store {
         // Fallback: use current key if available, else world name
         String current = currentKey.get(player.getUniqueId());
         return (current != null) ? current : overworldName;
+    }
+
+    /**
+     * Checks if a player is the owner or a team member of an island. Per-island switching
+     * applies to every island a player belongs to, not only the ones they own, so that team
+     * members get the island's inventory, advancements, etc. too.
+     * @param island - island
+     * @param uuid - player's UUID
+     * @return true if the player is a member or higher on the island
+     */
+    public static boolean isOnTeam(Island island, UUID uuid) {
+        return island.getMemberSet().contains(uuid);
     }
 
     /**
@@ -774,8 +785,8 @@ public class Store {
         if (count <= 1) {
             return overworldName;
         }
-        // Only use island-specific key if the player owns the island
-        if (island != null && island.getOwner() != null && island.getOwner().equals(player.getUniqueId())) {
+        // Only use island-specific key if the player is on the island's team
+        if (island != null && isOnTeam(island, player.getUniqueId())) {
             return overworldName + "/" + island.getUniqueId();
         }
         return overworldName;

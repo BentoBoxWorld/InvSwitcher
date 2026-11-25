@@ -46,7 +46,7 @@ public class Settings implements ConfigObject {
     @ConfigEntry(path = "options.money")
     private boolean money = false;
 
-    @ConfigComment("Switch inventories based on island. Only applies if players own more than one island.")
+    @ConfigComment("Switch inventories based on island. Only applies if players own or are team members of more than one island.")
     @ConfigComment("Each sub-option controls whether that aspect is switched per-island.")
     @ConfigComment("The world-level option must also be true for the island option to have any effect.")
     @ConfigEntry(path = "options.islands.active")

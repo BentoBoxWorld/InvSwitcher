@@ -20,6 +20,7 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.entity.Player;
 
 import com.wasteofplastic.invswitcher.InvSwitcher;
+import com.wasteofplastic.invswitcher.Store;
 
 import world.bentobox.bentobox.api.events.island.IslandEnterEvent;
 import world.bentobox.bentobox.api.events.player.PlayerBaseEvent;
@@ -81,8 +82,8 @@ public class PlayerListener implements Listener {
     }
 
     /**
-     * Handles inventory switching when a player enters an island they own.
-     * Only triggers when per-island switching is enabled and the player owns multiple islands.
+     * Handles inventory switching when a player enters an island they own or are a team member of.
+     * Only triggers when per-island switching is enabled and the player belongs to multiple islands.
      * @param event - event
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -103,12 +104,12 @@ public class PlayerListener implements Listener {
 
         Island island = event.getIsland();
 
-        // Only switch if the player owns the island they're entering
-        if (island.getOwner() == null || !island.getOwner().equals(player.getUniqueId())) {
+        // Only switch if the player is on the team of the island they're entering
+        if (!Store.isOnTeam(island, player.getUniqueId())) {
             return;
         }
 
-        // Only switch if player owns multiple islands (otherwise key is the same)
+        // Only switch if player belongs to multiple islands (otherwise key is the same)
         World overworld = Util.getWorld(world);
         int count = addon.getIslands().getNumberOfConcurrentIslands(
                 player.getUniqueId(), Objects.requireNonNull(overworld));
