@@ -231,8 +231,9 @@ class InvSwitcherTest {
                 .mock(world.bentobox.bentobox.api.addons.GameModeAddon.class);
         when(gm.getDescription()).thenReturn(new AddonDescription.Builder("bentobox", "Boxed", "1").build());
         when(gm.getOverWorld()).thenReturn(gmWorld);
-        when(gm.getRequestedSettings("InvSwitcher")).thenReturn(java.util.Map.of("options.islands.advancements", true,
-                "options.money", true, "worlds", "x"));
+        addon.requester = (g, n) -> g == gm && n.equals("InvSwitcher")
+                ? java.util.Map.of("options.islands.advancements", true, "options.money", true, "worlds", "x")
+                : java.util.Map.of();
         when(am.getGameModeAddons()).thenReturn(java.util.List.of(gm));
         return gm;
     }

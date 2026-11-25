@@ -3,7 +3,7 @@ package com.wasteofplastic.invswitcher;
 
 import java.util.HashSet;
 import java.util.Objects;
-import world.bentobox.bentobox.api.configuration.RequestedSettings;
+import java.util.function.BiFunction;
 import world.bentobox.bentobox.api.addons.GameModeAddon;
 import java.util.stream.Stream;
 import java.util.Map;
@@ -41,6 +41,10 @@ public class InvSwitcher extends Addon {
 
     private Settings settings;
     private final Map<World, Settings> worldSettings = new HashMap<>();
+    /**
+     * How game modes are asked for the options they want
+     */
+    BiFunction<GameModeAddon, String, Map<String, Object>> requester = GameModeRequests::ask;
 
     private final Config<Settings> config = new Config<>(this, Settings.class);
 
@@ -287,18 +291,12 @@ public class InvSwitcher extends Addon {
         }
         for (GameModeAddon gm : getPlugin().getAddonsManager().getGameModeAddons()) {
             String name = gm.getDescription().getName();
-            Map<String, Object> requests;
-            try {
-                requests = gm.getRequestedSettings(getDescription().getName());
-            } catch (LinkageError e) {
-                // This BentoBox is too old to have requests
-                return;
-            }
+            Map<String, Object> requests = requester.apply(gm, getDescription().getName());
             if (requests.isEmpty() || gm.getOverWorld() == null
                     || settings.getIgnoreRequests().stream().anyMatch(name::equalsIgnoreCase)) {
                 continue;
             }
-            RequestedSettings.Result<Settings> result = RequestedSettings.apply(settings, requests,
+            GameModeRequests.Result<Settings> result = GameModeRequests.apply(settings, requests,
                     InvSwitcher::isRequestable);
             result.refused().forEach(r -> logWarning(name + " asked for something that cannot be done: " + r));
             log(name + " asked for these options in its worlds: "
