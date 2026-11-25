@@ -3,6 +3,11 @@ package com.wasteofplastic.invswitcher;
 
 import java.util.HashSet;
 import java.util.Objects;
+import world.bentobox.bentobox.api.configuration.RequestedSettings;
+import world.bentobox.bentobox.api.addons.GameModeAddon;
+import java.util.stream.Stream;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -35,6 +40,7 @@ public class InvSwitcher extends Addon {
     private Store store;
 
     private Settings settings;
+    private final Map<World, Settings> worldSettings = new HashMap<>();
 
     private final Config<Settings> config = new Config<>(this, Settings.class);
 
@@ -59,6 +65,8 @@ public class InvSwitcher extends Addon {
                 .map(Bukkit::getWorld)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
+        // Game modes may ask for options in their own worlds
+        loadRequests();
         if (worlds.isEmpty()) {
             logWarning("Did not hook into any worlds - disabling addon!");
             this.setState(State.DISABLED);
@@ -249,6 +257,57 @@ public class InvSwitcher extends Addon {
 
     public Settings getSettings() {
         return this.settings;
+    }
+
+    /**
+     * Gets the settings that apply in a world. These are the settings from the config unless
+     * the world's game mode asked for different options and the admin allows that.
+     * @param world a world, may be null
+     * @return settings for the world
+     */
+    public Settings getSettings(World world) {
+        return world == null ? settings : worldSettings.getOrDefault(world, settings);
+    }
+
+    /**
+     * Options a game mode may ask for. Money and the economy are server-wide, and the worlds
+     * and request settings are the admin's alone.
+     */
+    static boolean isRequestable(String path) {
+        return path.startsWith("options.") && !path.endsWith(".money");
+    }
+
+    /**
+     * Asks every game mode which options it needs and works out the settings for its worlds.
+     */
+    void loadRequests() {
+        worldSettings.clear();
+        if (!settings.isAllowRequests()) {
+            return;
+        }
+        for (GameModeAddon gm : getPlugin().getAddonsManager().getGameModeAddons()) {
+            String name = gm.getDescription().getName();
+            Map<String, Object> requests;
+            try {
+                requests = gm.getRequestedSettings(getDescription().getName());
+            } catch (LinkageError e) {
+                // This BentoBox is too old to have requests
+                return;
+            }
+            if (requests.isEmpty() || gm.getOverWorld() == null
+                    || settings.getIgnoreRequests().stream().anyMatch(name::equalsIgnoreCase)) {
+                continue;
+            }
+            RequestedSettings.Result<Settings> result = RequestedSettings.apply(settings, requests,
+                    InvSwitcher::isRequestable);
+            result.refused().forEach(r -> logWarning(name + " asked for something that cannot be done: " + r));
+            log(name + " asked for these options in its worlds: "
+                    + (result.applied().isEmpty() ? "none that differ from the config" : String.join(", ", result.applied())));
+            // The nether and end are picked up by name with the other worlds
+            worlds.add(gm.getOverWorld());
+            Stream.of(gm.getOverWorld(), gm.getNetherWorld(), gm.getEndWorld()).filter(Objects::nonNull)
+                    .forEach(w -> worldSettings.put(w, result.settings()));
+        }
     }
 
     /**

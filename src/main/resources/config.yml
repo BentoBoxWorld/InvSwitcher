@@ -69,3 +69,14 @@ economy:
   # Log every economy transaction (deposit/withdraw/balance) to the console for troubleshooting.
   # Verbose - only enable while diagnosing a problem.
   debug: false
+# 
+# Game modes can ask for the options they need in their own worlds, so that you do not
+# have to set them up by hand. A game mode that asks is hooked into automatically and the
+# options it asks for apply in its worlds only. Nothing in this file is changed and other
+# worlds keep the options above. What was asked for is listed in the console at startup.
+# Set to false to ignore all requests.
+game-mode-requests:
+  allow: true
+  # Game modes whose requests are ignored, e.g. Boxed. Their worlds then use the options
+  # above, and only if they are in the worlds list.
+  ignore: []

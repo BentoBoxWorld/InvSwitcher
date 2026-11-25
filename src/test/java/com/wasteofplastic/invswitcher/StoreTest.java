@@ -132,6 +132,7 @@ class StoreTest {
         // Settings
         sets = new Settings();
         when(addon.getSettings()).thenReturn(sets);
+        when(addon.getSettings(org.mockito.ArgumentMatchers.nullable(org.bukkit.World.class))).thenReturn(sets);
 
         // Addon
         when(addon.getLogger()).thenReturn(logger);

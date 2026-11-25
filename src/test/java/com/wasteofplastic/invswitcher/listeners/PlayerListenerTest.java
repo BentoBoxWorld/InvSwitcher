@@ -109,6 +109,7 @@ class PlayerListenerTest {
         when(addon.getStore()).thenReturn(store);
         when(addon.getWorlds()).thenReturn(Set.of(world));
         when(addon.getSettings()).thenReturn(settings);
+        when(addon.getSettings(org.mockito.ArgumentMatchers.nullable(org.bukkit.World.class))).thenReturn(settings);
         when(addon.getIslands()).thenReturn(islandsManager);
         pl = new PlayerListener(addon);
     }

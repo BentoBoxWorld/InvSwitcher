@@ -88,7 +88,7 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onIslandEnter(IslandEnterEvent event) {
-        if (!addon.getSettings().isIslandsActive()) {
+        if (!addon.getSettings(event.getIsland().getWorld()).isIslandsActive()) {
             return;
         }
 
@@ -164,7 +164,7 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerRespawn(PlayerRespawnEvent event) {
-        if (!addon.getSettings().isIslandsActive()) {
+        if (!addon.getSettings(event.getRespawnLocation().getWorld()).isIslandsActive()) {
             return;
         }
 
@@ -213,7 +213,7 @@ public class PlayerListener implements Listener {
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onEnderChestClose(final InventoryCloseEvent event) {
-        if (!addon.getSettings().isEnderChest()) {
+        if (!addon.getSettings(event.getPlayer().getWorld()).isEnderChest()) {
             return;
         }
         if (event.getInventory().getType() != InventoryType.ENDER_CHEST) {
@@ -260,7 +260,7 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerResetInventory(PlayerResetInventoryEvent event) {
         // If we are not switching inventories, let BentoBox perform its own reset.
-        if (!addon.getSettings().isInventory()) return;
+        if (!addon.getSettings(event.getWorld()).isInventory()) return;
         if (!shouldInterceptPlayerReset(event)) return;
         event.setCancelled(true);
         Player player = Bukkit.getPlayer(event.getPlayerUUID());
@@ -277,7 +277,7 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerResetEnderChest(PlayerResetEnderChestEvent event) {
         // If we are not switching ender chests, let BentoBox perform its own reset.
-        if (!addon.getSettings().isEnderChest()) return;
+        if (!addon.getSettings(event.getWorld()).isEnderChest()) return;
         if (!shouldInterceptPlayerReset(event)) return;
         event.setCancelled(true);
         Player player = Bukkit.getPlayer(event.getPlayerUUID());
@@ -294,7 +294,7 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerResetExp(PlayerResetExpEvent event) {
         // If we are not switching experience, let BentoBox perform its own reset.
-        if (!addon.getSettings().isExperience()) return;
+        if (!addon.getSettings(event.getWorld()).isExperience()) return;
         if (!shouldInterceptPlayerReset(event)) return;
         event.setCancelled(true);
         Player player = Bukkit.getPlayer(event.getPlayerUUID());
@@ -312,7 +312,7 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerResetHealth(PlayerResetHealthEvent event) {
         // If we are not switching health, let BentoBox perform its own reset.
-        if (!addon.getSettings().isHealth()) return;
+        if (!addon.getSettings(event.getWorld()).isHealth()) return;
         if (!shouldInterceptPlayerReset(event)) return;
         event.setCancelled(true);
         Player player = Bukkit.getPlayer(event.getPlayerUUID());
@@ -329,7 +329,7 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerResetHunger(PlayerResetHungerEvent event) {
         // If we are not switching food, let BentoBox perform its own reset.
-        if (!addon.getSettings().isFood()) return;
+        if (!addon.getSettings(event.getWorld()).isFood()) return;
         if (!shouldInterceptPlayerReset(event)) return;
         event.setCancelled(true);
         Player player = Bukkit.getPlayer(event.getPlayerUUID());

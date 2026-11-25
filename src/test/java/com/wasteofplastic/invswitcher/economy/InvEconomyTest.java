@@ -103,6 +103,7 @@ class InvEconomyTest {
         sets.setIslandsActive(false);
         sets.setImportExistingBalances(false);
         when(addon.getSettings()).thenReturn(sets);
+        when(addon.getSettings(org.mockito.ArgumentMatchers.nullable(org.bukkit.World.class))).thenReturn(sets);
         when(addon.getLogger()).thenReturn(logger);
         when(addon.getIslands()).thenReturn(islandsManager);
 

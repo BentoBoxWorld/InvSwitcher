@@ -226,6 +226,63 @@ class InvSwitcherTest {
         verify(plugin, never()).log("Hooking into the following worlds:");
     }
 
+    private world.bentobox.bentobox.api.addons.GameModeAddon requestingGameMode(World gmWorld) {
+        world.bentobox.bentobox.api.addons.GameModeAddon gm = Mockito
+                .mock(world.bentobox.bentobox.api.addons.GameModeAddon.class);
+        when(gm.getDescription()).thenReturn(new AddonDescription.Builder("bentobox", "Boxed", "1").build());
+        when(gm.getOverWorld()).thenReturn(gmWorld);
+        when(gm.getRequestedSettings("InvSwitcher")).thenReturn(java.util.Map.of("options.islands.advancements", true,
+                "options.money", true, "worlds", "x"));
+        when(am.getGameModeAddons()).thenReturn(java.util.List.of(gm));
+        return gm;
+    }
+
+    /**
+     * A game mode's request applies in its own worlds only, and hooks the addon into them.
+     */
+    @Test
+    void testGameModeRequest() {
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class, Mockito.RETURNS_MOCKS)) {
+            when(Bukkit.getWorld(anyString())).thenReturn(null);
+            World gmWorld = Mockito.mock(World.class);
+            when(gmWorld.getName()).thenReturn("boxed_world");
+            requestingGameMode(gmWorld);
+            addon.onLoad();
+            addon.getSettings().setWorlds(Collections.emptySet());
+            addon.allLoaded();
+            // Hooked in without being in the worlds list
+            assertTrue(addon.getWorlds().contains(gmWorld));
+            // The option is on in the game mode's world and still off everywhere else
+            assertTrue(addon.getSettings(gmWorld).isIslandsAdvancements());
+            org.junit.jupiter.api.Assertions.assertFalse(addon.getSettings().isIslandsAdvancements());
+            org.junit.jupiter.api.Assertions.assertFalse(addon.getSettings(world).isIslandsAdvancements());
+            // Money and the worlds list cannot be asked for
+            org.junit.jupiter.api.Assertions.assertFalse(addon.getSettings(gmWorld).isMoney());
+            verify(plugin).log("[InvSwitcher] Boxed asked for these options in its worlds: options.islands.advancements: true");
+            verify(plugin, times(2)).logWarning(org.mockito.ArgumentMatchers.contains("asked for something that cannot be done"));
+        }
+    }
+
+    /**
+     * The admin can ignore requests from a game mode, or from all of them.
+     */
+    @Test
+    void testGameModeRequestIgnored() {
+        World gmWorld = Mockito.mock(World.class);
+        requestingGameMode(gmWorld);
+        addon.onLoad();
+        addon.getSettings().setWorlds(Collections.emptySet());
+        addon.getSettings().setIgnoreRequests(Set.of("boxed"));
+        addon.allLoaded();
+        org.junit.jupiter.api.Assertions.assertFalse(addon.getSettings(gmWorld).isIslandsAdvancements());
+        assertEquals(State.DISABLED, addon.getState());
+
+        addon.getSettings().setIgnoreRequests(Collections.emptySet());
+        addon.getSettings().setAllowRequests(false);
+        addon.loadRequests();
+        org.junit.jupiter.api.Assertions.assertFalse(addon.getSettings(gmWorld).isIslandsAdvancements());
+    }
+
     /**
      * Test method for {@link com.wasteofplastic.invswitcher.InvSwitcher#getStore()}.
      */
